@@ -1,0 +1,71 @@
+/*
+=============================================================================
+  MedControl — Estilos Customizados Extras
+  Este arquivo complementa os estilos inline dos templates.
+  Útil para sobrescritas, temas e componentes adicionais.
+=============================================================================
+*/
+
+/* ── SCROLLBAR PERSONALIZADA ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0f172a; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+/* ── SELEÇÃO DE TEXTO ────────────────────────────────────────────────── */
+::selection { background: rgba(20, 184, 166, 0.25); color: #f1f5f9; }
+
+/* ── TRANSIÇÃO GLOBAL DE PÁGINA ──────────────────────────────────────── */
+body { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── TOOLTIPS BOOTSTRAP CUSTOMIZADOS ─────────────────────────────────── */
+.tooltip-inner {
+  background: #1e293b;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #f1f5f9;
+  font-family: 'DM Sans', sans-serif;
+  font-size: .78rem;
+  border-radius: 8px;
+  padding: .4rem .8rem;
+}
+.tooltip-arrow::before { border-top-color: #1e293b !important; }
+
+/* ── MODAL CUSTOMIZADO ───────────────────────────────────────────────── */
+.modal-backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
+
+/* ── TABELA — ZEBRA SUAVE ────────────────────────────────────────────── */
+.table-zebra tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.012);
+}
+
+/* ── FORM CONTROL — PLACEHOLDER ─────────────────────────────────────── */
+.form-control::placeholder,
+.form-select::placeholder { color: #475569; }
+
+/* ── BADGE DE STATUS (uso geral) ─────────────────────────────────────── */
+.badge-vencido   { background: rgba(239, 68, 68, 0.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+.badge-alerta_30 { background: rgba(249,115, 22, 0.15);  color: #fdba74; border: 1px solid rgba(249,115,22,0.3); }
+.badge-alerta_60 { background: rgba(234,179,  8, 0.15);  color: #fde047; border: 1px solid rgba(234,179,8,0.3); }
+.badge-ok        { background: rgba( 34,197, 94, 0.15);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+
+/* ── CARD DE INTEGRAÇÃO HOVER ────────────────────────────────────────── */
+.integration-item { transition: background .2s, border-color .2s; }
+.integration-item:hover {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* ── PRINT — RELATÓRIO ───────────────────────────────────────────────── */
+@media print {
+  .sidebar, .topbar-actions, .btn-action, .search-bar { display: none !important; }
+  .main { margin-left: 0 !important; }
+  body { background: white; color: black; }
+  .table-card { border: 1px solid #e2e8f0; }
+}
+
+/* ── RESPONSIVO EXTRA ────────────────────────────────────────────────── */
+@media (max-width: 576px) {
+  .stat-value { font-size: 1.5rem !important; }
+  .form-card  { padding: 1.2rem !important; }
+}

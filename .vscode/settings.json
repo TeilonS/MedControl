@@ -1,0 +1,10 @@
+{
+  "editor.formatOnSave": true,
+  "python.defaultInterpreterPath": "./venv/bin/python",
+  "files.associations": {
+    "*.html": "jinja-html"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  }
+}
