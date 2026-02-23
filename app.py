@@ -584,6 +584,17 @@ def admin_clientes():
     clientes = Usuario.query.filter_by(perfil='cliente').all()
     return render_template('admin_clientes.html', clientes=clientes)
 
+@app.route('/admin/clientes/excluir/<int:id>', methods=['POST'])
+@login_required
+def admin_excluir_cliente(id):
+    if session.get('perfil') != 'admin':
+        return redirect(url_for('dashboard'))
+    cliente = Usuario.query.get_or_404(id)
+    nome = cliente.username
+    db.session.delete(cliente)
+    db.session.commit()
+    flash(f'Cliente "{nome}" excluído permanentemente.', 'warning')
+    return redirect(url_for('admin_clientes'))
 
 @app.route('/admin/clientes/novo', methods=['GET','POST'])
 @login_required

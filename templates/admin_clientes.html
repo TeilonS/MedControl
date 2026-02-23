@@ -157,6 +157,13 @@
               {% endif %}
             </td>
             <td>
+            <form method="POST" action="{{ url_for('admin_excluir_cliente', id=c.id) }}"
+      onsubmit="return confirm('Excluir permanentemente {{ c.username }}?')"
+      style="display:inline;">
+  <button type="submit" class="btn-sm-action" style="background:rgba(239,68,68,0.12);color:#fca5a5;margin-left:.3rem;">
+    <i class="bi bi-trash3"></i>
+  </button>
+</form>
               <form method="POST" action="{{ url_for('admin_renovar_cliente', id=c.id) }}" class="renovar-form">
                 <input type="number" name="dias" value="30" min="1" max="365" class="renovar-input">
                 <button type="submit" class="btn-renovar">
