@@ -686,10 +686,12 @@ def seed_database():
 
     db.session.commit()
 
+# Executado tanto pelo Flask dev server quanto pelo Gunicorn
+with app.app_context():
+    if os.environ.get('RESET_DB') == '1':
+        db.drop_all()
+    db.create_all()
+    seed_database()
+
 if __name__ == '__main__':
-    with app.app_context():
-        if os.environ.get('RESET_DB') == '1':
-            db.drop_all()
-        db.create_all()
-        seed_database()
-        app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
