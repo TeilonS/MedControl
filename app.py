@@ -560,12 +560,13 @@ def enviar_feedback():
         """
         msg.attach(MIMEText(html_body, 'html'))
 
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, dest, msg.as_string())
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10) as server:
+    server.login(gmail_user, gmail_pass)
+    server.sendmail(gmail_user, dest, msg.as_string())
 
         flash('Feedback enviado com sucesso! Obrigado.', 'success')
     except Exception as e:
+        app.logger.error(f'Erro ao enviar feedback: {e}')
         flash('Erro ao enviar feedback. Tente novamente.', 'danger')
 
     return redirect(url_for('dashboard'))
