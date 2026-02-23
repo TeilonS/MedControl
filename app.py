@@ -579,6 +579,10 @@ def seed_database():
 
     db.session.commit()
 
+# Garante criação do banco em produção (Railway e Render)
+with app.app_context():
+    db.create_all()
+    seed_database()
 
 if __name__ == '__main__':
     with app.app_context():
