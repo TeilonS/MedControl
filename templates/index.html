@@ -274,9 +274,14 @@
       <i class="bi bi-braces"></i> API REST
       <span class="badge" style="background:rgba(20,184,166,0.2);color:var(--primary-l);margin-left:auto;">v1</span>
     </a>
-    {% if session.perfil == 'admin' %}
-    <a href="{{ url_for('admin_clientes') }}" class="nav-item">
-      <i class="bi bi-people"></i> Clientes & Planos
+    {% if session.perfil == 'superadmin' %}
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-item">
+      <i class="bi bi-building"></i> Redes & Clientes
+    </a>
+    {% endif %}
+    {% if usuario and usuario.is_dono %}
+    <a href="{{ url_for('dashboard') }}" class="nav-item">
+      <i class="bi bi-building"></i> {{ session.get('nome_exibir', 'Minha Rede') }}
     </a>
     {% endif %}
     <button type="button" class="nav-item" data-bs-toggle="modal" data-bs-target="#feedbackModal"
@@ -308,7 +313,12 @@
       <div class="user-avatar">{{ session.username[0].upper() }}</div>
       <div>
         <div class="user-name">{{ session.username }}</div>
-        <div class="user-role">{{ session.perfil }}</div>
+        <div class="user-role">
+          {% if session.perfil == 'superadmin' %}Super Admin
+          {% elif session.perfil == 'dono_rede' %}Dono da Rede
+          {% elif session.perfil == 'filial' %}{{ session.filial_nome or 'Filial' }}
+          {% else %}{{ session.perfil }}{% endif %}
+        </div>
       </div>
       <a href="{{ url_for('logout') }}" class="logout-btn ms-auto" title="Sair">
         <i class="bi bi-box-arrow-right"></i>
@@ -335,6 +345,16 @@
       </a>
     </div>
   </div>
+
+  <!-- ALERTA DE RENOVAÇÃO -->
+  {% if alerta_renovacao %}
+  <div style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);border-radius:12px;padding:.85rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.8rem;">
+    <i class="bi bi-exclamation-triangle-fill" style="color:#f97316;font-size:1.1rem"></i>
+    <span style="font-size:.88rem;color:#fdba74">
+      <strong>Atenção:</strong> Sua assinatura expira em <strong>{{ dias_restantes }} dia(s)</strong>. Entre em contato para renovar e manter o acesso.
+    </span>
+  </div>
+  {% endif %}
 
   <!-- STAT CARDS -->
   <div class="row g-3 mb-4">
@@ -404,6 +424,14 @@
             <a href="{{ url_for('dashboard', busca=busca, status='ok') }}"
                class="pill p-green {% if status_filtro == 'ok' %}active{% endif %}">OK</a>
           </div>
+          {% if filiais %}
+          <select name="filial" class="search-input" style="max-width:200px;padding-left:.8rem">
+            <option value="">Todas as filiais</option>
+            {% for f in filiais %}
+            <option value="{{ f.id }}" {% if filial_filtro == f.id|string %}selected{% endif %}>{{ f.filial_nome or f.username }}</option>
+            {% endfor %}
+          </select>
+          {% endif %}
           <button type="submit" class="btn btn-primary-med" style="padding:.5rem .9rem;">
             <i class="bi bi-search"></i>
           </button>

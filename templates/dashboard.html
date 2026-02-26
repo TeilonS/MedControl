@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Painel Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    :root{--primary:#0f766e;--primary-l:#14b8a6;--dark:#0f172a;--surface:#1e293b;--surface2:#273548;--border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--sw:260px}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex}
+    .sidebar{width:var(--sw);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
+    .sb-logo{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border)}
+    .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--primary),var(--primary-l));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.7rem}
+    .sb-logo h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem}
+    .sb-logo span{font-size:.75rem;color:var(--muted)}
+    .sb-nav{padding:1rem;flex:1}
+    .nt{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#475569;padding:.6rem .5rem .3rem}
+    .ni{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;border-radius:10px;color:var(--muted);font-size:.88rem;font-weight:500;text-decoration:none;transition:all .2s;margin-bottom:.15rem}
+    .ni:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+    .ni.active{background:linear-gradient(135deg,rgba(15,118,110,0.25),rgba(20,184,166,0.12));color:var(--primary-l);border:1px solid rgba(20,184,166,0.2)}
+    .ni i{font-size:1rem;width:20px;text-align:center}
+    .sb-foot{padding:1rem;border-top:1px solid var(--border)}
+    .uc{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:rgba(255,255,255,0.03);border-radius:10px}
+    .ua{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-l));display:flex;align-items:center;justify-content:center;font-size:.85rem}
+    .main{margin-left:var(--sw);flex:1;padding:2rem}
+    .pt{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:.2rem}
+    .bc{color:var(--muted);font-size:.82rem;margin-bottom:2rem}
+    .bc a{color:var(--primary-l);text-decoration:none}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.2rem 1.4rem;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .sc-teal::before{background:var(--primary-l)}
+    .sc-green::before{background:#22c55e}
+    .sc-red::before{background:#ef4444}
+    .sc-blue::before{background:#3b82f6}
+    .sl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+    .sv{font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;margin:.3rem 0}
+    .si{position:absolute;right:1.2rem;top:1.2rem;font-size:1.4rem;opacity:.2}
+    .card-dark{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+    .th th{background:rgba(15,23,42,0.6);color:#64748b;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:.9rem 1rem;border-bottom:1px solid var(--border)}
+    .table{--bs-table-bg:transparent;--bs-table-color:var(--text)}
+    .table tbody tr{border-bottom:1px solid var(--border)}
+    .table tbody tr:last-child{border-bottom:none}
+    .table td{padding:.85rem 1rem;vertical-align:middle;font-size:.87rem}
+    .badge-ativo{background:rgba(34,197,94,0.15);color:#86efac;border:1px solid rgba(34,197,94,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .badge-inativo{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .badge-expirando{background:rgba(249,115,22,0.15);color:#fdba74;border:1px solid rgba(249,115,22,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .btn-pm{background:linear-gradient(135deg,var(--primary),var(--primary-l));border:none;color:white;border-radius:10px;padding:.55rem 1.1rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;transition:all .2s;box-shadow:0 3px 14px rgba(20,184,166,0.3);text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+    .btn-pm:hover{transform:translateY(-1px);color:white}
+    .btn-sa{border:none;border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s}
+    .btn-block{background:rgba(239,68,68,0.15);color:#fca5a5}
+    .btn-unblock{background:rgba(34,197,94,0.15);color:#86efac}
+    .btn-detail{background:rgba(20,184,166,0.12);color:var(--primary-l);text-decoration:none;border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600}
+    .rf{display:flex;gap:.4rem;align-items:center}
+    .ri{background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.1);color:var(--text);border-radius:8px;padding:.3rem .6rem;font-size:.8rem;width:70px}
+    .btn-r{background:rgba(20,184,166,0.15);color:var(--primary-l);border:1px solid rgba(20,184,166,0.3);border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer}
+    .tc{position:fixed;top:1.5rem;right:1.5rem;z-index:9999}
+    .ta{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.8rem 1.2rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;font-size:.88rem;box-shadow:0 8px 30px rgba(0,0,0,0.3)}
+    .ta.success{border-left:3px solid #22c55e}
+    .ta.warning{border-left:3px solid #eab308}
+    .ta.danger{border-left:3px solid #ef4444}
+  </style>
+</head>
+<body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}<div class="tc">{% for c,m in messages %}<div class="ta {{c}}">{{m}}</div>{% endfor %}</div>{% endif %}
+{% endwith %}
+
+<aside class="sidebar">
+  <div class="sb-logo"><div class="logo-icon">💊</div><h2>MedControl</h2><span>Super Admin</span></div>
+  <nav class="sb-nav">
+    <div class="nt">Sistema</div>
+    <a href="{{ url_for('dashboard') }}" class="ni"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <div class="nt mt-2">Clientes</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="ni active"><i class="bi bi-building"></i> Redes & Clientes</a>
+    <a href="{{ url_for('admin_nova_rede') }}" class="ni"><i class="bi bi-plus-circle"></i> Nova Rede</a>
+  </nav>
+  <div class="sb-foot">
+    <div class="uc">
+      <div class="ua">A</div>
+      <div><div style="font-size:.85rem;font-weight:600;">{{ session.username }}</div><div style="font-size:.7rem;color:var(--muted)">Super Admin</div></div>
+      <a href="{{ url_for('logout') }}" style="color:#ef4444;text-decoration:none;font-size:.78rem;margin-left:auto"><i class="bi bi-box-arrow-right"></i></a>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="pt">Redes & Clientes</div>
+  <div class="bc">Painel de controle de todas as redes cadastradas</div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><div class="stat-card sc-teal"><div class="sl">Total Redes</div><div class="sv" style="color:var(--primary-l)">{{ stats.total_redes }}</div><i class="bi bi-building si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card sc-green"><div class="sl">Ativas</div><div class="sv" style="color:#22c55e">{{ stats.ativas }}</div><i class="bi bi-check-circle si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card sc-red"><div class="sl">Expiradas</div><div class="sv" style="color:#ef4444">{{ stats.expiradas }}</div><i class="bi bi-x-circle si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card sc-blue"><div class="sl">Total Filiais</div><div class="sv" style="color:#3b82f6">{{ stats.total_filiais }}</div><i class="bi bi-shop si"></i></div></div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
+    <a href="{{ url_for('admin_nova_rede') }}" class="btn-pm"><i class="bi bi-plus-lg"></i> Nova Rede</a>
+  </div>
+
+  <div class="card-dark">
+    {% if redes %}
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr class="th"><th>Rede / Empresa</th><th>Plano</th><th>Filiais</th><th>Expira em</th><th>Status</th><th>Renovar</th><th>Ações</th></tr></thead>
+        <tbody>
+          {% for r in redes %}
+          <tr>
+            <td>
+              <div style="font-weight:600">{{ r.nome }}</div>
+              <div style="font-size:.75rem;color:var(--muted)">{{ r.email_contato or '—' }}</div>
+            </td>
+            <td><span style="font-size:.82rem;text-transform:capitalize">{{ r.plano }}</span></td>
+            <td><span style="font-weight:600;color:var(--primary-l)">{{ r.total_filiais }}</span></td>
+            <td>
+              {% if r.data_expiracao %}
+                <span style="font-size:.85rem;{% if r.dias_restantes is not none and r.dias_restantes <= 10 %}color:#f87171;font-weight:600{% endif %}">
+                  {{ r.data_expiracao.strftime('%d/%m/%Y') }}
+                  {% if r.dias_restantes is not none %}<span style="color:var(--muted);font-size:.75rem">({{ r.dias_restantes }}d)</span>{% endif %}
+                </span>
+              {% else %}<span style="color:var(--muted)">Sem expiração</span>{% endif %}
+            </td>
+            <td>
+              {% if not r.assinatura_ativa %}<span class="badge-inativo">Bloqueada</span>
+              {% elif r.alerta_renovacao %}<span class="badge-expirando">Expirando</span>
+              {% else %}<span class="badge-ativo">Ativa</span>{% endif %}
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('admin_renovar_rede', id=r.id) }}" class="rf">
+                <input type="number" name="dias" value="30" min="1" max="365" class="ri">
+                <button type="submit" class="btn-r"><i class="bi bi-arrow-clockwise"></i> Renovar</button>
+              </form>
+            </td>
+            <td style="display:flex;gap:.4rem;align-items:center">
+              <a href="{{ url_for('admin_rede_detalhe', id=r.id) }}" class="btn-detail"><i class="bi bi-eye"></i></a>
+              <form method="POST" action="{{ url_for('admin_toggle_rede', id=r.id) }}" style="display:inline" onsubmit="return confirm('{{ 'Bloquear' if r.ativa else 'Ativar' }} rede {{ r.nome }}?')">
+                {% if r.ativa %}<button type="submit" class="btn-sa btn-block"><i class="bi bi-lock"></i></button>
+                {% else %}<button type="submit" class="btn-sa btn-unblock"><i class="bi bi-unlock"></i></button>{% endif %}
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:3rem;color:var(--muted)">
+      <i class="bi bi-building" style="font-size:2.5rem;opacity:.3;display:block;margin-bottom:1rem"></i>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:.4rem">Nenhuma rede cadastrada</div>
+      <a href="{{ url_for('admin_nova_rede') }}" style="color:var(--primary-l)">Cadastrar primeira rede →</a>
+    </div>
+    {% endif %}
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>setTimeout(()=>document.querySelectorAll('.ta').forEach(t=>{t.style.transition='opacity .5s';t.style.opacity='0';setTimeout(()=>t.remove(),500)}),4000)</script>
+</body>
+</html>

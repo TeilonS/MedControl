@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — {{ rede.nome }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    :root{--primary:#0f766e;--primary-l:#14b8a6;--dark:#0f172a;--surface:#1e293b;--border:rgba(255,255,255,0.07);--text:#f1f5f9;--muted:#94a3b8;--sw:260px}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex}
+    .sidebar{width:var(--sw);min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
+    .sb-logo{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border)}
+    .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--primary),var(--primary-l));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.7rem}
+    .sb-logo h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem}
+    .sb-logo span{font-size:.75rem;color:var(--muted)}
+    .sb-nav{padding:1rem;flex:1}
+    .nt{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#475569;padding:.6rem .5rem .3rem}
+    .ni{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;border-radius:10px;color:var(--muted);font-size:.88rem;font-weight:500;text-decoration:none;transition:all .2s;margin-bottom:.15rem}
+    .ni:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+    .ni.active{background:linear-gradient(135deg,rgba(15,118,110,0.25),rgba(20,184,166,0.12));color:var(--primary-l);border:1px solid rgba(20,184,166,0.2)}
+    .ni i{font-size:1rem;width:20px;text-align:center}
+    .sb-foot{padding:1rem;border-top:1px solid var(--border)}
+    .uc{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:rgba(255,255,255,0.03);border-radius:10px}
+    .ua{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-l));display:flex;align-items:center;justify-content:center;font-size:.85rem}
+    .main{margin-left:var(--sw);flex:1;padding:2rem}
+    .pt{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:.2rem}
+    .bc{color:var(--muted);font-size:.82rem;margin-bottom:2rem}
+    .bc a{color:var(--primary-l);text-decoration:none}
+    .info-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem}
+    .sh{display:flex;align-items:center;gap:.7rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;color:var(--primary-l);margin-bottom:1rem;padding-bottom:.7rem;border-bottom:1px solid var(--border)}
+    .info-row{display:flex;gap:2rem;flex-wrap:wrap;margin-bottom:.5rem}
+    .ir-item label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:.2rem}
+    .ir-item span{font-size:.92rem;font-weight:500}
+    .badge-ativo{background:rgba(34,197,94,0.15);color:#86efac;border:1px solid rgba(34,197,94,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .badge-inativo{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .badge-expirando{background:rgba(249,115,22,0.15);color:#fdba74;border:1px solid rgba(249,115,22,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .card-dark{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.5rem}
+    .th th{background:rgba(15,23,42,0.6);color:#64748b;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:.9rem 1rem;border-bottom:1px solid var(--border)}
+    .table{--bs-table-bg:transparent;--bs-table-color:var(--text)}
+    .table tbody tr{border-bottom:1px solid var(--border)}
+    .table tbody tr:last-child{border-bottom:none}
+    .table td{padding:.85rem 1rem;vertical-align:middle;font-size:.87rem}
+    .add-filial-form{background:rgba(20,184,166,0.05);border:1px dashed rgba(20,184,166,0.2);border-radius:12px;padding:1.2rem;margin-top:.5rem}
+    .fc{background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.09);color:var(--text);border-radius:10px;padding:.6rem .85rem;font-family:'DM Sans',sans-serif;font-size:.88rem;width:100%}
+    .fc:focus{outline:none;border-color:var(--primary-l);box-shadow:0 0 0 3px rgba(20,184,166,0.15)}
+    .btn-pm{background:linear-gradient(135deg,var(--primary),var(--primary-l));border:none;color:white;border-radius:10px;padding:.55rem 1.1rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;transition:all .2s;cursor:pointer}
+    .btn-pm:hover{transform:translateY(-1px);color:white}
+    .btn-del{background:rgba(239,68,68,0.12);color:#fca5a5;border:none;border-radius:8px;padding:.3rem .7rem;font-size:.78rem;cursor:pointer}
+    label.fl{color:#94a3b8;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.3rem}
+    .rf{display:flex;gap:.4rem;align-items:center}
+    .ri{background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.1);color:var(--text);border-radius:8px;padding:.3rem .6rem;font-size:.8rem;width:70px}
+    .btn-r{background:rgba(20,184,166,0.15);color:var(--primary-l);border:1px solid rgba(20,184,166,0.3);border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer}
+    .tc{position:fixed;top:1.5rem;right:1.5rem;z-index:9999}
+    .ta{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.8rem 1.2rem;margin-bottom:.5rem;font-size:.88rem;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+    .ta.success{border-left:3px solid #22c55e}
+    .ta.warning{border-left:3px solid #eab308}
+    .ta.danger{border-left:3px solid #ef4444}
+    .dono-chip{display:flex;align-items:center;gap:.8rem;background:rgba(20,184,166,0.07);border:1px solid rgba(20,184,166,0.15);border-radius:12px;padding:.8rem 1rem}
+    .dono-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-l));display:flex;align-items:center;justify-content:center;font-size:1rem}
+  </style>
+</head>
+<body>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}<div class="tc">{% for c,m in messages %}<div class="ta {{c}}">{{m}}</div>{% endfor %}</div>{% endif %}
+{% endwith %}
+
+<aside class="sidebar">
+  <div class="sb-logo"><div class="logo-icon">💊</div><h2>MedControl</h2><span>Super Admin</span></div>
+  <nav class="sb-nav">
+    <div class="nt">Sistema</div>
+    <a href="{{ url_for('dashboard') }}" class="ni"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <div class="nt mt-2">Clientes</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="ni active"><i class="bi bi-building"></i> Redes & Clientes</a>
+    <a href="{{ url_for('admin_nova_rede') }}" class="ni"><i class="bi bi-plus-circle"></i> Nova Rede</a>
+  </nav>
+  <div class="sb-foot">
+    <div class="uc">
+      <div class="ua">A</div>
+      <div><div style="font-size:.85rem;font-weight:600">{{ session.username }}</div><div style="font-size:.7rem;color:var(--muted)">Super Admin</div></div>
+      <a href="{{ url_for('logout') }}" style="color:#ef4444;text-decoration:none;font-size:.78rem;margin-left:auto"><i class="bi bi-box-arrow-right"></i></a>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="pt">{{ rede.nome }}</div>
+  <div class="bc"><a href="{{ url_for('admin_dashboard') }}">Redes</a> / {{ rede.nome }}</div>
+
+  <!-- INFO DA REDE -->
+  <div class="info-card">
+    <div class="sh"><i class="bi bi-building"></i> Informações da Rede</div>
+    <div class="info-row">
+      <div class="ir-item"><label>Plano</label><span style="text-transform:capitalize">{{ rede.plano }}</span></div>
+      <div class="ir-item"><label>CNPJ</label><span>{{ rede.cnpj or '—' }}</span></div>
+      <div class="ir-item"><label>Email</label><span>{{ rede.email_contato or '—' }}</span></div>
+      <div class="ir-item"><label>Telefone</label><span>{{ rede.telefone or '—' }}</span></div>
+      <div class="ir-item">
+        <label>Expiração</label>
+        <span>
+          {% if rede.data_expiracao %}{{ rede.data_expiracao.strftime('%d/%m/%Y') }}
+            {% if rede.dias_restantes is not none %}
+              <span style="color:{% if rede.dias_restantes <= 10 %}#f87171{% else %}var(--muted){% endif %};font-size:.8rem">({{ rede.dias_restantes }} dias)</span>
+            {% endif %}
+          {% else %}Sem expiração{% endif %}
+        </span>
+      </div>
+      <div class="ir-item">
+        <label>Status</label>
+        {% if not rede.assinatura_ativa %}<span class="badge-inativo">Bloqueada</span>
+        {% elif rede.alerta_renovacao %}<span class="badge-expirando">Expirando</span>
+        {% else %}<span class="badge-ativo">Ativa</span>{% endif %}
+      </div>
+    </div>
+    <div style="display:flex;gap:.7rem;margin-top:1rem;flex-wrap:wrap">
+      <form method="POST" action="{{ url_for('admin_renovar_rede', id=rede.id) }}" class="rf">
+        <input type="number" name="dias" value="30" min="1" max="365" class="ri">
+        <button type="submit" class="btn-r"><i class="bi bi-arrow-clockwise me-1"></i>Renovar assinatura</button>
+      </form>
+      <form method="POST" action="{{ url_for('admin_toggle_rede', id=rede.id) }}" onsubmit="return confirm('Confirmar?')">
+        {% if rede.ativa %}
+          <button type="submit" style="background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:.35rem .8rem;font-size:.8rem;cursor:pointer"><i class="bi bi-lock me-1"></i>Bloquear rede</button>
+        {% else %}
+          <button type="submit" style="background:rgba(34,197,94,0.12);color:#86efac;border:1px solid rgba(34,197,94,0.2);border-radius:8px;padding:.35rem .8rem;font-size:.8rem;cursor:pointer"><i class="bi bi-unlock me-1"></i>Ativar rede</button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- LOGIN DO DONO -->
+  <div class="info-card">
+    <div class="sh"><i class="bi bi-person-badge"></i> Login do Dono da Rede</div>
+    {% if dono %}
+    <div class="dono-chip">
+      <div class="dono-avatar">👑</div>
+      <div>
+        <div style="font-weight:600;font-size:.95rem">{{ dono.nome_exibir or dono.username }}</div>
+        <div style="font-size:.78rem;color:var(--muted)">Login: <code style="background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px">{{ dono.username }}</code></div>
+      </div>
+      <div style="margin-left:auto;font-size:.75rem;color:var(--muted)">Acesso a todas as filiais desta rede</div>
+    </div>
+    {% else %}
+    <div style="color:var(--muted);font-size:.88rem">Nenhum dono cadastrado.</div>
+    {% endif %}
+  </div>
+
+  <!-- FILIAIS -->
+  <div class="card-dark">
+    <div style="padding:1rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'Syne',sans-serif;font-weight:700"><i class="bi bi-shop me-2" style="color:var(--primary-l)"></i>Filiais ({{ filiais|length }})</span>
+      <button type="button" class="btn-pm" data-bs-toggle="collapse" data-bs-target="#addFilial" style="font-size:.8rem;padding:.4rem .9rem">
+        <i class="bi bi-plus-lg"></i> Adicionar Filial
+      </button>
+    </div>
+
+    <!-- Form adicionar filial -->
+    <div class="collapse" id="addFilial">
+      <div style="padding:1.2rem;border-bottom:1px solid var(--border)">
+        <form method="POST" action="{{ url_for('admin_nova_filial', id=rede.id) }}">
+          <div class="add-filial-form">
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;color:var(--primary-l);margin-bottom:1rem"><i class="bi bi-shop me-2"></i>Nova Filial</div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="fl">Nome da Filial *</label>
+                <input type="text" name="filial_nome" class="fc" placeholder="Ex.: Filial Salvador Centro" required>
+              </div>
+              <div class="col-md-3">
+                <label class="fl">Usuário (login) *</label>
+                <input type="text" name="username" class="fc" placeholder="filial_salvador" required>
+              </div>
+              <div class="col-md-3">
+                <label class="fl">Senha *</label>
+                <input type="text" name="password" class="fc" placeholder="senha123" required>
+              </div>
+              <div class="col-md-6">
+                <label class="fl">Nome de exibição</label>
+                <input type="text" name="nome_exibir" class="fc" placeholder="Ex.: Equipe Salvador">
+              </div>
+            </div>
+            <div style="margin-top:1rem">
+              <button type="submit" class="btn-pm"><i class="bi bi-check-lg me-1"></i>Criar Filial</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if filiais %}
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr class="th"><th>Filial</th><th>Login</th><th>Medicamentos</th><th>Ação</th></tr></thead>
+        <tbody>
+          {% for f in filiais %}
+          <tr>
+            <td>
+              <div style="font-weight:600">{{ f.filial_nome or '—' }}</div>
+              <div style="font-size:.75rem;color:var(--muted)">{{ f.nome_exibir or '' }}</div>
+            </td>
+            <td><code style="background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:6px;font-size:.82rem">{{ f.username }}</code></td>
+            <td>
+              {% set total_meds = namespace(n=0) %}
+              {% for m in f.rede.medicamentos %}
+                {% if m.filial_id == f.id %}{% set total_meds.n = total_meds.n + 1 %}{% endif %}
+              {% endfor %}
+              <span style="font-weight:600;color:var(--primary-l)">{{ total_meds.n }}</span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('admin_excluir_filial', id=f.id) }}" style="display:inline" onsubmit="return confirm('Remover filial {{ f.filial_nome }}?')">
+                <button type="submit" class="btn-del"><i class="bi bi-trash3"></i> Remover</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2.5rem;color:var(--muted)">
+      <i class="bi bi-shop" style="font-size:2rem;opacity:.3;display:block;margin-bottom:.8rem"></i>
+      <div style="font-size:.88rem">Nenhuma filial cadastrada. Clique em "Adicionar Filial" acima.</div>
+    </div>
+    {% endif %}
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>setTimeout(()=>document.querySelectorAll('.ta').forEach(t=>{t.style.transition='opacity .5s';t.style.opacity='0';setTimeout(()=>t.remove(),500)}),4000)</script>
+</body>
+</html>
