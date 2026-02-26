@@ -376,28 +376,106 @@ function stopScanner() {
   }
 }
 
+function autofillField(name, value) {
+  if (!value) return;
+  const el = document.querySelector(`[name="${name}"]`);
+  if (!el || el.value) return; // não sobrescreve campos já preenchidos
+  el.value = value;
+  el.style.transition = 'border-color .4s, box-shadow .4s';
+  el.style.borderColor = '#14b8a6';
+  el.style.boxShadow = '0 0 0 3px rgba(20,184,166,0.15)';
+  setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 3000);
+}
+
+function showBanner(html, tipo) {
+  let b = document.getElementById('autofill-banner');
+  if (!b) {
+    b = document.createElement('div');
+    b.id = 'autofill-banner';
+    b.style.cssText = 'border-radius:12px;padding:.85rem 1.1rem;margin-bottom:1.2rem;font-size:.84rem;display:flex;align-items:flex-start;gap:.7rem;';
+    document.querySelector('.form-card').prepend(b);
+  }
+  if (tipo === 'success') {
+    b.style.background = 'rgba(20,184,166,0.08)';
+    b.style.border = '1px solid rgba(20,184,166,0.25)';
+    b.style.color = '#5eead4';
+  } else {
+    b.style.background = 'rgba(148,163,184,0.06)';
+    b.style.border = '1px solid rgba(148,163,184,0.15)';
+    b.style.color = '#94a3b8';
+  }
+  b.innerHTML = html;
+}
+
 function processBarcode(code) {
   stopScanner();
   document.getElementById('codigo_barras').value = code;
+
   const res = document.getElementById('scanResult');
   res.style.display = 'block';
-  res.innerHTML = `<i class="bi bi-check-circle-fill me-2"></i>Código detectado: <strong>${code}</strong>`;
+  res.innerHTML = `<i class="bi bi-hourglass-split me-2"></i>Buscando <strong>${code}</strong> no sistema...`;
   document.getElementById('scanStatus').innerHTML =
-    `<i class="bi bi-check-circle-fill me-1 text-success"></i> Código capturado com sucesso!`;
+    `<i class="bi bi-check-circle-fill me-1 text-success"></i> Código capturado!`;
 
-  // Verificar se medicamento já existe no sistema
+  // Busca no banco local
   fetch(`/api/v1/medicamentos/barcode/${code}`)
     .then(r => r.json())
     .then(data => {
-      if (data.success) {
-        res.innerHTML += `<br><small style="color:#94a3b8;">⚠️ Medicamento já cadastrado: <strong>${data.data.nome}</strong> (Lote: ${data.data.lote})</small>`;
-      }
-    }).catch(() => {});
+      if (data.success && data.data) {
+        const m = data.data;
 
-  // Fechar modal após 1.5s
+        // Preenche automaticamente: nome, fabricante, princípio ativo, preço
+        autofillField('nome',            m.nome);
+        autofillField('fabricante',      m.fabricante);
+        autofillField('principio_ativo', m.principio_ativo);
+
+        // Preço: converte para formato BR
+        if (m.preco_unitario) {
+          const precoEl = document.getElementById('preco_unitario');
+          if (precoEl && !precoEl.value) {
+            precoEl.value = parseFloat(m.preco_unitario).toFixed(2).replace('.', ',');
+            precoEl.style.transition = 'border-color .4s, box-shadow .4s';
+            precoEl.style.borderColor = '#14b8a6';
+            precoEl.style.boxShadow = '0 0 0 3px rgba(20,184,166,0.15)';
+            setTimeout(() => { precoEl.style.borderColor = ''; precoEl.style.boxShadow = ''; }, 3000);
+          }
+        }
+
+        // Origem
+        const orig = document.querySelector('[name="origem_cadastro"]');
+        if (orig) orig.value = 'barcode';
+
+        res.innerHTML = `<i class="bi bi-check-circle-fill me-2" style="color:#10b981"></i>
+          Produto encontrado: <strong>${m.nome}</strong>`;
+
+        showBanner(
+          `<i class="bi bi-magic" style="font-size:1.1rem;margin-top:.1rem"></i>
+           <div>
+             <strong style="color:#f1f5f9">Preenchimento automático</strong><br>
+             Nome, fabricante, princípio ativo e preço foram preenchidos com base no histórico.
+             <span style="color:#64748b"> Lote e validade ficaram em branco — preencha com os dados da embalagem atual.</span>
+             <br><span style="font-size:.78rem;color:#64748b;margin-top:.3rem;display:block">Você pode alterar qualquer campo antes de salvar.</span>
+           </div>`,
+          'success'
+        );
+      } else {
+        res.innerHTML = `<i class="bi bi-info-circle me-2" style="color:#94a3b8"></i>
+          Código <strong>${code}</strong> não encontrado no sistema — preencha os campos manualmente.`;
+        showBanner(
+          `<i class="bi bi-info-circle" style="font-size:1.1rem;margin-top:.1rem"></i>
+           <div>Produto novo — nenhum registro encontrado para este código de barras. Preencha os campos abaixo.</div>`,
+          'info'
+        );
+      }
+    })
+    .catch(() => {
+      res.innerHTML = `<i class="bi bi-check-circle-fill me-2" style="color:#10b981"></i>Código <strong>${code}</strong> capturado.`;
+    });
+
   setTimeout(() => {
-    bootstrap.Modal.getInstance(modalEl).hide();
-  }, 1500);
+    const m = bootstrap.Modal.getInstance(modalEl);
+    if (m) m.hide();
+  }, 1800);
 }
 
 function confirmarBarcode() {
@@ -405,11 +483,28 @@ function confirmarBarcode() {
   if (val) processBarcode(val);
 }
 
-// Também aceita leitura de barcode via USB (foco no input)
-document.getElementById('codigo_barras').addEventListener('keydown', function(e) {
+// Leitura via leitor USB — dispara busca ao pressionar Enter ou após pausa na digitação
+const barcodeInput = document.getElementById('codigo_barras');
+let barcodeTimer = null;
+
+barcodeInput.addEventListener('keydown', function(e) {
   if (e.key === 'Enter') {
     e.preventDefault();
-    document.querySelector('[name="nome"]').focus();
+    const code = this.value.trim();
+    if (code.length >= 8) {
+      processBarcode(code);
+    }
+  }
+});
+
+// Leitores USB digitam muito rápido — detecta por velocidade
+barcodeInput.addEventListener('input', function() {
+  clearTimeout(barcodeTimer);
+  const code = this.value.trim();
+  if (code.length >= 8) {
+    barcodeTimer = setTimeout(() => {
+      processBarcode(code);
+    }, 300); // 300ms sem digitar = provavelmente terminou o scan
   }
 });
 
