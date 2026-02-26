@@ -377,7 +377,7 @@ def enviar_feedback():
         </div>'''
 
         payload = json.dumps({
-            'from':    'MedControl <onboarding@resend.dev>',
+            'from': f'MedControl <{os.environ.get("RESEND_FROM", "onboarding@resend.dev")}>',
             'to':      [dest],
             'subject': f'[MedControl Feedback] {categoria} - {username}',
             'html':    html_body,
