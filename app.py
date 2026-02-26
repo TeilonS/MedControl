@@ -21,9 +21,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
 from reportlab.lib.enums import TA_CENTER
-import io, os, json, smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import io, os, json
+import urllib.request, urllib.error
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'medcontrol-dev-secret-2024')
@@ -354,40 +353,55 @@ def enviar_feedback():
         flash('Escreva uma mensagem antes de enviar.','warning')
         return redirect(request.referrer or url_for('dashboard'))
 
-    gmail_user = os.environ.get('GMAIL_USER')
-    gmail_pass = os.environ.get('GMAIL_PASS')
-    dest       = os.environ.get('FEEDBACK_DEST', gmail_user)
+    resend_key = os.environ.get('RESEND_API_KEY')
+    dest       = os.environ.get('FEEDBACK_DEST')
 
-    if not gmail_user or not gmail_pass:
-        flash('Feedback recebido! (email não configurado no servidor)','warning')
+    if not resend_key or not dest:
+        flash('Feedback recebido! (email não configurado no servidor)', 'warning')
         return redirect(url_for('dashboard'))
+
     try:
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = f'[MedControl Feedback] {categoria} — {username}'
-        msg['From']    = gmail_user
-        msg['To']      = dest
-        html_body = f"""
+        html_body = f'''
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:12px;">
           <div style="background:#0f766e;padding:16px 24px;border-radius:8px 8px 0 0;">
-            <h2 style="color:white;margin:0;">💊 MedControl — Feedback</h2>
+            <h2 style="color:white;margin:0;">&#128138; MedControl — Feedback</h2>
           </div>
           <div style="background:white;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;">
             <p><strong>Usuário:</strong> {username}</p>
             <p><strong>Categoria:</strong> {categoria}</p>
-            <p><strong>Data:</strong> {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>
+            <p><strong>Data:</strong> {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
             <hr style="border:1px solid #e2e8f0;">
             <p><strong>Mensagem:</strong></p>
             <p style="background:#f1f5f9;padding:16px;border-radius:8px;color:#334155;">{mensagem}</p>
           </div>
-        </div>"""
-        msg.attach(MIMEText(html_body,'html'))
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10) as server:
-            server.login(gmail_user, gmail_pass)
-            server.sendmail(gmail_user, dest, msg.as_string())
-        flash('Feedback enviado! Obrigado.','success')
+        </div>'''
+
+        payload = json.dumps({
+            'from':    'MedControl <onboarding@resend.dev>',
+            'to':      [dest],
+            'subject': f'[MedControl Feedback] {categoria} - {username}',
+            'html':    html_body,
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            'https://api.resend.com/emails',
+            data=payload,
+            headers={
+                'Authorization': f'Bearer {resend_key}',
+                'Content-Type':  'application/json',
+            },
+            method='POST'
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status in (200, 201):
+                flash('Feedback enviado! Obrigado.', 'success')
+            else:
+                raise Exception(f'Status {resp.status}')
+
     except Exception as e:
-        app.logger.error(f'Erro feedback: {e}')
-        flash('Erro ao enviar feedback.','danger')
+        app.logger.error(f'Erro feedback Resend: {e}')
+        flash('Erro ao enviar feedback. Tente novamente.', 'danger')
+
     return redirect(url_for('dashboard'))
 
 
