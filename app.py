@@ -516,6 +516,18 @@ def admin_excluir_filial(id):
     return redirect(url_for('admin_rede_detalhe', id=rede_id))
 
 
+
+# =============================================================================
+# PÁGINA DE PLANOS
+# =============================================================================
+@app.route('/planos')
+@login_required
+def planos():
+    u = get_usuario_atual()
+    if u.is_filial:
+        return redirect(url_for('dashboard'))
+    return render_template('planos.html', usuario=u)
+
 # =============================================================================
 # API REST
 # =============================================================================

@@ -279,6 +279,11 @@
       <i class="bi bi-building"></i> Redes & Clientes
     </a>
     {% endif %}
+    {% if session.perfil in ['superadmin', 'dono_rede'] %}
+    <a href="{{ url_for('planos') }}" class="nav-item">
+      <i class="bi bi-star"></i> Planos & Preços
+    </a>
+    {% endif %}
     {% if usuario and usuario.is_dono %}
     <a href="{{ url_for('dashboard') }}" class="nav-item">
       <i class="bi bi-building"></i> {{ session.get('nome_exibir', 'Minha Rede') }}
