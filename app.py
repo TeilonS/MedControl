@@ -26,7 +26,13 @@ import urllib.request, urllib.error
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'medcontrol-dev-secret-2024')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///medcontrol.db'
+
+# PostgreSQL em produção (Railway), SQLite localmente
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///medcontrol.db')
+# Railway usa postgres:// mas SQLAlchemy precisa de postgresql://
+if database_url.startswith('postgres://'):
+    database_url = database_url.replace('postgres://', 'postgresql://', 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -353,53 +359,41 @@ def enviar_feedback():
         flash('Escreva uma mensagem antes de enviar.','warning')
         return redirect(request.referrer or url_for('dashboard'))
 
-    resend_key = os.environ.get('RESEND_API_KEY')
-    dest       = os.environ.get('FEEDBACK_DEST')
+    tg_token   = os.environ.get('TELEGRAM_TOKEN')
+    tg_chat_id = os.environ.get('TELEGRAM_CHAT_ID')
 
-    if not resend_key or not dest:
-        flash('Feedback recebido! (email não configurado no servidor)', 'warning')
+    if not tg_token or not tg_chat_id:
+        flash('Feedback recebido! (notificação não configurada no servidor)', 'warning')
         return redirect(url_for('dashboard'))
 
     try:
-        html_body = f'''
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:12px;">
-          <div style="background:#0f766e;padding:16px 24px;border-radius:8px 8px 0 0;">
-            <h2 style="color:white;margin:0;">&#128138; MedControl — Feedback</h2>
-          </div>
-          <div style="background:white;padding:24px;border-radius:0 0 8px 8px;border:1px solid #e2e8f0;">
-            <p><strong>Usuário:</strong> {username}</p>
-            <p><strong>Categoria:</strong> {categoria}</p>
-            <p><strong>Data:</strong> {datetime.now().strftime("%d/%m/%Y %H:%M")}</p>
-            <hr style="border:1px solid #e2e8f0;">
-            <p><strong>Mensagem:</strong></p>
-            <p style="background:#f1f5f9;padding:16px;border-radius:8px;color:#334155;">{mensagem}</p>
-          </div>
-        </div>'''
-
+        texto = (
+            f"💊 *MedControl — Novo Feedback*\n\n"
+            f"👤 *Usuário:* {username}\n"
+            f"📂 *Categoria:* {categoria}\n"
+            f"🕐 *Data:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+            f"💬 *Mensagem:*\n{mensagem}"
+        )
         payload = json.dumps({
-            'from': f'MedControl <{os.environ.get("RESEND_FROM", "onboarding@resend.dev")}>',
-            'to':      [dest],
-            'subject': f'[MedControl Feedback] {categoria} - {username}',
-            'html':    html_body,
+            'chat_id':    tg_chat_id,
+            'text':       texto,
+            'parse_mode': 'Markdown',
         }).encode('utf-8')
 
         req = urllib.request.Request(
-            'https://api.resend.com/emails',
+            f'https://api.telegram.org/bot{tg_token}/sendMessage',
             data=payload,
-            headers={
-                'Authorization': f'Bearer {resend_key}',
-                'Content-Type':  'application/json',
-            },
+            headers={'Content-Type': 'application/json'},
             method='POST'
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
-            if resp.status in (200, 201):
+            if resp.status == 200:
                 flash('Feedback enviado! Obrigado.', 'success')
             else:
                 raise Exception(f'Status {resp.status}')
 
     except Exception as e:
-        app.logger.error(f'Erro feedback Resend: {e}')
+        app.logger.error(f'Erro feedback Telegram: {e}')
         flash('Erro ao enviar feedback. Tente novamente.', 'danger')
 
     return redirect(url_for('dashboard'))
