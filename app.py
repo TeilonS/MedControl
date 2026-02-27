@@ -502,6 +502,21 @@ def admin_toggle_rede(id):
     return redirect(url_for('admin_dashboard'))
 
 
+
+@app.route('/admin/redes/<int:id>/excluir', methods=['POST'])
+@login_required
+@superadmin_required
+def admin_excluir_rede(id):
+    rede = Rede.query.get_or_404(id)
+    nome = rede.nome
+    # Remove all medicamentos, usuarios da rede
+    Medicamento.query.filter_by(rede_id=id).delete()
+    Usuario.query.filter_by(rede_id=id).delete()
+    db.session.delete(rede)
+    db.session.commit()
+    flash(f'Rede "{nome}" e todos os seus dados foram excluídos.', 'danger')
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/admin/filial/<int:id>/excluir', methods=['POST'])
 @login_required
 @superadmin_required
@@ -527,6 +542,32 @@ def planos():
     if u.is_filial:
         return redirect(url_for('dashboard'))
     return render_template('planos.html', usuario=u)
+
+
+
+@app.route('/filiais')
+@assinatura_required
+def gerenciar_filiais():
+    u = get_usuario_atual()
+    if not u.is_dono:
+        return redirect(url_for('dashboard'))
+    filiais = Usuario.query.filter_by(rede_id=u.rede_id, perfil='filial').all()
+    return render_template('gerenciar_filiais.html', filiais=filiais, usuario=u)
+
+@app.route('/filial/<int:id>/excluir', methods=['POST'])
+@assinatura_required
+def dono_excluir_filial(id):
+    u = get_usuario_atual()
+    if not u.is_dono:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('dashboard'))
+    filial = Usuario.query.filter_by(id=id, rede_id=u.rede_id, perfil='filial').first_or_404()
+    nome = filial.filial_nome or filial.username
+    Medicamento.query.filter_by(filial_id=id).update({'filial_id': None})
+    db.session.delete(filial)
+    db.session.commit()
+    flash(f'Filial "{nome}" removida.', 'warning')
+    return redirect(url_for('dashboard'))
 
 # =============================================================================
 # API REST

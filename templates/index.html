@@ -285,8 +285,8 @@
     </a>
     {% endif %}
     {% if usuario and usuario.is_dono %}
-    <a href="{{ url_for('dashboard') }}" class="nav-item">
-      <i class="bi bi-building"></i> {{ session.get('nome_exibir', 'Minha Rede') }}
+    <a href="{{ url_for('gerenciar_filiais') }}" class="nav-item">
+      <i class="bi bi-shop"></i> Minhas Filiais
     </a>
     {% endif %}
     <button type="button" class="nav-item" data-bs-toggle="modal" data-bs-target="#feedbackModal"
