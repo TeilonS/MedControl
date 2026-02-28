@@ -569,6 +569,19 @@ def dono_excluir_filial(id):
     flash(f'Filial "{nome}" removida.', 'warning')
     return redirect(url_for('dashboard'))
 
+
+@app.route('/preferencias/tema', methods=['POST'])
+@login_required
+def salvar_tema():
+    tema = request.json.get('tema', 'light')
+    if tema not in ('light', 'dark'):
+        return jsonify({'ok': False}), 400
+    u = get_usuario_atual()
+    u.tema = tema
+    db.session.commit()
+    session['tema'] = tema
+    return jsonify({'ok': True})
+
 # =============================================================================
 # API REST
 # =============================================================================
