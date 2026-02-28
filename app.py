@@ -67,10 +67,11 @@ app.config['SQLALCHEMY_DATABASE_URI']        = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # WTF CSRF
-app.config['WTF_CSRF_TIME_LIMIT'] = 3600  # token CSRF válido por 1h
+app.config['WTF_CSRF_TIME_LIMIT']    = 3600  # token CSRF válido por 1h
+app.config['WTF_CSRF_CHECK_DEFAULT'] = False  # só verifica onde explicitamente decorado
 
-db       = SQLAlchemy(app)
-csrf     = CSRFProtect(app)  # protege todos os formulários POST automaticamente
+db   = SQLAlchemy(app)
+csrf = CSRFProtect(app)
 
 # Rate limiting — máximo 10 tentativas de login por minuto por IP
 limiter  = Limiter(
@@ -270,7 +271,8 @@ def handle_500(e):
 # =============================================================================
 
 @app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("10 per minute")   # máx 10 tentativas por minuto por IP
+@limiter.limit("10 per minute")
+@csrf.protect
 def login():
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
@@ -385,6 +387,7 @@ def dashboard():
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 @assinatura_required
+@csrf.protect
 def cadastro():
     u = get_usuario_atual()
     filiais = []
@@ -428,6 +431,7 @@ def cadastro():
 
 @app.route('/editar/<int:id>', methods=['GET', 'POST'])
 @assinatura_required
+@csrf.protect
 def editar(id):
     u   = get_usuario_atual()
     med = get_medicamentos_query().filter_by(id=id).first_or_404()
@@ -462,6 +466,7 @@ def editar(id):
 
 @app.route('/excluir/<int:id>', methods=['POST'])
 @assinatura_required
+@csrf.protect
 def excluir(id):
     med  = get_medicamentos_query().filter_by(id=id).first_or_404()
     nome = med.nome
@@ -477,6 +482,7 @@ def excluir(id):
 
 @app.route('/feedback', methods=['POST'])
 @login_required
+@csrf.protect
 def enviar_feedback():
     mensagem  = request.form.get('mensagem', '').strip()[:2000]  # limita tamanho
     categoria = request.form.get('categoria', 'Geral')[:50]
@@ -547,6 +553,7 @@ def admin_dashboard():
 @app.route('/admin/redes/nova', methods=['GET', 'POST'])
 @login_required
 @superadmin_required
+@csrf.protect
 def admin_nova_rede():
     if request.method == 'POST':
         try:
@@ -601,6 +608,7 @@ def admin_rede_detalhe(id):
 @app.route('/admin/redes/<int:id>/filial/nova', methods=['POST'])
 @login_required
 @superadmin_required
+@csrf.protect
 def admin_nova_filial(id):
     rede = Rede.query.get_or_404(id)
     try:
@@ -631,6 +639,7 @@ def admin_nova_filial(id):
 @app.route('/admin/redes/<int:id>/renovar', methods=['POST'])
 @login_required
 @superadmin_required
+@csrf.protect
 def admin_renovar_rede(id):
     rede = Rede.query.get_or_404(id)
     try:
@@ -648,6 +657,7 @@ def admin_renovar_rede(id):
 @app.route('/admin/redes/<int:id>/toggle', methods=['POST'])
 @login_required
 @superadmin_required
+@csrf.protect
 def admin_toggle_rede(id):
     rede      = Rede.query.get_or_404(id)
     rede.ativa = not rede.ativa
@@ -659,6 +669,7 @@ def admin_toggle_rede(id):
 @app.route('/admin/redes/<int:id>/excluir', methods=['POST'])
 @login_required
 @superadmin_required
+@csrf.protect
 def admin_excluir_rede(id):
     rede = Rede.query.get_or_404(id)
     nome = rede.nome
@@ -673,6 +684,7 @@ def admin_excluir_rede(id):
 @app.route('/admin/filial/<int:id>/excluir', methods=['POST'])
 @login_required
 @superadmin_required
+@csrf.protect
 def admin_excluir_filial(id):
     filial  = Usuario.query.get_or_404(id)
     rede_id = filial.rede_id
@@ -709,6 +721,7 @@ def gerenciar_filiais():
 
 @app.route('/filial/<int:id>/excluir', methods=['POST'])
 @assinatura_required
+@csrf.protect
 def dono_excluir_filial(id):
     u = get_usuario_atual()
     if not u.is_dono:
