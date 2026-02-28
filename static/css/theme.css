@@ -374,3 +374,21 @@ input:checked + .slider { background: var(--primary) !important; }
 [data-theme="light"] .text-muted,
 [data-theme="light"] [style*="color:#94a3b8"],
 [data-theme="light"] [style*="color: #94a3b8"] { color: var(--muted) !important; }
+
+/* ══ BOOTSTRAP BTN-CLOSE em modo claro ══ */
+[data-theme="light"] .btn-close { filter: none !important; }
+[data-theme="dark"]  .btn-close { filter: invert(1) grayscale(100%) brightness(200%) !important; }
+
+/* ══ FORM-CARD usa sb-bg em alguns templates — normaliza ══ */
+.form-card { background: var(--card-bg) !important; border-color: var(--card-border) !important; }
+
+/* ══ STATUS CHIPS light mode (index.html inline override) ══ */
+.chip-vencido, .chip-alerta_30, .chip-alerta_60, .chip-ok { border-width: 0; }
+
+/* ══ TABLE td color inherit from theme ══ */
+.table td, td { color: var(--text-2) !important; }
+.table td strong, td strong, .table td .fw-bold, .med-name { color: var(--text) !important; }
+
+/* ══ SV (stat value) em admin ══ */
+.sv { color: var(--text) !important; }
+.sl { color: var(--muted) !important; }
