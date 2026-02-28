@@ -15,16 +15,16 @@
     .sidebar{width:var(--sw);min-height:100vh;background:var(--sb-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
     .sb-logo{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border)}
     .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--primary),var(--primary-l));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.7rem}
-    .sb-logo h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem}
+    .sb-logo h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;color:var(--text)}
     .sb-logo span{font-size:.75rem;color:var(--muted)}
     .sb-nav{padding:1rem;flex:1}
     .nt{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sb-text);padding:.6rem .5rem .3rem}
     .ni{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;border-radius:10px;color:var(--muted);font-size:.88rem;font-weight:500;text-decoration:none;transition:all .2s;margin-bottom:.15rem}
-    .ni:hover{background:var(--surface2);color:var(--text)}
+    .ni:hover{background:var(--surface2) !important;color:var(--text) !important}
     .ni.active{background:linear-gradient(135deg,rgba(15,118,110,0.25),rgba(20,184,166,0.12));color:var(--primary-l);border:1px solid rgba(20,184,166,0.2)}
     .ni i{font-size:1rem;width:20px;text-align:center}
     .sb-foot{padding:1rem;border-top:1px solid var(--border)}
-    .uc{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:rgba(255,255,255,0.03);border-radius:10px}
+    .uc{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:var(--surface2);border-radius:10px}
     .ua{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-l));display:flex;align-items:center;justify-content:center;font-size:.85rem}
     .main{margin-left:var(--sw);flex:1;padding:2rem}
     .pt{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:.2rem}
@@ -33,12 +33,12 @@
     .form-card{background:var(--sb-bg);border:1px solid var(--border);border-radius:20px;padding:2rem;max-width:740px}
     .sh{display:flex;align-items:center;gap:.7rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;color:var(--primary-l);margin-bottom:1.2rem;padding-bottom:.7rem;border-bottom:1px solid var(--border)}
     label{color:var(--muted);font-size:.78rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;margin-bottom:.35rem;display:block}
-    .fc{width:100%;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.09);color:var(--text);border-radius:12px;padding:.65rem .9rem;font-family:'DM Sans',sans-serif;font-size:.9rem;transition:all .2s}
+    .fc{width:100%;background:var(--input-bg);border:1px solid var(--input-border);color:var(--input-text);border-radius:12px;padding:.65rem .9rem;font-family:'DM Sans',sans-serif;font-size:.9rem;transition:all .2s}
     .fc:focus{outline:none;border-color:var(--primary-l);box-shadow:0 0 0 3px rgba(20,184,166,0.15)}
     .btn-sub{background:linear-gradient(135deg,var(--primary),var(--primary-l));border:none;color:white;border-radius:12px;padding:.8rem 2rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;transition:all .2s;box-shadow:0 4px 20px rgba(20,184,166,.3);cursor:pointer}
     .btn-sub:hover{transform:translateY(-2px);color:white}
-    .btn-cancel{background:transparent;border:1px solid rgba(255,255,255,.12);color:var(--muted);border-radius:12px;padding:.8rem 1.5rem;font-size:.9rem;transition:all .2s;text-decoration:none}
-    .btn-cancel:hover{background:rgba(255,255,255,.05);color:var(--text)}
+    .btn-cancel{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:.8rem 1.5rem;font-size:.9rem;transition:all .2s;text-decoration:none}
+    .btn-cancel:hover{background:var(--surface2);color:var(--text)}
     .info-box{background:rgba(20,184,166,.07);border:1px solid rgba(20,184,166,.15);border-radius:10px;padding:.8rem 1rem;font-size:.8rem;color:var(--muted);margin-top:.5rem}
   </style>
 </head>

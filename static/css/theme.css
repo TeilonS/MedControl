@@ -314,3 +314,63 @@ input:checked + .slider { background: var(--primary) !important; }
 
 /* ══ ADMIN DASHBOARD — stat cards ══ */
 .stat-value, .sv { color: var(--text) !important; }
+
+/* ══ SIDEBAR GENÉRICA (sb-logo, ni, ns patterns) ══ */
+.sb-logo h2 { color: var(--text) !important; }
+.sb-logo span { color: var(--muted) !important; }
+.ni { color: var(--sb-text) !important; }
+.ni:hover { background: var(--surface2) !important; color: var(--text) !important; }
+.ni.active { background: var(--sb-active-bg) !important; color: var(--sb-active-c) !important; }
+.ns { color: var(--muted-l) !important; }
+
+/* ══ FORM CONTROLS (.fc class) ══ */
+.fc {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--input-text) !important;
+}
+.fc::placeholder { color: var(--muted-l) !important; }
+.fc:focus { border-color: var(--input-focus) !important; }
+
+/* ══ INFO BOX (caixas verdes de informação) ══ */
+.info-box, .info-tip, [class*="info-"] {
+  background: var(--primary-bg) !important;
+  border-color: rgba(13,148,136,0.25) !important;
+  color: var(--text) !important;
+}
+.info-box strong, .info-tip strong { color: var(--primary) !important; }
+
+/* ══ CANCELAR BTN ══ */
+.btn-cancel {
+  background: transparent !important;
+  border-color: var(--border) !important;
+  color: var(--muted) !important;
+}
+.btn-cancel:hover { background: var(--surface2) !important; color: var(--text) !important; }
+
+/* ══ FAQ QUESTIONS ══ */
+.faq-q { color: var(--text) !important; }
+.faq-a, .faq-a-inner { color: var(--muted) !important; }
+
+/* ══ MODAL (feedback) ══ */
+.modal-box, .modal-content {
+  background: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  color: var(--text) !important;
+}
+.modal-box label, .modal-content label { color: var(--muted) !important; }
+.modal-box select, .modal-box textarea,
+.modal-content select, .modal-content textarea {
+  background: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--input-text) !important;
+}
+
+/* ══ REDES TABLE (admin) — stat cards ══ */
+.sv { color: var(--text) !important; font-size: 1.8rem; font-weight: 800; }
+.sl { color: var(--muted) !important; font-size: .72rem; text-transform: uppercase; }
+
+/* ══ FORCE all text visible in light ══ */
+[data-theme="light"] .text-muted,
+[data-theme="light"] [style*="color:#94a3b8"],
+[data-theme="light"] [style*="color: #94a3b8"] { color: var(--muted) !important; }

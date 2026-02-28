@@ -12,13 +12,6 @@
   <!-- QuaggaJS para leitura de código de barras via câmera -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
   <style>
-    :root {
-      --primary:   #0f766e; --primary-l: #14b8a6;
-      --dark:      #0f172a; --surface:  #1e293b;
-      --surface2:  #273548; --border:   rgba(255,255,255,0.07);
-      --text:      #f1f5f9; --muted:    #94a3b8;
-      --sidebar-w: 260px;
-    }
     * { box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; }
 
@@ -31,7 +24,7 @@
     .sidebar-nav { padding: 1rem; flex: 1; }
     .nav-section-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #475569; padding: .6rem .5rem .3rem; }
     .nav-item { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; cursor: pointer; text-decoration: none; transition: all .2s; margin-bottom: .15rem; }
-    .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
     .nav-item.active { background: linear-gradient(135deg, rgba(15,118,110,0.25), rgba(20,184,166,0.12)); color: var(--primary-l); border: 1px solid rgba(20,184,166,0.2); }
     .nav-item i { font-size: 1rem; width: 20px; text-align: center; }
     .sidebar-footer { padding: 1rem; border-top: 1px solid var(--sb-border); }
@@ -58,9 +51,9 @@
       color: var(--primary-l); margin-bottom: 1.2rem; padding-bottom: .7rem;
       border-bottom: 1px solid var(--sb-border);
     }
-    label { color: #94a3b8; font-size: .78rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-bottom: .35rem; display: block; }
+    label { color: var(--muted); font-size: .78rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-bottom: .35rem; display: block; }
     .form-control, .form-select {
-      background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.09);
+      background: var(--input-bg); border: 1px solid var(--input-border);
       color: var(--text); border-radius: 12px; padding: .65rem .9rem;
       font-family: 'DM Sans', sans-serif; font-size: .9rem;
       transition: all .2s;
@@ -79,7 +72,7 @@
     .input-group .btn-scan:hover { box-shadow: 0 4px 16px rgba(20,184,166,0.35); }
     .input-group .form-control { border-radius: 12px 0 0 12px; }
     .input-group-text {
-      background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.09);
+      background: var(--input-bg); border: 1px solid var(--input-border);
       color: var(--muted); border-right: none; border-radius: 12px 0 0 12px;
     }
     .input-group .form-control.mid { border-radius: 0; border-left: none; }
@@ -114,7 +107,7 @@
       color: var(--muted); border-radius: 12px; padding: .8rem 1.5rem;
       font-size: .9rem; transition: all .2s;
     }
-    .btn-cancel:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .btn-cancel:hover { background: var(--surface2); color: var(--text); }
     .origem-info { background: rgba(20,184,166,0.07); border: 1px solid rgba(20,184,166,0.15); border-radius: 10px; padding: .7rem 1rem; font-size: .8rem; color: var(--muted); margin-top: .7rem; }
     .origem-info strong { color: var(--primary-l); }
 
@@ -270,7 +263,7 @@
 
       <div class="origem-info">
         <strong><i class="bi bi-lightning-charge-fill me-1"></i>Integrações disponíveis via API REST:</strong>
-        <code style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:.78rem;">POST /api/v1/medicamentos</code> —
+        <code style="background:var(--surface2); padding:2px 6px; border-radius:4px; font-size:.78rem;">POST /api/v1/medicamentos</code> —
         Sistemas como <strong>Consys</strong>, Tasy e SNGPC podem enviar dados automaticamente.
         <a href="/api/v1/medicamentos" target="_blank" style="color:var(--primary-l);">Ver documentação da API →</a>
       </div>
@@ -408,7 +401,7 @@ function showBanner(html, tipo) {
   } else {
     b.style.background = 'rgba(148,163,184,0.06)';
     b.style.border = '1px solid rgba(148,163,184,0.15)';
-    b.style.color = '#94a3b8';
+    b.style.color = 'var(--muted)';
   }
   b.innerHTML = html;
 }
