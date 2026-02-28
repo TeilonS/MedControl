@@ -155,6 +155,7 @@
 
   <div class="form-card">
     <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <!-- ── SEÇÃO: IDENTIFICAÇÃO ──────────────────────────────────────── -->
       <div class="section-header">

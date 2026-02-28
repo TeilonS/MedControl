@@ -618,6 +618,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter:var(--btn-close-filter,none)"></button>
       </div>
       <form method="POST" action="/feedback">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-body" style="padding:1.5rem;">
           <div class="mb-3">
             <label style="display:block;margin-bottom:.35rem;">Categoria</label>

@@ -141,6 +141,7 @@
             </td>
             <td>
               <form method="POST" action="{{ url_for('admin_renovar_rede', id=r.id) }}" class="rf">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="number" name="dias" value="30" min="1" max="365" class="ri">
                 <button type="submit" class="btn-r"><i class="bi bi-arrow-clockwise"></i> Renovar</button>
               </form>
@@ -148,6 +149,7 @@
             <td style="display:flex;gap:.4rem;align-items:center">
               <a href="{{ url_for('admin_rede_detalhe', id=r.id) }}" class="btn-detail"><i class="bi bi-eye"></i></a>
               <form method="POST" action="{{ url_for('admin_toggle_rede', id=r.id) }}" style="display:inline" onsubmit="return confirm('{{ 'Bloquear' if r.ativa else 'Ativar' }} rede {{ r.nome }}?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if r.ativa %}<button type="submit" class="btn-sa btn-block"><i class="bi bi-lock"></i></button>
                 {% else %}<button type="submit" class="btn-sa btn-unblock"><i class="bi bi-unlock"></i></button>{% endif %}
               </form>

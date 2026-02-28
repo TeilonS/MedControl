@@ -73,6 +73,7 @@
 
   <div class="form-card">
     <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="sh"><i class="bi bi-building"></i> Dados da Rede / Empresa</div>
       <div class="row g-3 mb-4">
@@ -123,7 +124,7 @@
         </div>
         <div class="col-md-4">
           <label>Senha *</label>
-          <input type="text" name="password_dono" class="fc" placeholder="Senha de acesso" required>
+          <input type="password" name="password_dono" class="fc" placeholder="Mínimo 6 caracteres" autocomplete="new-password" required>
         </div>
       </div>
 
