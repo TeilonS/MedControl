@@ -29,7 +29,7 @@
 
     /* PAGE HEADER */
     .page-header{text-align:center;margin-bottom:3rem}
-    .page-header h1{font-family:'Syne',sans-serif;font-weight:900;font-size:2.4rem;background:linear-gradient(135deg,#f1f5f9,var(--primary-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:.6rem}
+    .page-header h1{font-family:'Syne',sans-serif;font-weight:900;font-size:2.4rem;color:var(--text);margin-bottom:.6rem}
     .page-header p{color:var(--muted);font-size:1rem;max-width:520px;margin:0 auto}
 
     /* TOGGLE */
@@ -38,7 +38,7 @@
     .toggle-label.active{color:var(--text)}
     .toggle{position:relative;width:52px;height:28px;cursor:pointer}
     .toggle input{opacity:0;width:0;height:0}
-    .slider{position:absolute;inset:0;background:rgba(255,255,255,0.1);border-radius:28px;transition:.3s;border:1px solid rgba(255,255,255,0.12)}
+    .slider{position:absolute;inset:0;background:var(--border);border-radius:28px;transition:.3s;border:1px solid var(--input-border)}
     .slider:before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
     input:checked+.slider{background:var(--primary)}
     input:checked+.slider:before{transform:translateX(24px)}
@@ -46,7 +46,7 @@
 
     /* CARDS */
     .plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:960px;margin:0 auto}
-    .plan-card{background:var(--sb-bg);border:1px solid var(--border);border-radius:20px;padding:2rem;position:relative;transition:all .3s;overflow:hidden}
+    .plan-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;padding:2rem;position:relative;transition:all .3s;overflow:hidden}
     .plan-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--border)}
     .plan-card.popular{border-color:rgba(20,184,166,0.4);transform:scale(1.03)}
     .plan-card.popular::before{background:linear-gradient(90deg,var(--primary),var(--primary-l))}
@@ -59,18 +59,18 @@
     .plan-price{margin-bottom:1.5rem}
     .price-monthly{display:block}
     .price-annual{display:none}
-    .price-amount{font-family:'Syne',sans-serif;font-weight:900;font-size:2.4rem;color:var(--text)}
+    .price-amount{font-family:'Syne',sans-serif;font-weight:900;font-size:2.4rem;color:var(--primary)}
     .price-period{font-size:.85rem;color:var(--muted);font-weight:400}
     .price-annual-note{font-size:.75rem;color:var(--primary-l);margin-top:.3rem;display:block}
     .plan-features{list-style:none;margin-bottom:2rem}
-    .plan-features li{display:flex;align-items:center;gap:.6rem;font-size:.85rem;color:#cbd5e1;padding:.35rem 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .plan-features li{display:flex;align-items:center;gap:.6rem;font-size:.85rem;color:var(--text-2);padding:.35rem 0;border-bottom:1px solid var(--border-l)}
     .plan-features li:last-child{border-bottom:none}
     .plan-features li i{color:var(--primary-l);font-size:.9rem;flex-shrink:0}
     .plan-features li.muted i{color:#475569}
     .plan-features li.muted span{color:#475569}
     .btn-plan{display:block;text-align:center;padding:.8rem;border-radius:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;transition:all .2s;text-decoration:none;border:none}
-    .btn-outline{background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--text)}
-    .btn-outline:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+    .btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+    .btn-outline:hover{background:var(--surface2);color:var(--text)}
     .btn-filled{background:linear-gradient(135deg,var(--primary),var(--primary-l));color:white;box-shadow:0 4px 20px rgba(20,184,166,0.35)}
     .btn-filled:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(20,184,166,0.45);color:white}
 
@@ -81,7 +81,7 @@
     /* FAQ */
     .faq-section{max-width:700px;margin:3.5rem auto 0}
     .faq-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;text-align:center;margin-bottom:1.5rem}
-    .faq-item{background:var(--sb-bg);border:1px solid var(--border);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
+    .faq-item{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;margin-bottom:.7rem;overflow:hidden}
     .faq-q{padding:1rem 1.2rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:.9rem}
     .faq-q i{transition:transform .3s;color:var(--muted)}
     .faq-item.open .faq-q i{transform:rotate(180deg)}
@@ -90,14 +90,14 @@
     .faq-a-inner{padding:0 1.2rem 1rem}
 
     /* CONTACT */
-    .contact-bar{max-width:700px;margin:2rem auto 0;background:linear-gradient(135deg,rgba(15,118,110,0.15),rgba(20,184,166,0.08));border:1px solid rgba(20,184,166,0.2);border-radius:16px;padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+    .contact-bar{max-width:700px;margin:2rem auto 0;background:var(--primary-bg);border:1px solid rgba(13,148,136,0.25);border-radius:16px;padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
     .contact-bar p{font-size:.9rem;color:var(--muted)}
     .contact-bar strong{color:var(--text)}
     .contact-btns{display:flex;gap:.7rem}
     .btn-wa{background:linear-gradient(135deg,#16a34a,#22c55e);color:white;border:none;border-radius:10px;padding:.55rem 1.1rem;font-size:.85rem;font-weight:700;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:.4rem;transition:all .2s}
     .btn-wa:hover{transform:translateY(-1px);color:white}
-    .btn-email{background:rgba(255,255,255,0.06);color:var(--text);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:.55rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:.4rem;transition:all .2s}
-    .btn-email:hover{background:rgba(255,255,255,0.1);color:var(--text)}
+    .btn-email{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:.55rem 1.1rem;font-size:.85rem;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:.4rem;transition:all .2s}
+    .btn-email:hover{background:var(--border);color:var(--text)}
   </style>
 </head>
 <body>

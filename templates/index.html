@@ -44,7 +44,7 @@
     }
     .user-chip {
       display: flex; align-items: center; gap: .7rem;
-      padding: .6rem .8rem; background: rgba(255,255,255,0.03); border-radius: 10px;
+      padding: .6rem .8rem; background: var(--surface2); border-radius: 10px; border: 1px solid var(--border);
     }
     .user-avatar {
       width: 32px; height: 32px; border-radius: 50%;
@@ -60,17 +60,17 @@
     .integration-item {
       display: flex; align-items: center; gap: .6rem;
       padding: .5rem .8rem; border-radius: 8px;
-      border: 1px dashed rgba(255,255,255,0.1);
+      border: 1px dashed var(--border);
       margin-bottom: .3rem; cursor: default;
     }
     .integration-item .dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; }
     .integration-item.connected .dot { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.6); }
     .integration-item span { font-size: .78rem; color: #64748b; }
-    .integration-item .tag { margin-left: auto; font-size: .62rem; background: rgba(255,255,255,0.05); color: #475569; padding: 1px 6px; border-radius: 10px; }
+    .integration-item .tag { margin-left: auto; font-size: .62rem; background: var(--surface2); color: var(--muted); padding: 1px 6px; border-radius: 10px; }
 
     /* ── MAIN CONTENT ── */
     .main { margin-left: var(--sidebar-w); flex: 1; padding: 2rem; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding: .5rem 0; }
     .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; }
     .topbar-actions { display: flex; gap: .75rem; align-items: center; }
 
@@ -102,7 +102,7 @@
     .search-input-wrap { position: relative; flex: 1; min-width: 200px; }
     .search-input-wrap i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: .95rem; }
     .search-input {
-      width: 100%; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);
+      width: 100%; background: var(--input-bg); border: 1px solid var(--input-border);
       color: var(--text); border-radius: 10px; padding: .55rem .8rem .55rem 2.4rem;
       font-family: 'DM Sans', sans-serif; font-size: .9rem; transition: all .2s;
     }
@@ -110,7 +110,7 @@
     .filter-pills { display: flex; gap: .4rem; flex-wrap: wrap; }
     .pill {
       padding: .35rem .9rem; border-radius: 20px; font-size: .78rem; font-weight: 600;
-      border: 1.5px solid rgba(255,255,255,0.1); color: var(--muted); cursor: pointer;
+      border: 1.5px solid var(--border); color: var(--muted); cursor: pointer;
       text-decoration: none; transition: all .2s; background: transparent;
     }
     .pill:hover, .pill.active { color: white; border-color: transparent; }
@@ -125,18 +125,18 @@
       background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; overflow: hidden;
     }
     .table-head-row th {
-      background: rgba(15,23,42,0.6); color: #64748b;
+      background: var(--surface2); color: var(--muted);
       font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
       padding: .9rem 1rem; border-bottom: 1px solid var(--sb-border); white-space: nowrap;
     }
     .table tbody tr { border-bottom: 1px solid var(--sb-border); transition: background .15s; }
-    .table tbody tr:hover { background: rgba(255,255,255,0.025); }
+    .table tbody tr:hover { background: var(--surface2); }
     .table tbody tr:last-child { border-bottom: none; }
     .table td { padding: .85rem 1rem; vertical-align: middle; font-size: .87rem; }
     .med-name { font-weight: 600; color: var(--text); }
     .med-code { font-size: .75rem; color: var(--muted); }
     .lote-badge {
-      display: inline-block; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      display: inline-block; background: var(--surface2); border: 1px solid var(--border);
       color: var(--muted); padding: .2rem .6rem; border-radius: 6px; font-size: .75rem; font-family: monospace;
     }
     .status-chip {
@@ -166,7 +166,7 @@
     }
     .btn-primary-med:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(20,184,166,0.45); color: white; }
     .btn-outline-soft {
-      background: transparent; border: 1px solid rgba(255,255,255,0.12);
+      background: transparent; border: 1px solid var(--border);
       color: var(--muted); border-radius: 10px; padding: .55rem 1rem;
       font-size: .85rem; transition: all .2s;
     }

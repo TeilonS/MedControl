@@ -213,3 +213,104 @@ p { color: var(--text-2); }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ══ SIDEBAR LOGO TEXT (fix invisible in light) ══ */
+.sb-logo h2, .sidebar-logo h2 { color: var(--text) !important; font-size: 1.1rem; }
+.sb-logo span, .sidebar-logo span { color: var(--muted) !important; }
+
+/* ══ TOPBAR — remove card border/radius, keep clean ══ */
+.topbar {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-bottom: 1.5rem !important;
+}
+
+/* ══ USER CHIP — consistent across all templates ══ */
+.user-chip, .uc {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  padding: .6rem .8rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: .7rem !important;
+}
+.user-name, .un { color: var(--text) !important; font-size: .85rem; font-weight: 600; }
+.user-role, .ur { color: var(--muted) !important; font-size: .7rem; }
+.user-avatar, .ua {
+  background: linear-gradient(135deg, var(--primary), var(--primary-l)) !important;
+  color: white !important;
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ══ PLANOS — toggle labels legíveis ══ */
+.toggle-label { color: var(--muted) !important; font-weight: 600; }
+.toggle-label.active { color: var(--text) !important; }
+/* slider do toggle de planos em modo claro */
+.slider { background: var(--border) !important; border-color: var(--input-border) !important; }
+input:checked + .slider { background: var(--primary) !important; }
+
+/* ══ PLANOS — nomes dos planos legíveis ══ */
+.plan-name { color: var(--text) !important; }
+.plan-desc { color: var(--muted) !important; }
+.plan-features li { color: var(--text-2) !important; border-bottom-color: var(--border-l) !important; }
+.plan-features li.muted span { color: var(--muted-l) !important; }
+.price-amount { color: var(--primary) !important; }
+.price-period { color: var(--muted) !important; }
+
+/* ══ PLANOS — btn outline em modo claro ══ */
+.btn-outline {
+  background: transparent !important;
+  border: 1.5px solid var(--border) !important;
+  color: var(--text) !important;
+}
+.btn-outline:hover { background: var(--surface2) !important; color: var(--text) !important; }
+
+/* ══ PLANOS — cards ══ */
+.plan-card { background: var(--card-bg) !important; border-color: var(--card-border) !important; }
+.plan-card::before { background: var(--border) !important; }
+.plan-card.popular { border-color: var(--primary-l) !important; }
+
+/* ══ PLANOS — FAQ ══ */
+.faq-item { background: var(--card-bg) !important; border-color: var(--card-border) !important; }
+.faq-q { color: var(--text) !important; }
+.faq-q i { color: var(--muted) !important; }
+.faq-a { color: var(--muted) !important; }
+
+/* ══ PLANOS — contact bar ══ */
+.contact-bar { 
+  background: var(--primary-bg) !important; 
+  border-color: rgba(13,148,136,0.25) !important; 
+}
+.contact-bar p, .contact-bar strong { color: var(--text) !important; }
+.btn-email {
+  background: var(--surface2) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+
+/* ══ PAGE HEADER — título planos visível ══ */
+.page-header h1 {
+  background: linear-gradient(135deg, var(--primary), var(--primary-l)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+[data-theme="dark"] .page-header h1 {
+  background: linear-gradient(135deg, #f1f5f9, var(--primary-xl)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+.page-header p { color: var(--muted) !important; }
+
+/* ══ HEADINGS NAS PÁGINAS ADMIN ══ */
+.page-title, .main h1, .main h2 { color: var(--text) !important; }
+.breadcrumb a, .breadcrumb span { color: var(--primary) !important; }
+
+/* ══ ADMIN DASHBOARD — stat cards ══ */
+.stat-value, .sv { color: var(--text) !important; }
