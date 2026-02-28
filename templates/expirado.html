@@ -65,13 +65,13 @@
     <div class="highlight">
       <strong>Para reativar seu acesso</strong>, entre em contato com o administrador do sistema e efetue o pagamento da mensalidade.
     </div>
-    <a href="mailto:contato@medcontrol.com.br" class="btn-contact">
-      📧 Entrar em contato
+    <a href="https://wa.me/5577988175300?text=Olá! Preciso reativar meu acesso ao MedControl." target="_blank" class="btn-contact">
+      📱 Falar no WhatsApp
     </a>
     <a href="{{ url_for('logout') }}" class="btn-logout">Sair da conta</a>
   </div>
 
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     (function() {
       const tema = "{{ session.get('tema', 'light') }}";
       document.documentElement.setAttribute('data-theme', tema);
@@ -87,11 +87,4 @@
       const lbl = document.getElementById('theme-label');
       if (lbl) lbl.textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
       fetch('/preferencias/tema', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({tema: newTheme})
-      });
-    }
-  </script>
-</body>
-</html>
+        method
