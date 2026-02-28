@@ -113,6 +113,10 @@
     {% endif %}
   </nav>
   <div class="sb-foot">
+  <div class="theme-toggle-wrap" style="margin-bottom:.4rem">
+    <span class="theme-toggle-label" id="theme-label">☀️ Modo claro</span>
+    <button class="theme-toggle" id="themeToggle" title="Alternar tema" onclick="toggleTheme()"></button>
+  </div>
     <div class="uc">
       <div class="ua">{{ session.username[0].upper() }}</div>
       <div><div style="font-size:.85rem;font-weight:600">{{ session.nome_exibir or session.username }}</div><div style="font-size:.7rem;color:var(--muted)">{{ 'Super Admin' if usuario.is_superadmin else 'Dono da Rede' }}</div></div>

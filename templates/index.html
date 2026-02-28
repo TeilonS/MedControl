@@ -298,6 +298,10 @@
   </nav>
 
   <div class="sidebar-footer">
+      <div class="theme-toggle-wrap">
+        <span class="theme-toggle-label" id="theme-label">☀️ Modo claro</span>
+        <button class="theme-toggle" id="themeToggle" title="Alternar tema" onclick="toggleTheme()"></button>
+      </div>
     <div class="user-chip">
       <div class="user-avatar">{{ session.username[0].upper() }}</div>
       <div>

@@ -79,6 +79,10 @@
     <a href="{{ url_for('admin_nova_rede') }}" class="ni"><i class="bi bi-plus-circle"></i> Nova Rede</a>
   </nav>
   <div class="sb-foot">
+  <div class="theme-toggle-wrap" style="margin-bottom:.4rem">
+    <span class="theme-toggle-label" id="theme-label">☀️ Modo claro</span>
+    <button class="theme-toggle" id="themeToggle" title="Alternar tema" onclick="toggleTheme()"></button>
+  </div>
     <div class="uc">
       <div class="ua">A</div>
       <div><div style="font-size:.85rem;font-weight:600;">{{ session.username }}</div><div style="font-size:.7rem;color:var(--muted)">Super Admin</div></div>
