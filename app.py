@@ -38,6 +38,16 @@ import urllib.request, urllib.error
 
 app = Flask(__name__)
 
+# Filtro Jinja para data em português
+DIAS_PT   = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo']
+MESES_PT  = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+              'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+
+@app.template_filter('datefmt_ptbr')
+def datefmt_ptbr(d):
+    dia_semana = DIAS_PT[d.weekday()]
+    return f"{dia_semana}, {d.day:02d} de {MESES_PT[d.month]} de {d.year}"
+
 # =============================================================================
 # CONFIGURAÇÃO
 # =============================================================================

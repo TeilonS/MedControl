@@ -343,7 +343,7 @@
   <div class="topbar">
     <div>
       <div class="page-title">Dashboard</div>
-      <div style="color:var(--muted);font-size:.82rem;">{{ hoje.strftime('%A, %d de %B de %Y') }}</div>
+      <div style="color:var(--muted);font-size:.82rem;">{{ hoje | datefmt_ptbr }}</div>
     </div>
     <div class="topbar-actions">
       <a href="{{ url_for('gerar_pdf') }}" class="btn btn-outline-soft">
@@ -637,9 +637,9 @@
 <!-- ── MODAL FEEDBACK ──────────────────────────────────────────────────── -->
 <div class="modal fade" id="feedbackModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:20px;">
-      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.07);">
-        <h5 class="modal-title text-white" style="font-family:'Syne',sans-serif;font-weight:700;">
+    <div class="modal-content" style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;">
+      <div class="modal-header" style="border-bottom:1px solid var(--card-border);">
+        <h5 class="modal-title" style="color:var(--text)" style="font-family:'Syne',sans-serif;font-weight:700;">
           <i class="bi bi-chat-heart me-2" style="color:#14b8a6"></i>Enviar Feedback
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -648,8 +648,8 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-body" style="padding:1.5rem;">
           <div class="mb-3">
-            <label style="color:#94a3b8;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Categoria</label>
-            <select name="categoria" style="width:100%;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.09);color:#f1f5f9;border-radius:12px;padding:.65rem .9rem;font-family:'DM Sans',sans-serif;">
+            <label style="color:var(--muted);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Categoria</label>
+            <select name="categoria" style="width:100%;background:var(--input-bg,var(--surface2));border:1px solid var(--card-border);color:var(--text);border-radius:12px;padding:.65rem .9rem;font-family:'DM Sans',sans-serif;">
               <option value="Sugestão">💡 Sugestão de melhoria</option>
               <option value="Bug">🐛 Reportar bug</option>
               <option value="Elogio">⭐ Elogio</option>
@@ -658,17 +658,17 @@
             </select>
           </div>
           <div class="mb-1">
-            <label style="color:#94a3b8;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Mensagem <span style="color:#ef4444">*</span></label>
+            <label style="color:var(--muted);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Mensagem <span style="color:#ef4444">*</span></label>
             <textarea name="mensagem" rows="5" required placeholder="Descreva sua sugestão, problema ou elogio..."
-              style="width:100%;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.09);color:#f1f5f9;border-radius:12px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;resize:vertical;"></textarea>
+              style="width:100%;background:var(--input-bg,var(--surface2));border:1px solid var(--card-border);color:var(--text);border-radius:12px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;resize:vertical;"></textarea>
           </div>
           <div style="font-size:.75rem;color:#475569;margin-top:.4rem;">
             <i class="bi bi-info-circle me-1"></i>Seu feedback será enviado diretamente ao desenvolvedor.
           </div>
         </div>
-        <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.07);padding:1rem 1.5rem;gap:.7rem;">
+        <div class="modal-footer" style="border-top:1px solid var(--card-border);padding:1rem 1.5rem;gap:.7rem;">
           <button type="button" class="btn" data-bs-dismiss="modal"
-                  style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:#94a3b8;border-radius:10px;padding:.6rem 1.2rem;">
+                  style="background:transparent;border:1px solid var(--card-border);color:var(--muted);border-radius:10px;padding:.6rem 1.2rem;">
             Cancelar
           </button>
           <button type="submit"
