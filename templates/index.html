@@ -510,6 +510,7 @@
               </a>
               <form method="POST" action="{{ url_for('excluir', id=med.id) }}" style="display:inline"
                     onsubmit="return confirm('Excluir {{ med.nome }}?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-action del" title="Excluir">
                   <i class="bi bi-trash3"></i>
                 </button>
@@ -631,6 +632,7 @@
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <form method="POST" action="/feedback">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-body" style="padding:1.5rem;">
           <div class="mb-3">
             <label style="color:#94a3b8;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Categoria</label>
