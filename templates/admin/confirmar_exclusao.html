@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="{{ session.get('tema', 'light') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Confirmar Exclusão</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .confirm-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 2.5rem; max-width: 480px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .danger-icon {
+      width: 64px; height: 64px; background: rgba(239,68,68,0.12);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem; margin: 0 auto 1.5rem;
+    }
+    h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--text); text-align: center; margin-bottom: .5rem; }
+    .subtitle { color: var(--muted); font-size: .88rem; text-align: center; margin-bottom: 1.5rem; line-height: 1.5; }
+    .rede-nome {
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+      border-radius: 10px; padding: .75rem 1rem; text-align: center;
+      font-weight: 700; color: #ef4444; font-size: 1rem; margin-bottom: 1.5rem;
+    }
+    .warning-list {
+      background: var(--surface2); border-radius: 10px; padding: 1rem 1rem 1rem 1.5rem;
+      margin-bottom: 1.5rem; border: 1px solid var(--card-border);
+    }
+    .warning-list li { font-size: .85rem; color: var(--muted); margin-bottom: .3rem; }
+    label { font-size: .82rem; font-weight: 600; color: var(--text); display: block; margin-bottom: .4rem; }
+    .hint { font-size: .78rem; color: var(--muted); margin-bottom: .5rem; }
+    .fc {
+      background: var(--input-bg); border: 1px solid var(--input-border);
+      color: var(--input-text); border-radius: 10px; padding: .65rem .9rem;
+      font-family: 'DM Sans', sans-serif; width: 100%; transition: all .2s; font-size: .9rem;
+    }
+    .fc:focus { outline: none; border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.15); }
+    .btn-danger-confirm {
+      background: #ef4444; color: white; border: none; border-radius: 10px;
+      padding: .75rem; width: 100%; font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: .9rem; cursor: pointer; transition: all .2s;
+      margin-top: .75rem;
+    }
+    .btn-danger-confirm:hover { background: #dc2626; transform: translateY(-1px); }
+    .btn-danger-confirm:disabled { background: #94a3b8; cursor: not-allowed; transform: none; }
+    .btn-cancel {
+      display: block; text-align: center; margin-top: .75rem;
+      color: var(--muted); font-size: .85rem; text-decoration: none;
+    }
+    .btn-cancel:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+
+<div class="confirm-card">
+  <div class="danger-icon">🗑️</div>
+  <h1>Excluir Rede</h1>
+  <p class="subtitle">Esta ação é <strong>irreversível</strong>. Todos os dados abaixo serão permanentemente excluídos:</p>
+
+  <div class="rede-nome">{{ rede.nome }}</div>
+
+  <ul class="warning-list">
+    <li>{{ rede.total_filiais }} filial(is) e o dono da rede</li>
+    <li>Todos os medicamentos cadastrados</li>
+    <li>Histórico de dados da rede</li>
+  </ul>
+
+  <form method="POST" action="{{ url_for('admin_excluir_rede', id=rede.id) }}" id="deleteForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <label>Para confirmar, digite exatamente o nome da rede:</label>
+    <div class="hint">{{ rede.nome }}</div>
+    <input type="text" name="confirmacao" id="confirmInput" class="fc"
+           placeholder="Digite o nome da rede aqui" autocomplete="off" required>
+
+    <button type="submit" class="btn-danger-confirm" id="btnExcluir" disabled>
+      <i class="bi bi-trash3 me-2"></i> Excluir definitivamente
+    </button>
+  </form>
+
+  <a href="{{ url_for('admin_rede_detalhe', id=rede.id) }}" class="btn-cancel">
+    <i class="bi bi-arrow-left me-1"></i> Cancelar e voltar
+  </a>
+</div>
+
+<script>
+  // Habilita o botão só quando o nome bater exatamente
+  const nomeEsperado = {{ rede.nome | tojson }};
+  const input        = document.getElementById('confirmInput');
+  const btn          = document.getElementById('btnExcluir');
+
+  input.addEventListener('input', () => {
+    btn.disabled = input.value.trim() !== nomeEsperado;
+  });
+</script>
+</body>
+</html>

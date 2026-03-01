@@ -1,21 +1,21 @@
 """
 =============================================================================
   MEDCONTROL — Sistema de Controle de Validade de Medicamentos
-  Versão 2.1 | Arquitetura Multi-Tenant | Segurança Reforçada
-
-  Hierarquia de acesso:
-    superadmin  → acesso total, gerencia redes e assinaturas
-    dono_rede   → vê e edita todas as filiais da sua rede
-    filial      → gerencia somente o próprio estoque
+  Versão 2.2 | Arquitetura Multi-Tenant | Segurança Completa
 
   Segurança aplicada:
-    ✔ Senhas com hash bcrypt (werkzeug)
+    ✔ Senhas com hash (werkzeug)
     ✔ CSRF protection (Flask-WTF)
     ✔ Rate limiting no login (Flask-Limiter)
-    ✔ SECRET_KEY obrigatória via env (sem fallback fraco)
+    ✔ SECRET_KEY e ADMIN_PASS obrigatórias via env
     ✔ Session timeout (30 min inatividade)
+    ✔ Cookie seguro (HttpOnly, SameSite, Secure em produção)
+    ✔ Headers de segurança HTTP (X-Frame-Options, CSP, etc.)
+    ✔ Logs de auditoria (login, logout, cadastro, exclusão)
+    ✔ Troca de senha pelo próprio usuário
+    ✔ Confirmação server-side antes de excluir rede
+    ✔ Paginação na listagem de medicamentos
     ✔ Input validation com try/except em todos os POSTs
-    ✔ debug=False em produção
 =============================================================================
 """
 
@@ -33,31 +33,29 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
-from reportlab.lib.enums import TA_CENTER
-import io, os, json
+import io, os, json, logging
 import urllib.request, urllib.error
 
 app = Flask(__name__)
 
 # =============================================================================
-# CONFIGURAÇÃO — todas as chaves sensíveis via variável de ambiente
+# CONFIGURAÇÃO
 # =============================================================================
 
-# SECRET_KEY obrigatória — sem fallback fraco
 _secret = os.environ.get('SECRET_KEY')
 if not _secret:
-    raise RuntimeError(
-        "SECRET_KEY não definida! "
-        "Adicione SECRET_KEY nas variáveis de ambiente do Railway."
-    )
+    raise RuntimeError("SECRET_KEY não definida! Adicione nas variáveis do Railway.")
 app.secret_key = _secret
 
-# Sessão expira após 30 min de inatividade
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
-app.config['SESSION_COOKIE_HTTPONLY']    = True   # JS não acessa o cookie
-app.config['SESSION_COOKIE_SAMESITE']   = 'Lax'  # Proteção CSRF extra
+_is_prod = os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('DATABASE_URL', '').startswith('postgresql')
 
-# PostgreSQL em produção (Railway/Supabase), SQLite localmente
+# Sessão
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.config['SESSION_COOKIE_HTTPONLY']    = True
+app.config['SESSION_COOKIE_SAMESITE']   = 'Lax'
+app.config['SESSION_COOKIE_SECURE']     = bool(_is_prod)  # HTTPS apenas em produção
+
+# Banco
 database_url = os.environ.get('DATABASE_URL', 'sqlite:///medcontrol.db')
 if database_url.startswith('postgres://'):
     database_url = database_url.replace('postgres://', 'postgresql+psycopg://', 1)
@@ -66,20 +64,60 @@ elif database_url.startswith('postgresql://'):
 app.config['SQLALCHEMY_DATABASE_URI']        = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# WTF CSRF
-app.config['WTF_CSRF_TIME_LIMIT']    = 3600
-app.config['WTF_CSRF_CHECK_DEFAULT'] = True  # verifica todos os POSTs automaticamente
+# CSRF
+app.config['WTF_CSRF_TIME_LIMIT'] = 3600
 
-db   = SQLAlchemy(app)
-csrf = CSRFProtect(app)
+# Paginação
+ITENS_POR_PAGINA = 20
 
-# Rate limiting — máximo 10 tentativas de login por minuto por IP
-limiter  = Limiter(
-    get_remote_address,
-    app=app,
-    default_limits=[],          # sem limite global
-    storage_uri="memory://"     # troque por Redis em produção se necessário
-)
+db      = SQLAlchemy(app)
+csrf    = CSRFProtect(app)
+limiter = Limiter(get_remote_address, app=app, default_limits=[], storage_uri="memory://")
+
+# =============================================================================
+# HEADERS DE SEGURANÇA HTTP
+# =============================================================================
+
+@app.after_request
+def set_security_headers(response):
+    # Impede que o site seja carregado em iframes (clickjacking)
+    response.headers['X-Frame-Options'] = 'DENY'
+    # Impede MIME sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Controla informações de referência
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Força HTTPS por 1 ano (só em produção)
+    if _is_prod:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Content Security Policy — permite Bootstrap/Google Fonts/CDNs usados
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+        "img-src 'self' data:; "
+        "connect-src 'self';"
+    )
+    return response
+
+
+# =============================================================================
+# LOGS DE AUDITORIA
+# =============================================================================
+
+# Configura logger de auditoria separado
+audit_logger = logging.getLogger('medcontrol.audit')
+audit_logger.setLevel(logging.INFO)
+if not audit_logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('[AUDIT] %(asctime)s %(message)s'))
+    audit_logger.addHandler(handler)
+
+def audit(acao, detalhe=''):
+    """Registra ação crítica com usuário, IP e timestamp."""
+    usuario  = session.get('username', 'anônimo')
+    ip       = request.remote_addr
+    audit_logger.info(f"user={usuario} ip={ip} acao={acao} detalhe={detalhe}")
 
 
 # =============================================================================
@@ -125,7 +163,7 @@ class Usuario(db.Model):
     __tablename__ = 'usuarios'
     id           = db.Column(db.Integer, primary_key=True)
     username     = db.Column(db.String(80), unique=True, nullable=False)
-    password     = db.Column(db.String(200), nullable=False)  # sempre hash bcrypt
+    password     = db.Column(db.String(200), nullable=False)
     perfil       = db.Column(db.String(20), default='filial')
     nome_exibir  = db.Column(db.String(150), nullable=True)
     filial_nome  = db.Column(db.String(150), nullable=True)
@@ -152,11 +190,9 @@ class Usuario(db.Model):
         return self.rede.alerta_renovacao
 
     def set_password(self, senha_plana):
-        """Gera hash bcrypt e salva. Nunca armazena texto puro."""
         self.password = generate_password_hash(senha_plana)
 
     def check_password(self, senha_plana):
-        """Verifica senha contra o hash armazenado."""
         return check_password_hash(self.password, senha_plana)
 
 
@@ -210,7 +246,6 @@ def login_required(f):
     def decorated(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
-        # Renova session como permanente a cada request (sliding expiry)
         session.permanent = True
         return f(*args, **kwargs)
     return decorated
@@ -280,16 +315,15 @@ def login():
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
 
-        # Validação básica de entrada
         if not username or not password:
             flash('Preencha usuário e senha.', 'danger')
             return render_template('login.html')
 
         usuario = Usuario.query.filter_by(username=username).first()
 
-        # check_password verifica o hash — nunca compara texto puro
         if usuario and usuario.check_password(password):
             if not usuario.assinatura_ok:
+                audit('login_bloqueado', f'username={username} motivo=assinatura_expirada')
                 return redirect(url_for('assinatura_expirada'))
             session.permanent = True
             session['user_id']     = usuario.id
@@ -299,9 +333,10 @@ def login():
             session['rede_id']     = usuario.rede_id
             session['filial_nome'] = usuario.filial_nome or ''
             session['tema']        = usuario.tema or 'light'
+            audit('login_ok', f'username={username} perfil={usuario.perfil}')
             return redirect(url_for('dashboard'))
 
-        # Mensagem genérica — não revela se usuário existe ou não
+        audit('login_falhou', f'username={username}')
         flash('Usuário ou senha incorretos.', 'danger')
 
     return render_template('login.html')
@@ -309,6 +344,7 @@ def login():
 
 @app.route('/logout')
 def logout():
+    audit('logout')
     session.clear()
     return redirect(url_for('login'))
 
@@ -316,6 +352,35 @@ def logout():
 @app.route('/assinatura-expirada')
 def assinatura_expirada():
     return render_template('expirado.html', username=session.get('username', ''))
+
+
+# =============================================================================
+# TROCA DE SENHA
+# =============================================================================
+
+@app.route('/alterar-senha', methods=['GET', 'POST'])
+@login_required
+def alterar_senha():
+    u = get_usuario_atual()
+    if request.method == 'POST':
+        senha_atual  = request.form.get('senha_atual', '').strip()
+        nova_senha   = request.form.get('nova_senha', '').strip()
+        confirma     = request.form.get('confirma_senha', '').strip()
+
+        if not u.check_password(senha_atual):
+            flash('Senha atual incorreta.', 'danger')
+        elif len(nova_senha) < 6:
+            flash('A nova senha deve ter pelo menos 6 caracteres.', 'danger')
+        elif nova_senha != confirma:
+            flash('A confirmação não coincide com a nova senha.', 'danger')
+        else:
+            u.set_password(nova_senha)
+            db.session.commit()
+            audit('senha_alterada', f'username={u.username}')
+            flash('Senha alterada com sucesso!', 'success')
+            return redirect(url_for('dashboard'))
+
+    return render_template('alterar_senha.html', usuario=u)
 
 
 # =============================================================================
@@ -329,6 +394,7 @@ def dashboard():
     busca         = request.args.get('busca', '').strip()
     status        = request.args.get('status', '')
     filial_filtro = request.args.get('filial', '')
+    pagina        = request.args.get('pagina', 1, type=int)
     u             = get_usuario_atual()
     query         = get_medicamentos_query()
 
@@ -345,10 +411,21 @@ def dashboard():
         except (ValueError, TypeError):
             pass
 
-    medicamentos = query.order_by(Medicamento.data_validade.asc()).all()
-    if status:
-        medicamentos = [m for m in medicamentos if m.status == status]
+    query = query.order_by(Medicamento.data_validade.asc())
 
+    # Filtra por status antes de paginar
+    if status:
+        todos_filtrados = [m for m in query.all() if m.status == status]
+        total_filtrado  = len(todos_filtrados)
+        inicio = (pagina - 1) * ITENS_POR_PAGINA
+        medicamentos = todos_filtrados[inicio: inicio + ITENS_POR_PAGINA]
+    else:
+        total_filtrado = query.count()
+        medicamentos   = query.offset((pagina - 1) * ITENS_POR_PAGINA).limit(ITENS_POR_PAGINA).all()
+
+    total_paginas = max(1, -(-total_filtrado // ITENS_POR_PAGINA))  # ceil division
+
+    # Stats sempre sobre todos os medicamentos (sem filtro de busca)
     todos = get_medicamentos_query().all()
     stats = {
         'total':     len(todos),
@@ -377,6 +454,8 @@ def dashboard():
         filiais=filiais, filial_filtro=filial_filtro, usuario=u,
         alerta_renovacao=u.exibir_alerta_renovacao,
         dias_restantes=u.rede.dias_restantes if u.rede else None,
+        pagina=pagina, total_paginas=total_paginas,
+        total_filtrado=total_filtrado,
     )
 
 
@@ -389,7 +468,7 @@ def dashboard():
 def cadastro():
     u = get_usuario_atual()
     filiais = []
-    if u.is_dono:        filiais = Usuario.query.filter_by(rede_id=u.rede_id, perfil='filial').all()
+    if u.is_dono:         filiais = Usuario.query.filter_by(rede_id=u.rede_id, perfil='filial').all()
     elif u.is_superadmin: filiais = Usuario.query.filter_by(perfil='filial').all()
 
     if request.method == 'POST':
@@ -412,16 +491,16 @@ def cadastro():
                 quantidade      = int(request.form['quantidade']),
                 preco_unitario  = float(request.form['preco_unitario'].replace(',', '.')),
                 origem_cadastro = request.form.get('origem_cadastro', 'manual'),
-                filial_id       = filial_id,
-                rede_id         = rede_id,
+                filial_id=filial_id, rede_id=rede_id,
             )
             db.session.add(med)
             db.session.commit()
+            audit('medicamento_cadastrado', f'nome={med.nome} lote={med.lote}')
             flash(f'Medicamento "{med.nome}" cadastrado!', 'success')
             return redirect(url_for('dashboard'))
 
         except (ValueError, KeyError) as e:
-            app.logger.warning(f'Erro no cadastro de medicamento: {e}')
+            app.logger.warning(f'Erro no cadastro: {e}')
             flash('Dados inválidos. Verifique os campos e tente novamente.', 'danger')
 
     return render_template('cadastro.html', med=None, modo='novo', filiais=filiais, usuario=u)
@@ -433,7 +512,7 @@ def editar(id):
     u   = get_usuario_atual()
     med = get_medicamentos_query().filter_by(id=id).first_or_404()
     filiais = []
-    if u.is_dono:        filiais = Usuario.query.filter_by(rede_id=u.rede_id, perfil='filial').all()
+    if u.is_dono:         filiais = Usuario.query.filter_by(rede_id=u.rede_id, perfil='filial').all()
     elif u.is_superadmin: filiais = Usuario.query.filter_by(perfil='filial').all()
 
     if request.method == 'POST':
@@ -451,11 +530,12 @@ def editar(id):
                 if fid and fid.isdigit():
                     med.filial_id = int(fid)
             db.session.commit()
+            audit('medicamento_editado', f'id={id} nome={med.nome}')
             flash(f'"{med.nome}" atualizado!', 'success')
             return redirect(url_for('dashboard'))
 
         except (ValueError, KeyError) as e:
-            app.logger.warning(f'Erro ao editar medicamento {id}: {e}')
+            app.logger.warning(f'Erro ao editar {id}: {e}')
             flash('Dados inválidos. Verifique os campos e tente novamente.', 'danger')
 
     return render_template('cadastro.html', med=med, modo='editar', filiais=filiais, usuario=u)
@@ -468,6 +548,7 @@ def excluir(id):
     nome = med.nome
     db.session.delete(med)
     db.session.commit()
+    audit('medicamento_excluido', f'id={id} nome={nome}')
     flash(f'"{nome}" excluído.', 'warning')
     return redirect(url_for('dashboard'))
 
@@ -479,7 +560,7 @@ def excluir(id):
 @app.route('/feedback', methods=['POST'])
 @login_required
 def enviar_feedback():
-    mensagem  = request.form.get('mensagem', '').strip()[:2000]  # limita tamanho
+    mensagem  = request.form.get('mensagem', '').strip()[:2000]
     categoria = request.form.get('categoria', 'Geral')[:50]
     username  = session.get('username', 'Desconhecido')
 
@@ -503,23 +584,17 @@ def enviar_feedback():
             f"💬 *Mensagem:*\n{mensagem}"
         )
         payload = json.dumps({
-            'chat_id':    tg_chat_id,
-            'text':       texto,
-            'parse_mode': 'Markdown',
+            'chat_id': tg_chat_id, 'text': texto, 'parse_mode': 'Markdown',
         }).encode('utf-8')
-
         req = urllib.request.Request(
             f'https://api.telegram.org/bot{tg_token}/sendMessage',
-            data=payload,
-            headers={'Content-Type': 'application/json'},
-            method='POST'
+            data=payload, headers={'Content-Type': 'application/json'}, method='POST'
         )
         with urllib.request.urlopen(req, timeout=10) as resp:
             if resp.status == 200:
                 flash('Feedback enviado! Obrigado.', 'success')
             else:
                 raise Exception(f'Status {resp.status}')
-
     except Exception as e:
         app.logger.error(f'Erro feedback Telegram: {e}')
         flash('Erro ao enviar feedback. Tente novamente.', 'danger')
@@ -551,7 +626,13 @@ def admin_dashboard():
 def admin_nova_rede():
     if request.method == 'POST':
         try:
-            expiracao = request.form.get('data_expiracao')
+            expiracao  = request.form.get('data_expiracao')
+            senha_dono = request.form['password_dono'].strip()
+
+            if len(senha_dono) < 6:
+                flash('A senha do dono deve ter pelo menos 6 caracteres.', 'danger')
+                return render_template('admin/rede_form.html', rede=None)
+
             rede = Rede(
                 nome          = request.form['nome'].strip()[:200],
                 cnpj          = request.form.get('cnpj', '').strip()[:20] or None,
@@ -563,27 +644,22 @@ def admin_nova_rede():
             db.session.add(rede)
             db.session.flush()
 
-            senha_dono = request.form['password_dono'].strip()
-            if len(senha_dono) < 6:
-                flash('A senha do dono deve ter pelo menos 6 caracteres.', 'danger')
-                db.session.rollback()
-                return render_template('admin/rede_form.html', rede=None)
-
             dono = Usuario(
                 username    = request.form['username_dono'].strip()[:80],
                 perfil      = 'dono_rede',
                 nome_exibir = request.form['nome_dono'].strip()[:150],
                 rede_id     = rede.id,
             )
-            dono.set_password(senha_dono)  # hash bcrypt
+            dono.set_password(senha_dono)
             db.session.add(dono)
             db.session.commit()
+            audit('rede_criada', f'rede={rede.nome} dono={dono.username}')
             flash(f'Rede "{rede.nome}" criada! Login do dono: {dono.username}', 'success')
             return redirect(url_for('admin_rede_detalhe', id=rede.id))
 
         except (ValueError, KeyError) as e:
-            app.logger.warning(f'Erro ao criar rede: {e}')
             db.session.rollback()
+            app.logger.warning(f'Erro ao criar rede: {e}')
             flash('Dados inválidos. Verifique os campos.', 'danger')
 
     return render_template('admin/rede_form.html', rede=None)
@@ -617,9 +693,10 @@ def admin_nova_filial(id):
             filial_nome = request.form['filial_nome'].strip()[:150],
             rede_id     = rede.id,
         )
-        filial.set_password(senha)  # hash bcrypt
+        filial.set_password(senha)
         db.session.add(filial)
         db.session.commit()
+        audit('filial_criada', f'filial={filial.filial_nome} rede={rede.nome}')
         flash(f'Filial "{filial.filial_nome}" criada!', 'success')
 
     except (ValueError, KeyError) as e:
@@ -635,11 +712,12 @@ def admin_nova_filial(id):
 def admin_renovar_rede(id):
     rede = Rede.query.get_or_404(id)
     try:
-        dias = max(1, min(int(request.form.get('dias', 30)), 365))  # entre 1 e 365
+        dias = max(1, min(int(request.form.get('dias', 30)), 365))
         base = max(rede.data_expiracao, date.today()) if rede.data_expiracao and rede.data_expiracao > date.today() else date.today()
         rede.data_expiracao = base + timedelta(days=dias)
         rede.ativa = True
         db.session.commit()
+        audit('rede_renovada', f'rede={rede.nome} ate={rede.data_expiracao}')
         flash(f'Assinatura de "{rede.nome}" renovada até {rede.data_expiracao.strftime("%d/%m/%Y")}.', 'success')
     except (ValueError, TypeError):
         flash('Número de dias inválido.', 'danger')
@@ -650,23 +728,40 @@ def admin_renovar_rede(id):
 @login_required
 @superadmin_required
 def admin_toggle_rede(id):
-    rede      = Rede.query.get_or_404(id)
+    rede       = Rede.query.get_or_404(id)
     rede.ativa = not rede.ativa
     db.session.commit()
+    audit('rede_toggle', f'rede={rede.nome} ativa={rede.ativa}')
     flash(f'Rede "{rede.nome}" {"ativada" if rede.ativa else "bloqueada"}.', 'success' if rede.ativa else 'warning')
     return redirect(url_for('admin_dashboard'))
 
 
-@app.route('/admin/redes/<int:id>/excluir', methods=['POST'])
+@app.route('/admin/redes/<int:id>/excluir', methods=['GET', 'POST'])
 @login_required
 @superadmin_required
 def admin_excluir_rede(id):
+    """
+    GET  → mostra tela de confirmação com nome da rede
+    POST → executa exclusão somente se confirmação bater
+    """
     rede = Rede.query.get_or_404(id)
+
+    if request.method == 'GET':
+        # Tela de confirmação server-side
+        return render_template('admin/confirmar_exclusao.html', rede=rede)
+
+    # POST — verifica se o usuário digitou o nome correto
+    confirmacao = request.form.get('confirmacao', '').strip()
+    if confirmacao != rede.nome:
+        flash('Nome da rede não confere. Exclusão cancelada.', 'danger')
+        return redirect(url_for('admin_rede_detalhe', id=id))
+
     nome = rede.nome
     Medicamento.query.filter_by(rede_id=id).delete()
     Usuario.query.filter_by(rede_id=id).delete()
     db.session.delete(rede)
     db.session.commit()
+    audit('rede_excluida', f'rede={nome}')
     flash(f'Rede "{nome}" e todos os seus dados foram excluídos.', 'danger')
     return redirect(url_for('admin_dashboard'))
 
@@ -681,6 +776,7 @@ def admin_excluir_filial(id):
     Medicamento.query.filter_by(filial_id=id).update({'filial_id': None})
     db.session.delete(filial)
     db.session.commit()
+    audit('filial_excluida', f'filial={nome}')
     flash(f'Filial "{nome}" removida.', 'warning')
     return redirect(url_for('admin_rede_detalhe', id=rede_id))
 
@@ -720,6 +816,7 @@ def dono_excluir_filial(id):
     Medicamento.query.filter_by(filial_id=id).update({'filial_id': None})
     db.session.delete(filial)
     db.session.commit()
+    audit('filial_excluida_dono', f'filial={nome}')
     flash(f'Filial "{nome}" removida.', 'warning')
     return redirect(url_for('dashboard'))
 
@@ -761,7 +858,6 @@ def api_listar():
 @login_required
 @csrf.exempt
 def api_buscar_barcode(codigo):
-    # Sanitiza o código — só alfanumérico e hífens
     codigo_limpo = ''.join(c for c in codigo if c.isalnum() or c == '-')[:50]
     med = get_medicamentos_query().filter_by(codigo_barras=codigo_limpo).first()
     if med:
@@ -804,10 +900,8 @@ def gerar_pdf():
                  f'R$ {prejuizo:,.2f}'.replace(',','X').replace('.',',').replace('X','.')]]
     rt = Table(resumo, colWidths=[3.5*cm]*5)
     rt.setStyle(TableStyle([
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#1e293b')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.white),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
-        ('FONTSIZE',(0,0),(-1,-1),8),
+        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#1e293b')),('TEXTCOLOR',(0,0),(-1,0),colors.white),
+        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),('FONTSIZE',(0,0),(-1,-1),8),
         ('ALIGN',(0,0),(-1,-1),'CENTER'),
         ('BACKGROUND',(0,1),(0,1),colors.HexColor('#fee2e2')),
         ('BACKGROUND',(1,1),(1,1),colors.HexColor('#ffedd5')),
@@ -815,26 +909,19 @@ def gerar_pdf():
         ('BACKGROUND',(3,1),(3,1),colors.HexColor('#dcfce7')),
         ('BACKGROUND',(4,1),(4,1),colors.HexColor('#fee2e2')),
         ('GRID',(0,0),(-1,-1),0.5,colors.HexColor('#e2e8f0')),
-        ('TOPPADDING',(0,0),(-1,-1),6),
-        ('BOTTOMPADDING',(0,0),(-1,-1),6),
+        ('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6),
     ]))
     el.append(rt)
     el.append(Spacer(1, 0.6*cm))
-    SC = {'vencido':   colors.HexColor('#fee2e2'),
-          'alerta_30': colors.HexColor('#ffedd5'),
-          'alerta_60': colors.HexColor('#fef9c3'),
-          'ok':        colors.HexColor('#dcfce7')}
+    SC = {'vencido': colors.HexColor('#fee2e2'), 'alerta_30': colors.HexColor('#ffedd5'),
+          'alerta_60': colors.HexColor('#fef9c3'), 'ok': colors.HexColor('#dcfce7')}
     dados = [['#','Nome','Lote','Validade','Qtd','Preço','Total','Status']]
     et = [
-        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#1e293b')),
-        ('TEXTCOLOR',(0,0),(-1,0),colors.white),
-        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),
-        ('FONTSIZE',(0,0),(-1,-1),7.5),
-        ('ALIGN',(0,0),(-1,-1),'CENTER'),
-        ('ALIGN',(1,1),(1,-1),'LEFT'),
+        ('BACKGROUND',(0,0),(-1,0),colors.HexColor('#1e293b')),('TEXTCOLOR',(0,0),(-1,0),colors.white),
+        ('FONTNAME',(0,0),(-1,0),'Helvetica-Bold'),('FONTSIZE',(0,0),(-1,-1),7.5),
+        ('ALIGN',(0,0),(-1,-1),'CENTER'),('ALIGN',(1,1),(1,-1),'LEFT'),
         ('GRID',(0,0),(-1,-1),0.4,colors.HexColor('#e2e8f0')),
-        ('TOPPADDING',(0,0),(-1,-1),5),
-        ('BOTTOMPADDING',(0,0),(-1,-1),5),
+        ('TOPPADDING',(0,0),(-1,-1),5),('BOTTOMPADDING',(0,0),(-1,-1),5),
     ]
     for i, m in enumerate(meds, 1):
         vt = f'R$ {m.valor_total:,.2f}'.replace(',','X').replace('.',',').replace('X','.')
@@ -853,17 +940,23 @@ def gerar_pdf():
 
 
 # =============================================================================
-# INICIALIZAÇÃO — seed com senhas hasheadas
+# INICIALIZAÇÃO
 # =============================================================================
 
 def seed_database():
     if Usuario.query.filter_by(perfil='superadmin').count() == 0:
+        _admin_pass = os.environ.get('ADMIN_PASS')
+        if not _admin_pass:
+            raise RuntimeError(
+                "ADMIN_PASS não definida! "
+                "Adicione ADMIN_PASS nas variáveis de ambiente do Railway."
+            )
         admin = Usuario(
             username    = os.environ.get('ADMIN_USER', 'admin'),
             perfil      = 'superadmin',
             nome_exibir = 'Administrador',
         )
-        admin.set_password(os.environ.get('ADMIN_PASS', 'admin123'))
+        admin.set_password(_admin_pass)
         db.session.add(admin)
 
     if Rede.query.count() == 0:
@@ -872,7 +965,6 @@ def seed_database():
                          plano='mensal', data_expiracao=hoje + timedelta(days=30))
         db.session.add(rede_demo)
         db.session.flush()
-
         dono_demo   = Usuario(username='dono_demo', perfil='dono_rede',
                                nome_exibir='Dono Demo', rede_id=rede_demo.id)
         filial_demo = Usuario(username='filial_demo', perfil='filial',
@@ -882,7 +974,6 @@ def seed_database():
         filial_demo.set_password('demo123')
         db.session.add_all([dono_demo, filial_demo])
         db.session.flush()
-
         db.session.add_all([
             Medicamento(nome='Dipirona 500mg', lote='LT-001',
                         data_validade=hoje - timedelta(days=5),
@@ -911,6 +1002,5 @@ with app.app_context():
     seed_database()
 
 if __name__ == '__main__':
-    # debug=False em produção — nunca expõe traceback
     app.run(debug=os.environ.get('FLASK_DEBUG', '0') == '1',
             host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
