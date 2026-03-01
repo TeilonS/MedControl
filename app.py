@@ -648,13 +648,17 @@ def enviar_feedback():
 @superadmin_required
 def admin_dashboard():
     redes = Rede.query.order_by(Rede.nome).all()
+    todos_usuarios = Usuario.query.filter(Usuario.perfil != 'superadmin').order_by(Usuario.id.desc()).all()
     stats = {
-        'total_redes':   len(redes),
-        'ativas':        sum(1 for r in redes if r.assinatura_ativa),
-        'expiradas':     sum(1 for r in redes if not r.assinatura_ativa),
-        'total_filiais': sum(r.total_filiais for r in redes),
+        'total_redes':      len(redes),
+        'ativas':           sum(1 for r in redes if r.assinatura_ativa),
+        'expiradas':        sum(1 for r in redes if not r.assinatura_ativa),
+        'total_filiais':    sum(r.total_filiais for r in redes),
+        'total_usuarios':   len(todos_usuarios),
+        'aceitaram_termos': sum(1 for u in todos_usuarios if u.termos_aceitos),
+        'pendentes_termos': sum(1 for u in todos_usuarios if not u.termos_aceitos),
     }
-    return render_template('admin/dashboard.html', redes=redes, stats=stats)
+    return render_template('admin/dashboard.html', redes=redes, stats=stats, todos_usuarios=todos_usuarios)
 
 
 @app.route('/admin/redes/nova', methods=['GET', 'POST'])
@@ -709,7 +713,10 @@ def admin_rede_detalhe(id):
     rede    = Rede.query.get_or_404(id)
     filiais = Usuario.query.filter_by(rede_id=id, perfil='filial').all()
     dono    = Usuario.query.filter_by(rede_id=id, perfil='dono_rede').first()
-    return render_template('admin/rede_detalhe.html', rede=rede, filiais=filiais, dono=dono)
+    # todos os usuários da rede (dono + filiais) para mostrar status de aceite
+    usuarios_rede = Usuario.query.filter_by(rede_id=id).all()
+    return render_template('admin/rede_detalhe.html',
+        rede=rede, filiais=filiais, dono=dono, usuarios_rede=usuarios_rede)
 
 
 @app.route('/admin/redes/<int:id>/filial/nova', methods=['POST'])

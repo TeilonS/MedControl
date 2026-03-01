@@ -9,25 +9,25 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    :root{--primary:#0f766e;--primary-l:#14b8a6;--sw:260px}
+    :root{--primary:#0f766e;--primary-l:#14b8a6;--dark:#0f172a;--surface:#1e293b;--surface2:#273548;--border:var(--border);--text:#f1f5f9;--muted:var(--muted);--sw:260px}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex}
-    .sidebar{width:var(--sw);min-height:100vh;background:var(--sb-bg);border-right:1px solid var(--sb-border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
-    .sb-logo{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--sb-border)}
+    body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex}
+    .sidebar{width:var(--sw);min-height:100vh;background:var(--sb-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
+    .sb-logo{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border)}
     .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--primary),var(--primary-l));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.7rem}
     .sb-logo h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;color:var(--text)}
     .sb-logo span{font-size:.75rem;color:var(--muted)}
     .sb-nav{padding:1rem;flex:1}
-    .nt{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:.6rem .5rem .3rem}
-    .ni{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;border-radius:10px;color:var(--sb-text);font-size:.88rem;font-weight:500;text-decoration:none;transition:all .2s;margin-bottom:.15rem}
+    .nt{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--sb-text);padding:.6rem .5rem .3rem}
+    .ni{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;border-radius:10px;color:var(--muted);font-size:.88rem;font-weight:500;text-decoration:none;transition:all .2s;margin-bottom:.15rem}
     .ni:hover{background:var(--surface2) !important;color:var(--text) !important}
-    .ni.active{background:var(--sb-active-bg);color:var(--sb-active-c);border:1px solid var(--sb-active-br)}
+    .ni.active{background:linear-gradient(135deg,rgba(15,118,110,0.25),rgba(20,184,166,0.12));color:var(--primary-l);border:1px solid rgba(20,184,166,0.2)}
     .ni i{font-size:1rem;width:20px;text-align:center}
-    .sb-foot{padding:1rem;border-top:1px solid var(--sb-border)}
-    .uc{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:var(--surface2);border-radius:10px;border:1px solid var(--border)}
-    .ua{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-l));display:flex;align-items:center;justify-content:center;font-size:.85rem;color:white}
-    .main{margin-left:var(--sw);flex:1;padding:2rem;background:var(--bg)}
-    .pt{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:.2rem;color:var(--text)}
+    .sb-foot{padding:1rem;border-top:1px solid var(--border)}
+    .uc{display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;background:var(--surface2);border-radius:10px}
+    .ua{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-l));display:flex;align-items:center;justify-content:center;font-size:.85rem}
+    .main{margin-left:var(--sw);flex:1;padding:2rem}
+    .pt{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:.2rem}
     .bc{color:var(--muted);font-size:.82rem;margin-bottom:2rem}
     .bc a{color:var(--primary-l);text-decoration:none}
     .stat-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:1.2rem 1.4rem;position:relative;overflow:hidden}
@@ -37,34 +37,28 @@
     .sc-red::before{background:#ef4444}
     .sc-blue::before{background:#3b82f6}
     .sl{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
-    .sv{font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;margin:.3rem 0;color:var(--text)}
-    .si{position:absolute;right:1.2rem;top:1.2rem;font-size:1.4rem;opacity:.2;color:var(--text)}
+    .sv{font-family:'Syne',sans-serif;font-weight:800;font-size:2rem;margin:.3rem 0}
+    .si{position:absolute;right:1.2rem;top:1.2rem;font-size:1.4rem;opacity:.2}
     .card-dark{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;overflow:hidden}
-    .th th{background:var(--surface2);color:var(--muted);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:.9rem 1rem;border-bottom:1px solid var(--card-border)}
+    .th th{background:var(--surface2);color:var(--muted);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:.9rem 1rem;border-bottom:1px solid var(--border)}
     .table{--bs-table-bg:transparent;--bs-table-color:var(--text)}
     .table tbody tr{border-bottom:1px solid var(--border)}
     .table tbody tr:last-child{border-bottom:none}
-    .table td{padding:.85rem 1rem;vertical-align:middle;font-size:.87rem;color:var(--text-2)}
-    .badge-ativo{background:rgba(34,197,94,0.15);color:#16a34a;border:1px solid rgba(34,197,94,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
-    .badge-inativo{background:rgba(239,68,68,0.15);color:#dc2626;border:1px solid rgba(239,68,68,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
-    .badge-expirando{background:rgba(249,115,22,0.15);color:#ea580c;border:1px solid rgba(249,115,22,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
-    [data-theme="dark"] .badge-ativo{color:#86efac}
-    [data-theme="dark"] .badge-inativo{color:#fca5a5}
-    [data-theme="dark"] .badge-expirando{color:#fdba74}
+    .table td{padding:.85rem 1rem;vertical-align:middle;font-size:.87rem}
+    .badge-ativo{background:rgba(34,197,94,0.15);color:#86efac;border:1px solid rgba(34,197,94,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .badge-inativo{background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
+    .badge-expirando{background:rgba(249,115,22,0.15);color:#fdba74;border:1px solid rgba(249,115,22,0.3);padding:.25rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700}
     .btn-pm{background:linear-gradient(135deg,var(--primary),var(--primary-l));border:none;color:white;border-radius:10px;padding:.55rem 1.1rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;transition:all .2s;box-shadow:0 3px 14px rgba(20,184,166,0.3);text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
     .btn-pm:hover{transform:translateY(-1px);color:white}
     .btn-sa{border:none;border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s}
-    .btn-block{background:rgba(239,68,68,0.15);color:#dc2626}
-    .btn-unblock{background:rgba(34,197,94,0.15);color:#16a34a}
-    [data-theme="dark"] .btn-block{color:#fca5a5}
-    [data-theme="dark"] .btn-unblock{color:#86efac}
-    .btn-detail{background:rgba(20,184,166,0.12);color:var(--primary);text-decoration:none;border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600}
+    .btn-block{background:rgba(239,68,68,0.15);color:#fca5a5}
+    .btn-unblock{background:rgba(34,197,94,0.15);color:#86efac}
+    .btn-detail{background:rgba(20,184,166,0.12);color:var(--primary-l);text-decoration:none;border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600}
     .rf{display:flex;gap:.4rem;align-items:center}
-    .ri{background:var(--input-bg);border:1px solid var(--input-border);color:var(--input-text);border-radius:8px;padding:.3rem .6rem;font-size:.8rem;width:70px}
-    .btn-r{background:rgba(20,184,166,0.15);color:var(--primary);border:1px solid rgba(20,184,166,0.3);border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer}
-    [data-theme="dark"] .btn-detail,.btn-r{color:var(--primary-l)}
+    .ri{background:var(--input-bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.3rem .6rem;font-size:.8rem;width:70px}
+    .btn-r{background:rgba(20,184,166,0.15);color:var(--primary-l);border:1px solid rgba(20,184,166,0.3);border-radius:8px;padding:.3rem .7rem;font-size:.78rem;font-weight:600;cursor:pointer}
     .tc{position:fixed;top:1.5rem;right:1.5rem;z-index:9999}
-    .ta{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:.8rem 1.2rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;font-size:.88rem;box-shadow:var(--card-shadow);color:var(--text)}
+    .ta{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:.8rem 1.2rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.7rem;font-size:.88rem;box-shadow:0 8px 30px rgba(0,0,0,0.3)}
     .ta.success{border-left:3px solid #22c55e}
     .ta.warning{border-left:3px solid #eab308}
     .ta.danger{border-left:3px solid #ef4444}
@@ -106,6 +100,8 @@
     <div class="col-6 col-md-3"><div class="stat-card sc-green"><div class="sl">Ativas</div><div class="sv" style="color:#22c55e">{{ stats.ativas }}</div><i class="bi bi-check-circle si"></i></div></div>
     <div class="col-6 col-md-3"><div class="stat-card sc-red"><div class="sl">Expiradas</div><div class="sv" style="color:#ef4444">{{ stats.expiradas }}</div><i class="bi bi-x-circle si"></i></div></div>
     <div class="col-6 col-md-3"><div class="stat-card sc-blue"><div class="sl">Total Filiais</div><div class="sv" style="color:#3b82f6">{{ stats.total_filiais }}</div><i class="bi bi-shop si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card sc-green" style="margin-top:.8rem"><div class="sl">Aceitaram Termos</div><div class="sv" style="color:#22c55e">{{ stats.aceitaram_termos }}</div><i class="bi bi-file-earmark-check si"></i></div></div>
+    <div class="col-6 col-md-3"><div class="stat-card sc-red" style="margin-top:.8rem"><div class="sl">Pendentes Termos</div><div class="sv" style="color:#ef4444">{{ stats.pendentes_termos }}</div><i class="bi bi-clock si"></i></div></div>
   </div>
 
   <div style="display:flex;justify-content:flex-end;margin-bottom:1rem">
@@ -141,7 +137,6 @@
             </td>
             <td>
               <form method="POST" action="{{ url_for('admin_renovar_rede', id=r.id) }}" class="rf">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="number" name="dias" value="30" min="1" max="365" class="ri">
                 <button type="submit" class="btn-r"><i class="bi bi-arrow-clockwise"></i> Renovar</button>
               </form>
@@ -149,7 +144,6 @@
             <td style="display:flex;gap:.4rem;align-items:center">
               <a href="{{ url_for('admin_rede_detalhe', id=r.id) }}" class="btn-detail"><i class="bi bi-eye"></i></a>
               <form method="POST" action="{{ url_for('admin_toggle_rede', id=r.id) }}" style="display:inline" onsubmit="return confirm('{{ 'Bloquear' if r.ativa else 'Ativar' }} rede {{ r.nome }}?')">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 {% if r.ativa %}<button type="submit" class="btn-sa btn-block"><i class="bi bi-lock"></i></button>
                 {% else %}<button type="submit" class="btn-sa btn-unblock"><i class="bi bi-unlock"></i></button>{% endif %}
               </form>
@@ -167,6 +161,74 @@
     </div>
     {% endif %}
   </div>
+
+  <!-- ACEITES DE TERMOS GLOBAL -->
+  <div class="card-dark" style="margin-top:1.5rem">
+    <div style="padding:1rem 1.2rem;border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
+      <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem">
+        <i class="bi bi-file-earmark-check me-2" style="color:var(--primary-l)"></i>
+        Aceite de Termos — Todos os Usuários
+      </span>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <span style="background:rgba(34,197,94,0.12);color:#16a34a;border:1px solid rgba(34,197,94,0.25);padding:.2rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700">
+          ✓ {{ stats.aceitaram_termos }} aceitaram
+        </span>
+        <span style="background:rgba(239,68,68,0.1);color:#dc2626;border:1px solid rgba(239,68,68,0.2);padding:.2rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700">
+          ⏳ {{ stats.pendentes_termos }} pendentes
+        </span>
+      </div>
+    </div>
+    {% if todos_usuarios %}
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead><tr class="th">
+          <th>Usuário</th>
+          <th>Rede</th>
+          <th>Perfil</th>
+          <th>Status Termos</th>
+          <th>Aceito em</th>
+        </tr></thead>
+        <tbody>
+          {% for u in todos_usuarios %}
+          <tr>
+            <td>
+              <div style="font-weight:600">{{ u.nome_exibir or u.username }}</div>
+              <div style="font-size:.75rem;color:var(--muted)">@{{ u.username }}</div>
+            </td>
+            <td style="font-size:.85rem">{{ u.rede.nome if u.rede else '—' }}</td>
+            <td>
+              {% if u.perfil == 'dono_rede' %}
+                <span style="background:rgba(20,184,166,0.12);color:var(--primary-l);border:1px solid rgba(20,184,166,0.25);padding:.18rem .55rem;border-radius:20px;font-size:.7rem;font-weight:700">Dono</span>
+              {% else %}
+                <span style="background:rgba(99,102,241,0.12);color:#818cf8;border:1px solid rgba(99,102,241,0.25);padding:.18rem .55rem;border-radius:20px;font-size:.7rem;font-weight:700">Filial</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if u.termos_aceitos %}
+                <span style="background:rgba(34,197,94,0.12);color:#16a34a;border:1px solid rgba(34,197,94,0.25);padding:.18rem .55rem;border-radius:20px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;gap:.3rem">
+                  <i class="bi bi-check-circle-fill"></i> Aceito
+                </span>
+              {% else %}
+                <span style="background:rgba(239,68,68,0.1);color:#dc2626;border:1px solid rgba(239,68,68,0.2);padding:.18rem .55rem;border-radius:20px;font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;gap:.3rem">
+                  <i class="bi bi-clock"></i> Pendente
+                </span>
+              {% endif %}
+            </td>
+            <td style="font-size:.82rem;color:var(--muted)">
+              {% if u.termos_aceitos_em %}
+                {{ u.termos_aceitos_em.strftime('%d/%m/%Y %H:%M') }}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:2rem;color:var(--muted);font-size:.88rem">Nenhum usuário cadastrado.</div>
+    {% endif %}
+  </div>
+
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>setTimeout(()=>document.querySelectorAll('.ta').forEach(t=>{t.style.transition='opacity .5s';t.style.opacity='0';setTimeout(()=>t.remove(),500)}),4000)</script>
