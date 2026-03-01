@@ -820,6 +820,23 @@ def dono_excluir_filial(id):
     flash(f'Filial "{nome}" removida.', 'warning')
     return redirect(url_for('dashboard'))
 
+# =============================================================================
+# PÁGINAS LEGAIS — LGPD
+# =============================================================================
+
+@app.route('/politica-de-privacidade')
+@login_required
+def politica_privacidade():
+    return render_template('politica_privacidade.html',
+        data_atualizacao='01/03/2025')
+
+@app.route('/termos-de-uso')
+@login_required
+def termos_uso():
+    return render_template('termos_uso.html',
+        data_atualizacao='01/03/2025')
+
+
 
 # =============================================================================
 # PREFERÊNCIAS DE TEMA

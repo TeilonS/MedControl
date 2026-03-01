@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="{{ session.get('tema', 'light') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Política de Privacidade</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; }
+    .sidebar { width: var(--sidebar-w); min-height: 100vh; background: var(--card-bg); border-right: 1px solid var(--sb-border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+    .sidebar-logo { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--sb-border); }
+    .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--primary), var(--primary-l)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: .7rem; }
+    .sidebar-logo h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); }
+    .sidebar-logo span { font-size: .75rem; color: var(--muted); }
+    .sidebar-nav { padding: 1rem; flex: 1; }
+    .nav-section-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: .6rem .5rem .3rem; }
+    .nav-item { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; text-decoration: none; transition: all .2s; margin-bottom: .15rem; }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: linear-gradient(135deg, rgba(15,118,110,0.25), rgba(20,184,166,0.12)); color: var(--primary-l); border: 1px solid rgba(20,184,166,0.2); }
+    .nav-item i { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--sb-border); }
+    .user-chip { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; background: var(--surface2); border-radius: 10px; border: 1px solid var(--card-border); }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-l)); display: flex; align-items: center; justify-content: center; font-size: .85rem; color: white; }
+    .user-name { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .user-role { font-size: .7rem; color: var(--muted); }
+    .logout-btn { color: #ef4444; text-decoration: none; font-size: .78rem; }
+    .theme-toggle-wrap { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; }
+    .theme-toggle-label { font-size: .78rem; color: var(--muted); }
+    .theme-toggle { width: 36px; height: 20px; border-radius: 20px; background: var(--primary); border: none; cursor: pointer; position: relative; }
+    .theme-toggle::after { content:''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; transition: transform .2s; }
+    [data-theme="dark"] .theme-toggle::after { transform: translateX(16px); }
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 2.5rem; max-width: 860px; }
+    .page-header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--card-border); }
+    .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.8rem; color: var(--text); margin-bottom: .4rem; }
+    .page-meta { font-size: .82rem; color: var(--muted); }
+    .badge-lgpd { background: rgba(20,184,166,0.12); color: var(--primary-l); border: 1px solid rgba(20,184,166,0.25); padding: .3rem .8rem; border-radius: 20px; font-size: .75rem; font-weight: 700; display: inline-block; margin-bottom: 1rem; }
+    .doc-section { margin-bottom: 2.2rem; }
+    .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--primary-l); margin-bottom: .8rem; display: flex; align-items: center; gap: .5rem; }
+    p, li { font-size: .92rem; line-height: 1.75; color: var(--text); }
+    ul { padding-left: 1.4rem; }
+    li { margin-bottom: .3rem; }
+    .highlight-box { background: rgba(20,184,166,0.06); border: 1px solid rgba(20,184,166,0.2); border-left: 4px solid var(--primary-l); border-radius: 0 12px 12px 0; padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; }
+    .warning-box { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; }
+    .contact-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 1.5rem; margin-top: 1rem; }
+    .contact-card p { margin: .3rem 0; font-size: .9rem; }
+    .divider { border: none; border-top: 1px solid var(--card-border); margin: 2rem 0; }
+    a { color: var(--primary-l); }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">💊</div>
+    <h2>MedControl</h2>
+    <span>Controle de Validade v1.0</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Principal</div>
+    <a href="{{ url_for('dashboard') }}" class="nav-item"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="{{ url_for('cadastro') }}" class="nav-item"><i class="bi bi-plus-circle"></i> Novo Medicamento</a>
+    <div class="nav-section-title mt-3">Legal</div>
+    <a href="{{ url_for('politica_privacidade') }}" class="nav-item active"><i class="bi bi-shield-check"></i> Política de Privacidade</a>
+    <a href="{{ url_for('termos_uso') }}" class="nav-item"><i class="bi bi-file-text"></i> Termos de Uso</a>
+    {% if session.perfil == 'superadmin' %}
+    <div class="nav-section-title mt-3">Admin</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-item"><i class="bi bi-building"></i> Redes & Clientes</a>
+    {% endif %}
+  </nav>
+  <div class="sidebar-footer">
+    <div class="theme-toggle-wrap">
+      <span class="theme-toggle-label" id="theme-label">☀️ Modo claro</span>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"></button>
+    </div>
+    <div class="user-chip">
+      <div class="user-avatar">{{ session.username[0].upper() }}</div>
+      <div>
+        <div class="user-name">{{ session.username }}</div>
+        <div class="user-role">
+          {% if session.perfil == 'superadmin' %}Super Admin
+          {% elif session.perfil == 'dono_rede' %}Dono da Rede
+          {% else %}{{ session.filial_nome or 'Filial' }}{% endif %}
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn ms-auto"><i class="bi bi-box-arrow-right"></i></a>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <span class="badge-lgpd"><i class="bi bi-shield-check me-1"></i>Conforme LGPD — Lei nº 13.709/2018</span>
+    <div class="page-title">🔒 Política de Privacidade</div>
+    <div class="page-meta">Última atualização: {{ data_atualizacao }} &nbsp;|&nbsp; Versão 1.0</div>
+  </div>
+
+  <div class="doc-section">
+    <div class="highlight-box">
+      Esta Política descreve como o <strong>MedControl</strong> coleta, usa, armazena e protege os dados dos seus usuários, em conformidade com a <strong>Lei Geral de Proteção de Dados — LGPD (Lei nº 13.709/2018)</strong>.
+    </div>
+  </div>
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-building"></i> 1. Quem Somos</div>
+    <p>O <strong>MedControl</strong> é um sistema SaaS de controle de validade de medicamentos desenvolvido para farmácias, redes farmacêuticas e estabelecimentos de saúde. O responsável pelo tratamento dos dados é o titular da conta que contratou o serviço.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-database"></i> 2. Quais Dados Coletamos</div>
+    <p><strong>Dados de usuário:</strong></p>
+    <ul>
+      <li>Nome de usuário (login) e nome de exibição</li>
+      <li>Senha — armazenada em hash criptográfico (nunca em texto puro)</li>
+      <li>Perfil de acesso (superadmin, dono_rede ou filial)</li>
+      <li>Preferência de tema (claro/escuro)</li>
+    </ul>
+    <p><strong>Dados da empresa/rede:</strong></p>
+    <ul>
+      <li>Nome da rede, CNPJ, e-mail e telefone (opcionais)</li>
+      <li>Plano e data de expiração da assinatura</li>
+    </ul>
+    <p><strong>Dados de estoque:</strong></p>
+    <ul>
+      <li>Nome, fabricante, princípio ativo, código de barras, lote, validade, quantidade e preço dos medicamentos</li>
+    </ul>
+    <p><strong>Logs de auditoria:</strong></p>
+    <ul>
+      <li>Endereço IP, data/hora e tipo de ação realizada (login, cadastro, exclusão, etc.)</li>
+    </ul>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-bullseye"></i> 3. Para Que Usamos os Dados</div>
+    <ul>
+      <li>Autenticar e identificar usuários no sistema</li>
+      <li>Controlar acesso conforme perfil de cada usuário</li>
+      <li>Gerenciar estoque de medicamentos e gerar relatórios</li>
+      <li>Controlar assinaturas e períodos de acesso</li>
+      <li>Registrar auditoria de ações para segurança e rastreabilidade</li>
+      <li>Enviar notificações de feedback ao administrador</li>
+    </ul>
+    <div class="highlight-box">
+      <strong>Não vendemos, compartilhamos nem cedemos seus dados a terceiros</strong> para fins comerciais, publicitários ou de qualquer outra natureza.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-shield-lock"></i> 4. Como Protegemos os Dados</div>
+    <ul>
+      <li><strong>Senhas criptografadas</strong> com algoritmo scrypt — nunca armazenadas em texto puro</li>
+      <li><strong>HTTPS obrigatório</strong> em todas as comunicações</li>
+      <li><strong>Proteção CSRF</strong> em todos os formulários</li>
+      <li><strong>Limite de tentativas de login</strong> contra ataques de força bruta</li>
+      <li><strong>Sessões com expiração automática</strong> após 30 minutos de inatividade</li>
+      <li><strong>Cookies seguros</strong> com flags HttpOnly, Secure e SameSite</li>
+      <li><strong>Headers de segurança HTTP</strong> (X-Frame-Options, CSP, HSTS)</li>
+      <li><strong>Isolamento por rede</strong> — cada filial acessa somente seus próprios dados</li>
+      <li><strong>Logs de auditoria</strong> de todas as ações críticas</li>
+    </ul>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-clock-history"></i> 5. Por Quanto Tempo Armazenamos</div>
+    <ul>
+      <li>Os dados ficam disponíveis enquanto a assinatura estiver ativa</li>
+      <li>Após o vencimento, os dados são mantidos por <strong>30 dias</strong> para eventual reativação</li>
+      <li>Logs de auditoria podem ser mantidos por até <strong>12 meses</strong> para fins de segurança</li>
+      <li>Após esse prazo, os dados são excluídos permanentemente mediante solicitação</li>
+    </ul>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-person-check"></i> 6. Seus Direitos como Titular (LGPD, Art. 18)</div>
+    <ul>
+      <li><strong>Confirmação</strong> — saber se tratamos seus dados pessoais</li>
+      <li><strong>Acesso</strong> — obter cópia dos dados armazenados</li>
+      <li><strong>Correção</strong> — corrigir dados incorretos ou desatualizados</li>
+      <li><strong>Eliminação</strong> — solicitar a exclusão dos seus dados</li>
+      <li><strong>Portabilidade</strong> — receber seus dados em formato estruturado</li>
+      <li><strong>Revogação</strong> — retirar o consentimento a qualquer momento</li>
+    </ul>
+    <div class="warning-box">
+      Para exercer qualquer um desses direitos, entre em contato pelo canal indicado na seção 9 abaixo. Responderemos em até <strong>15 dias úteis</strong>.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-cloud-arrow-up"></i> 7. Onde os Dados São Armazenados</div>
+    <ul>
+      <li><strong>Servidor de aplicação:</strong> Railway (infraestrutura em nuvem com SSL)</li>
+      <li><strong>Banco de dados:</strong> Supabase (PostgreSQL gerenciado, com backup automático diário)</li>
+    </ul>
+    <p>Ambos os provedores adotam práticas de segurança compatíveis com padrões internacionais.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-cookie"></i> 8. Cookies</div>
+    <p>Utilizamos apenas <strong>cookies de sessão</strong> estritamente necessários para o funcionamento do sistema. Não utilizamos cookies de rastreamento, publicidade ou análise de comportamento. O cookie é excluído automaticamente ao fazer logout ou após 30 minutos de inatividade.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-envelope"></i> 9. Contato — Encarregado de Dados (DPO)</div>
+    <div class="contact-card">
+      <p><strong>MedControl — Sistema de Controle de Validade</strong></p>
+      <p><i class="bi bi-whatsapp me-1" style="color:#22c55e"></i> <a href="https://wa.me/5577988175300" target="_blank">(77) 9 8817-5300</a></p>
+      <p><i class="bi bi-clock me-1"></i> Atendimento: Segunda a Sexta, 8h às 18h</p>
+      <p style="margin-top:.8rem;font-size:.8rem;color:var(--muted)">Prazo de resposta: até 15 dias úteis, conforme LGPD.</p>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-arrow-repeat"></i> 10. Alterações nesta Política</div>
+    <p>Esta Política pode ser atualizada periodicamente. Mudanças relevantes serão comunicadas dentro do próprio sistema. A data de última atualização estará sempre indicada no topo desta página.</p>
+    <div style="margin-top:2rem;text-align:center;">
+      <a href="{{ url_for('termos_uso') }}" class="nav-item" style="display:inline-flex;background:var(--surface2);border:1px solid var(--card-border);border-radius:10px;padding:.7rem 1.4rem;font-weight:600;">
+        <i class="bi bi-file-text me-2"></i> Ver Termos de Uso
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  (function() {
+    const tema = "{{ session.get('tema', 'light') }}";
+    document.documentElement.setAttribute('data-theme', tema);
+    const lbl = document.getElementById('theme-label');
+    if (lbl) lbl.textContent = tema === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+  })();
+  function toggleTheme() {
+    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    document.getElementById('theme-label').textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+    fetch('/preferencias/tema', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tema: newTheme}) });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="{{ session.get('tema', 'light') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Termos de Uso</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; }
+    .sidebar { width: var(--sidebar-w); min-height: 100vh; background: var(--card-bg); border-right: 1px solid var(--sb-border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+    .sidebar-logo { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--sb-border); }
+    .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--primary), var(--primary-l)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: .7rem; }
+    .sidebar-logo h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); }
+    .sidebar-logo span { font-size: .75rem; color: var(--muted); }
+    .sidebar-nav { padding: 1rem; flex: 1; }
+    .nav-section-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: .6rem .5rem .3rem; }
+    .nav-item { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; text-decoration: none; transition: all .2s; margin-bottom: .15rem; }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: linear-gradient(135deg, rgba(15,118,110,0.25), rgba(20,184,166,0.12)); color: var(--primary-l); border: 1px solid rgba(20,184,166,0.2); }
+    .nav-item i { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--sb-border); }
+    .user-chip { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; background: var(--surface2); border-radius: 10px; border: 1px solid var(--card-border); }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-l)); display: flex; align-items: center; justify-content: center; font-size: .85rem; color: white; }
+    .user-name { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .user-role { font-size: .7rem; color: var(--muted); }
+    .logout-btn { color: #ef4444; text-decoration: none; font-size: .78rem; }
+    .theme-toggle-wrap { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; }
+    .theme-toggle-label { font-size: .78rem; color: var(--muted); }
+    .theme-toggle { width: 36px; height: 20px; border-radius: 20px; background: var(--primary); border: none; cursor: pointer; position: relative; }
+    .theme-toggle::after { content:''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; transition: transform .2s; }
+    [data-theme="dark"] .theme-toggle::after { transform: translateX(16px); }
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 2.5rem; max-width: 860px; }
+    .page-header { margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--card-border); }
+    .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.8rem; color: var(--text); margin-bottom: .4rem; }
+    .page-meta { font-size: .82rem; color: var(--muted); }
+    .badge-legal { background: rgba(99,102,241,0.12); color: #818cf8; border: 1px solid rgba(99,102,241,0.25); padding: .3rem .8rem; border-radius: 20px; font-size: .75rem; font-weight: 700; display: inline-block; margin-bottom: 1rem; }
+    .doc-section { margin-bottom: 2.2rem; }
+    .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--primary-l); margin-bottom: .8rem; display: flex; align-items: center; gap: .5rem; }
+    p, li { font-size: .92rem; line-height: 1.75; color: var(--text); }
+    ul { padding-left: 1.4rem; }
+    li { margin-bottom: .3rem; }
+    .highlight-box { background: rgba(20,184,166,0.06); border: 1px solid rgba(20,184,166,0.2); border-left: 4px solid var(--primary-l); border-radius: 0 12px 12px 0; padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; }
+    .warning-box { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2); border-left: 4px solid #ef4444; border-radius: 0 12px 12px 0; padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; }
+    .info-box { background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.2); border-left: 4px solid #818cf8; border-radius: 0 12px 12px 0; padding: 1rem 1.2rem; margin: 1rem 0; font-size: .88rem; }
+    .contact-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 1.5rem; margin-top: 1rem; }
+    .contact-card p { margin: .3rem 0; font-size: .9rem; }
+    .divider { border: none; border-top: 1px solid var(--card-border); margin: 2rem 0; }
+    .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .plan-card { background: var(--surface2); border: 1px solid var(--card-border); border-radius: 12px; padding: 1.1rem; }
+    .plan-card strong { color: var(--primary-l); font-family: 'Syne', sans-serif; display: block; margin-bottom: .4rem; }
+    .plan-card p { font-size: .82rem; margin: 0; color: var(--muted); }
+    a { color: var(--primary-l); }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">💊</div>
+    <h2>MedControl</h2>
+    <span>Controle de Validade v1.0</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Principal</div>
+    <a href="{{ url_for('dashboard') }}" class="nav-item"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="{{ url_for('cadastro') }}" class="nav-item"><i class="bi bi-plus-circle"></i> Novo Medicamento</a>
+    <div class="nav-section-title mt-3">Legal</div>
+    <a href="{{ url_for('politica_privacidade') }}" class="nav-item"><i class="bi bi-shield-check"></i> Política de Privacidade</a>
+    <a href="{{ url_for('termos_uso') }}" class="nav-item active"><i class="bi bi-file-text"></i> Termos de Uso</a>
+    {% if session.perfil == 'superadmin' %}
+    <div class="nav-section-title mt-3">Admin</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-item"><i class="bi bi-building"></i> Redes & Clientes</a>
+    {% endif %}
+  </nav>
+  <div class="sidebar-footer">
+    <div class="theme-toggle-wrap">
+      <span class="theme-toggle-label" id="theme-label">☀️ Modo claro</span>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"></button>
+    </div>
+    <div class="user-chip">
+      <div class="user-avatar">{{ session.username[0].upper() }}</div>
+      <div>
+        <div class="user-name">{{ session.username }}</div>
+        <div class="user-role">
+          {% if session.perfil == 'superadmin' %}Super Admin
+          {% elif session.perfil == 'dono_rede' %}Dono da Rede
+          {% else %}{{ session.filial_nome or 'Filial' }}{% endif %}
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn ms-auto"><i class="bi bi-box-arrow-right"></i></a>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="page-header">
+    <span class="badge-legal"><i class="bi bi-file-earmark-check me-1"></i>Documento Jurídico</span>
+    <div class="page-title">📋 Termos de Uso</div>
+    <div class="page-meta">Última atualização: {{ data_atualizacao }} &nbsp;|&nbsp; Versão 1.0</div>
+  </div>
+
+  <div class="doc-section">
+    <div class="highlight-box">
+      Ao acessar ou utilizar o <strong>MedControl</strong>, você concorda integralmente com estes Termos de Uso. Leia com atenção antes de utilizar o sistema. Caso não concorde com alguma cláusula, não utilize o serviço.
+    </div>
+  </div>
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-info-circle"></i> 1. O Serviço</div>
+    <p>O <strong>MedControl</strong> é um sistema SaaS (Software como Serviço) de controle de validade de medicamentos, disponibilizado via internet para farmácias, redes farmacêuticas e estabelecimentos de saúde.</p>
+    <p>O acesso ao sistema é fornecido mediante assinatura paga, com planos e valores definidos na página de Planos. O serviço inclui:</p>
+    <ul>
+      <li>Gerenciamento de estoque de medicamentos com controle de validade</li>
+      <li>Dashboard analítico com alertas de vencimento</li>
+      <li>Geração de relatórios em PDF</li>
+      <li>API REST para integrações externas</li>
+      <li>Suporte a múltiplas filiais por rede</li>
+      <li>Tema claro/escuro e interface responsiva</li>
+    </ul>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-person-badge"></i> 2. Cadastro e Responsabilidade do Usuário</div>
+    <p>Para utilizar o MedControl, é necessário ter uma conta ativa criada pelo administrador do sistema. Ao utilizar o serviço, você declara que:</p>
+    <ul>
+      <li>As informações fornecidas no cadastro são verdadeiras e atualizadas</li>
+      <li>Você é responsável pela confidencialidade da sua senha de acesso</li>
+      <li>Você é responsável por todas as ações realizadas com sua conta</li>
+      <li>Você notificará imediatamente o administrador em caso de acesso não autorizado</li>
+      <li>Não compartilhará suas credenciais de acesso com terceiros não autorizados</li>
+    </ul>
+    <div class="warning-box">
+      O MedControl não se responsabiliza por danos decorrentes do uso indevido, compartilhamento ou perda de credenciais de acesso por parte do usuário.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-calendar-check"></i> 3. Assinatura e Pagamento</div>
+    <p>O acesso ao sistema é condicionado a uma assinatura ativa. Os planos disponíveis e seus valores estão descritos na página de Planos do sistema.</p>
+    <ul>
+      <li>O pagamento deve ser realizado conforme o plano contratado (mensal, trimestral ou anual)</li>
+      <li>O não pagamento resulta no bloqueio automático do acesso ao sistema</li>
+      <li>O desbloqueio ocorre após a confirmação do pagamento pelo administrador</li>
+      <li>Não há reembolso proporcional por período não utilizado, salvo acordo expresso</li>
+    </ul>
+    <div class="plan-grid">
+      <div class="plan-card">
+        <strong>Plano Mensal</strong>
+        <p>Renovação mensal. Ideal para testar o sistema.</p>
+      </div>
+      <div class="plan-card">
+        <strong>Plano Trimestral</strong>
+        <p>3 meses com desconto. Boa relação custo-benefício.</p>
+      </div>
+      <div class="plan-card">
+        <strong>Plano Anual</strong>
+        <p>12 meses com maior desconto. Melhor para redes estabelecidas.</p>
+      </div>
+    </div>
+    <p style="margin-top:.8rem;font-size:.85rem;color:var(--muted)">Consulte os valores atualizados diretamente com o suporte via WhatsApp.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-check-circle"></i> 4. Uso Permitido</div>
+    <p>O MedControl pode ser utilizado para:</p>
+    <ul>
+      <li>Controle de validade e estoque de medicamentos da própria empresa</li>
+      <li>Geração de relatórios internos de gestão</li>
+      <li>Integração com sistemas internos via API REST</li>
+      <li>Gerenciamento de múltiplas filiais da mesma rede</li>
+    </ul>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-x-circle"></i> 5. Uso Proibido</div>
+    <p>É expressamente proibido:</p>
+    <ul>
+      <li>Tentar acessar áreas do sistema sem autorização (invasão, engenharia reversa)</li>
+      <li>Compartilhar credenciais de acesso com pessoas não autorizadas</li>
+      <li>Cadastrar dados falsos, fraudulentos ou de terceiros sem autorização</li>
+      <li>Usar o sistema para fins ilegais ou que violem legislação vigente</li>
+      <li>Realizar ataques ao sistema (força bruta, injeção, DoS, etc.)</li>
+      <li>Revender, sublicenciar ou transferir o acesso ao sistema sem autorização</li>
+      <li>Copiar, reproduzir ou criar produtos derivados do MedControl</li>
+    </ul>
+    <div class="warning-box">
+      O descumprimento destas proibições resultará no encerramento imediato da conta, sem direito a reembolso, e poderá implicar responsabilização civil e criminal.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-hdd"></i> 6. Dados e Backup</div>
+    <ul>
+      <li>Os dados cadastrados no sistema pertencem ao contratante</li>
+      <li>O MedControl realiza backups automáticos diários via Supabase</li>
+      <li>Em caso de encerramento da conta, os dados ficam disponíveis por <strong>30 dias</strong> para exportação</li>
+      <li>Após esse prazo, os dados poderão ser excluídos permanentemente</li>
+      <li>Recomendamos exportar relatórios PDF periodicamente como cópia de segurança local</li>
+    </ul>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-activity"></i> 7. Disponibilidade do Serviço</div>
+    <p>O MedControl se esforça para manter o sistema disponível 24 horas por dia, 7 dias por semana. No entanto:</p>
+    <ul>
+      <li>Não garantimos disponibilidade ininterrupta (SLA de 99% de uptime)</li>
+      <li>Manutenções programadas serão comunicadas com antecedência</li>
+      <li>Falhas de infraestrutura de terceiros (Railway, Supabase) estão fora do nosso controle direto</li>
+      <li>Não nos responsabilizamos por perdas decorrentes de indisponibilidade temporária</li>
+    </ul>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-exclamation-triangle"></i> 8. Limitação de Responsabilidade</div>
+    <p>O MedControl é uma ferramenta de <strong>apoio à gestão</strong> de validade de medicamentos. Portanto:</p>
+    <ul>
+      <li>Não substituímos controles físicos obrigatórios por legislação sanitária</li>
+      <li>A responsabilidade pelo cumprimento de normas da ANVISA é exclusivamente do estabelecimento</li>
+      <li>Não nos responsabilizamos por decisões tomadas com base nos dados do sistema</li>
+      <li>Nossa responsabilidade é limitada ao valor pago pelo último período de assinatura</li>
+    </ul>
+    <div class="info-box">
+      O sistema é uma ferramenta de apoio. A responsabilidade pela conformidade regulatória e sanitária é sempre do estabelecimento contratante.
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-lock"></i> 9. Propriedade Intelectual</div>
+    <p>O MedControl, incluindo seu código-fonte, interface, marca, logotipo e documentação, é protegido por direitos de propriedade intelectual. É proibido:</p>
+    <ul>
+      <li>Copiar, reproduzir ou redistribuir qualquer parte do sistema</li>
+      <li>Usar a marca "MedControl" sem autorização expressa</li>
+      <li>Realizar engenharia reversa ou descompilar o software</li>
+    </ul>
+    <p>Os dados cadastrados pelo contratante (medicamentos, filiais, etc.) pertencem ao contratante. O MedControl não reivindica propriedade sobre eles.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-door-closed"></i> 10. Rescisão</div>
+    <p>O contrato pode ser encerrado:</p>
+    <ul>
+      <li><strong>Pelo contratante:</strong> a qualquer momento, solicitando o cancelamento via WhatsApp</li>
+      <li><strong>Pelo MedControl:</strong> em caso de descumprimento destes Termos, sem aviso prévio</li>
+      <li><strong>Por inadimplência:</strong> após o vencimento sem renovação do pagamento</li>
+    </ul>
+    <p>Em caso de rescisão, os dados ficam disponíveis para exportação por 30 dias conforme cláusula 6.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-geo-alt"></i> 11. Foro e Legislação Aplicável</div>
+    <p>Estes Termos são regidos pelas leis brasileiras. Fica eleito o foro da comarca de <strong>Vitória da Conquista — BA</strong> para dirimir quaisquer controvérsias decorrentes deste instrumento, com renúncia a qualquer outro, por mais privilegiado que seja.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-arrow-repeat"></i> 12. Alterações nos Termos</div>
+    <p>Estes Termos podem ser atualizados a qualquer momento. Alterações relevantes serão comunicadas dentro do sistema com antecedência mínima de <strong>15 dias</strong>. O uso continuado do sistema após a vigência das alterações implica aceitação dos novos termos.</p>
+  </div>
+
+  <hr class="divider">
+
+  <div class="doc-section">
+    <div class="section-title"><i class="bi bi-envelope"></i> 13. Contato</div>
+    <div class="contact-card">
+      <p><strong>MedControl — Suporte e Atendimento</strong></p>
+      <p><i class="bi bi-whatsapp me-1" style="color:#22c55e"></i> <a href="https://wa.me/5577988175300" target="_blank">(77) 9 8817-5300</a></p>
+      <p><i class="bi bi-clock me-1"></i> Atendimento: Segunda a Sexta, 8h às 18h</p>
+      <p style="margin-top:.8rem;font-size:.8rem;color:var(--muted)">Para dúvidas sobre privacidade e dados pessoais, consulte também nossa <a href="{{ url_for('politica_privacidade') }}">Política de Privacidade</a>.</p>
+    </div>
+    <div style="margin-top:2rem;text-align:center;">
+      <a href="{{ url_for('politica_privacidade') }}" class="nav-item" style="display:inline-flex;background:var(--surface2);border:1px solid var(--card-border);border-radius:10px;padding:.7rem 1.4rem;font-weight:600;">
+        <i class="bi bi-shield-check me-2"></i> Ver Política de Privacidade
+      </a>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  (function() {
+    const tema = "{{ session.get('tema', 'light') }}";
+    document.documentElement.setAttribute('data-theme', tema);
+    const lbl = document.getElementById('theme-label');
+    if (lbl) lbl.textContent = tema === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+  })();
+  function toggleTheme() {
+    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    document.getElementById('theme-label').textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+    fetch('/preferencias/tema', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tema: newTheme}) });
+  }
+</script>
+</body>
+</html>
