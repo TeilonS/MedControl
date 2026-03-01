@@ -168,7 +168,9 @@ class Usuario(db.Model):
     nome_exibir  = db.Column(db.String(150), nullable=True)
     filial_nome  = db.Column(db.String(150), nullable=True)
     rede_id      = db.Column(db.Integer, db.ForeignKey('redes.id'), nullable=True)
-    tema         = db.Column(db.String(10), default='light')
+    tema              = db.Column(db.String(10), default='light')
+    termos_aceitos    = db.Column(db.Boolean, default=False, nullable=False)
+    termos_aceitos_em = db.Column(db.DateTime, nullable=True)
 
     @property
     def is_superadmin(self): return self.perfil == 'superadmin'
@@ -188,6 +190,11 @@ class Usuario(db.Model):
         if self.is_superadmin: return False
         if not self.rede: return False
         return self.rede.alerta_renovacao
+
+    @property
+    def aceitou_termos(self):
+        if self.is_superadmin: return True   # superadmin não precisa aceitar
+        return bool(self.termos_aceitos)
 
     def set_password(self, senha_plana):
         self.password = generate_password_hash(senha_plana)
@@ -259,6 +266,9 @@ def assinatura_required(f):
         u = Usuario.query.get(session['user_id'])
         if not u or not u.assinatura_ok:
             return redirect(url_for('assinatura_expirada'))
+        # Força leitura e aceite dos termos antes de qualquer rota
+        if not u.aceitou_termos:
+            return redirect(url_for('aceitar_termos'))
         return f(*args, **kwargs)
     return decorated
 
@@ -381,6 +391,33 @@ def alterar_senha():
             return redirect(url_for('dashboard'))
 
     return render_template('alterar_senha.html', usuario=u)
+
+
+# =============================================================================
+# ACEITE DE TERMOS — obrigatório na primeira sessão
+# =============================================================================
+
+@app.route('/aceitar-termos', methods=['GET', 'POST'])
+@login_required
+def aceitar_termos():
+    u = get_usuario_atual()
+    # superadmin nunca precisa aceitar
+    if u.aceitou_termos:
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        aceite = request.form.get('aceite')
+        if aceite == '1':
+            u.termos_aceitos    = True
+            u.termos_aceitos_em = datetime.utcnow()
+            db.session.commit()
+            audit('termos_aceitos', f'username={u.username} ip={request.remote_addr}')
+            flash('Bem-vindo ao MedControl! Termos aceitos com sucesso.', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Você precisa aceitar os Termos de Uso para continuar.', 'danger')
+
+    return render_template('aceitar_termos.html', usuario=u)
 
 
 # =============================================================================
@@ -1016,6 +1053,19 @@ with app.app_context():
     if os.environ.get('RESET_DB') == '1':
         db.drop_all()
     db.create_all()
+    # Migração: adiciona colunas novas se não existirem (PostgreSQL e SQLite)
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(db.text(
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS termos_aceitos BOOLEAN DEFAULT FALSE"
+            ))
+            conn.execute(db.text(
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS termos_aceitos_em TIMESTAMP"
+            ))
+            conn.commit()
+    except Exception:
+        # SQLite não suporta IF NOT EXISTS — ignora se coluna já existe
+        pass
     seed_database()
 
 if __name__ == '__main__':
