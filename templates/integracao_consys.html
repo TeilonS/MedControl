@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="{{ session.get('tema', 'light') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Integração Consys</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; }
+
+    /* sidebar igual ao restante do app */
+    .sidebar { width: var(--sidebar-w); height: 100vh; background: var(--card-bg); border-right: 1px solid var(--sb-border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; overflow: hidden; }
+    .sidebar-logo { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--sb-border); flex-shrink: 0; }
+    .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--primary), var(--primary-l)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: .7rem; }
+    .sidebar-logo h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); }
+    .sidebar-logo span { font-size: .75rem; color: var(--muted); }
+    .sidebar-nav { padding: 1rem; flex: 1; overflow-y: auto; overflow-x: hidden; }
+    .sidebar-nav::-webkit-scrollbar { width: 3px; }
+    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    .nav-section-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding: .6rem .5rem .3rem; }
+    .nav-item { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; text-decoration: none; transition: all .2s; margin-bottom: .15rem; }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: linear-gradient(135deg, rgba(15,118,110,0.25), rgba(20,184,166,0.12)); color: var(--primary-l); border: 1px solid rgba(20,184,166,0.2); }
+    .nav-item i { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--sb-border); flex-shrink: 0; }
+    .user-chip { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; background: var(--surface2); border-radius: 10px; border: 1px solid var(--card-border); }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-l)); display: flex; align-items: center; justify-content: center; font-size: .85rem; color: white; }
+    .user-name { font-size: .85rem; font-weight: 600; color: var(--text); }
+    .user-role { font-size: .7rem; color: var(--muted); }
+    .logout-btn { color: #ef4444; text-decoration: none; font-size: .78rem; }
+    .theme-toggle-wrap { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; }
+    .theme-toggle-label { font-size: .78rem; color: var(--muted); }
+    .theme-toggle { width: 36px; height: 20px; border-radius: 20px; background: var(--primary); border: none; cursor: pointer; position: relative; }
+    .theme-toggle::after { content:''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; transition: transform .2s; }
+    [data-theme="dark"] .theme-toggle::after { transform: translateX(16px); }
+
+    /* main */
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 2.5rem; }
+    .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.8rem; color: var(--text); margin-bottom: .3rem; }
+    .page-sub { font-size: .85rem; color: var(--muted); margin-bottom: 2rem; }
+
+    /* cards */
+    .card-mc { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; margin-bottom: 1.5rem; overflow: hidden; }
+    .card-header-mc { padding: 1rem 1.4rem; border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; }
+    .card-header-mc h5 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem; color: var(--text); margin: 0; display: flex; align-items: center; gap: .5rem; }
+    .card-body-mc { padding: 1.4rem; }
+
+    /* status badges */
+    .badge-ok      { background: rgba(34,197,94,0.12); color: #16a34a; border: 1px solid rgba(34,197,94,0.25); padding: .25rem .75rem; border-radius: 20px; font-size: .72rem; font-weight: 700; }
+    .badge-erro    { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); padding: .25rem .75rem; border-radius: 20px; font-size: .72rem; font-weight: 700; }
+    .badge-nunca   { background: rgba(100,116,139,0.1); color: var(--muted); border: 1px solid rgba(100,116,139,0.2); padding: .25rem .75rem; border-radius: 20px; font-size: .72rem; font-weight: 700; }
+    .badge-inativo { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); padding: .25rem .75rem; border-radius: 20px; font-size: .72rem; font-weight: 700; }
+
+    /* form */
+    label.field-label { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: .35rem; display: block; }
+    .field-input { width: 100%; background: var(--surface2); border: 1px solid var(--card-border); color: var(--text); border-radius: 10px; padding: .65rem .9rem; font-family: 'DM Sans', sans-serif; font-size: .9rem; transition: border-color .2s; }
+    .field-input:focus { outline: none; border-color: var(--primary-l); box-shadow: 0 0 0 3px rgba(20,184,166,0.12); }
+    .field-hint { font-size: .75rem; color: var(--muted); margin-top: .3rem; }
+
+    /* toggle switch */
+    .toggle-row { display: flex; align-items: center; gap: 1rem; }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: var(--card-border); border-radius: 24px; cursor: pointer; transition: .2s; }
+    .slider::before { content:''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .2s; }
+    input:checked + .slider { background: var(--primary-l); }
+    input:checked + .slider::before { transform: translateX(20px); }
+    .toggle-label { font-size: .88rem; color: var(--text); font-weight: 500; }
+
+    /* botões de ação */
+    .btn-mc { display: inline-flex; align-items: center; gap: .5rem; padding: .65rem 1.3rem; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: .85rem; cursor: pointer; border: none; transition: all .2s; text-decoration: none; }
+    .btn-primary-mc { background: linear-gradient(135deg, var(--primary), var(--primary-l)); color: white; box-shadow: 0 4px 14px rgba(20,184,166,0.25); }
+    .btn-primary-mc:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(20,184,166,0.35); color: white; }
+    .btn-outline-mc { background: transparent; border: 1px solid var(--card-border); color: var(--muted); }
+    .btn-outline-mc:hover { background: var(--surface2); color: var(--text); border-color: var(--primary-l); }
+    .btn-amber-mc { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #d97706; }
+    .btn-amber-mc:hover { background: rgba(245,158,11,0.2); color: #b45309; }
+    .btn-green-mc { background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: #16a34a; }
+    .btn-green-mc:hover { background: rgba(34,197,94,0.2); }
+
+    /* info box */
+    .info-box { background: rgba(20,184,166,0.06); border: 1px solid rgba(20,184,166,0.2); border-left: 4px solid var(--primary-l); border-radius: 0 12px 12px 0; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: .87rem; color: var(--text); line-height: 1.6; }
+    .warn-box  { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 1rem 1.2rem; margin-bottom: 1.5rem; font-size: .87rem; color: var(--text); line-height: 1.6; }
+
+    /* status grid */
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .status-item { background: var(--surface2); border: 1px solid var(--card-border); border-radius: 12px; padding: 1rem; }
+    .status-item .si-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-weight: 700; margin-bottom: .4rem; }
+    .status-item .si-val { font-size: .92rem; font-weight: 600; color: var(--text); }
+
+    /* passos */
+    .steps { counter-reset: step; }
+    .step-item { display: flex; gap: 1rem; margin-bottom: 1.2rem; align-items: flex-start; }
+    .step-num { width: 28px; height: 28px; min-width: 28px; border-radius: 50%; background: rgba(20,184,166,0.15); border: 1px solid rgba(20,184,166,0.3); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: .8rem; color: var(--primary-l); }
+    .step-content strong { display: block; font-size: .88rem; color: var(--text); margin-bottom: .15rem; }
+    .step-content p { font-size: .8rem; color: var(--muted); margin: 0; line-height: 1.5; }
+
+    /* flash */
+    .flash-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: #16a34a; border-radius: 10px; padding: .75rem 1rem; font-size: .87rem; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+    .flash-danger  { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #dc2626; border-radius: 10px; padding: .75rem 1rem; font-size: .87rem; margin-bottom: 1rem; display: flex; align-items: center; gap: .5rem; }
+
+    a { color: var(--primary-l); }
+    hr { border-color: var(--card-border); margin: 1.2rem 0; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">💊</div>
+    <h2>MedControl</h2>
+    <span>Controle de Validade v1.0</span>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">Principal</div>
+    <a href="{{ url_for('dashboard') }}" class="nav-item"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="{{ url_for('cadastro') }}" class="nav-item"><i class="bi bi-plus-circle"></i> Novo Medicamento</a>
+    <div class="nav-section-title mt-3">Integrações</div>
+    <a href="{{ url_for('integracao_consys') }}" class="nav-item active"><i class="bi bi-plugin"></i> Consys ERP</a>
+    {% if session.perfil == 'superadmin' %}
+    <div class="nav-section-title mt-3">Admin</div>
+    <a href="{{ url_for('admin_dashboard') }}" class="nav-item"><i class="bi bi-building"></i> Redes & Clientes</a>
+    {% endif %}
+    <div class="nav-section-title mt-3">Legal</div>
+    <a href="{{ url_for('politica_privacidade') }}" class="nav-item"><i class="bi bi-shield-check"></i> Política de Privacidade</a>
+    <a href="{{ url_for('termos_uso') }}" class="nav-item"><i class="bi bi-file-text"></i> Termos de Uso</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="theme-toggle-wrap">
+      <span class="theme-toggle-label" id="theme-label">☀️ Modo claro</span>
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()"></button>
+    </div>
+    <div class="user-chip">
+      <div class="user-avatar">{{ session.username[0].upper() }}</div>
+      <div>
+        <div class="user-name">{{ session.username }}</div>
+        <div class="user-role">
+          {% if session.perfil == 'superadmin' %}Super Admin
+          {% elif session.perfil == 'dono_rede' %}Dono da Rede
+          {% else %}{{ session.filial_nome or 'Filial' }}{% endif %}
+        </div>
+      </div>
+      <a href="{{ url_for('logout') }}" class="logout-btn ms-auto"><i class="bi bi-box-arrow-right"></i></a>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash-{{ 'success' if cat == 'success' else 'danger' }}">
+        <i class="bi bi-{{ 'check-circle-fill' if cat == 'success' else 'exclamation-triangle-fill' }}"></i>
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="page-title">🔌 Integração Consys ERP</div>
+  <div class="page-sub">
+    Rede: <strong>{{ rede.nome }}</strong> &nbsp;·&nbsp;
+    Configure a conexão com o Consys para importar medicamentos automaticamente.
+  </div>
+
+  <!-- AVISO de desenvolvimento -->
+  <div class="warn-box">
+    <strong>⚠️ Integração em desenvolvimento</strong> — A estrutura está preparada e aguardando as credenciais e documentação oficial da API do Consys.
+    Quando disponíveis, basta preencher os campos abaixo e clicar em <strong>Testar Conexão</strong>.
+    Os medicamentos serão importados automaticamente com lote, validade e quantidade.
+  </div>
+
+  <!-- STATUS ATUAL -->
+  <div class="card-mc">
+    <div class="card-header-mc">
+      <h5><i class="bi bi-activity" style="color:var(--primary-l)"></i> Status da Integração</h5>
+      {% if not integracao.ativa %}
+        <span class="badge-inativo">Inativa</span>
+      {% elif integracao.sync_status == 'ok' %}
+        <span class="badge-ok">✓ Ativa</span>
+      {% elif integracao.sync_status == 'erro' %}
+        <span class="badge-erro">✗ Erro</span>
+      {% else %}
+        <span class="badge-nunca">Nunca sincronizado</span>
+      {% endif %}
+    </div>
+    <div class="card-body-mc">
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="si-label">Última Sincronização</div>
+          <div class="si-val">
+            {% if integracao.ultimo_sync %}
+              {{ integracao.ultimo_sync.strftime('%d/%m/%Y %H:%M') }}
+            {% else %}
+              <span style="color:var(--muted)">Nunca</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="status-item">
+          <div class="si-label">Resultado</div>
+          <div class="si-val">{{ integracao.sync_mensagem or '—' }}</div>
+        </div>
+        <div class="status-item">
+          <div class="si-label">URL Configurada</div>
+          <div class="si-val">
+            {% if integracao.base_url %}
+              <span style="color:var(--primary-l)">✓ Sim</span>
+            {% else %}
+              <span style="color:var(--muted)">Não</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="status-item">
+          <div class="si-label">API Key</div>
+          <div class="si-val">
+            {% if integracao.api_key %}
+              <span style="color:var(--primary-l)">✓ Configurada</span>
+            {% else %}
+              <span style="color:var(--muted)">Não configurada</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações rápidas -->
+      {% if integracao.ativa and integracao.base_url and integracao.api_key %}
+      <hr>
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap;margin-top:.2rem">
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="acao" value="testar">
+          <button type="submit" class="btn-mc btn-outline-mc">
+            <i class="bi bi-wifi"></i> Testar Conexão
+          </button>
+        </form>
+        <form method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="acao" value="sincronizar">
+          <button type="submit" class="btn-mc btn-green-mc">
+            <i class="bi bi-arrow-repeat"></i> Sincronizar Agora
+          </button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- CONFIGURAÇÃO -->
+  <div class="card-mc">
+    <div class="card-header-mc">
+      <h5><i class="bi bi-gear" style="color:var(--primary-l)"></i> Configuração da Conexão</h5>
+    </div>
+    <div class="card-body-mc">
+      <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="acao" value="salvar">
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-8">
+            <label class="field-label">URL Base da API</label>
+            <input type="url" name="base_url" class="field-input"
+              value="{{ integracao.base_url or '' }}"
+              placeholder="https://api.consysonline.com.br">
+            <div class="field-hint">Endereço fornecido pela Consys ao ativar o módulo de API.</div>
+          </div>
+          <div class="col-md-4">
+            <label class="field-label">Código da Empresa</label>
+            <input type="text" name="cod_empresa" class="field-input"
+              value="{{ integracao.cod_empresa or '' }}"
+              placeholder="Ex: 001">
+            <div class="field-hint">Código da sua empresa no sistema Consys.</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="field-label">Chave de API (Bearer Token)</label>
+          <input type="password" name="api_key" class="field-input" id="apiKeyInput"
+            value="{{ integracao.api_key or '' }}"
+            placeholder="Cole aqui o token fornecido pela Consys">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-top:.35rem">
+            <input type="checkbox" id="showKey" onchange="document.getElementById('apiKeyInput').type = this.checked ? 'text' : 'password'">
+            <label for="showKey" style="font-size:.75rem;color:var(--muted);cursor:pointer">Mostrar chave</label>
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="toggle-row mb-4">
+          <label class="switch">
+            <input type="checkbox" name="ativa" value="1" id="toggleAtiva" {{ 'checked' if integracao.ativa }}>
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">Integração ativa — sincronizar automaticamente</span>
+        </div>
+
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+          <button type="submit" class="btn-mc btn-primary-mc">
+            <i class="bi bi-floppy"></i> Salvar Configuração
+          </button>
+          <a href="{{ url_for('dashboard') }}" class="btn-mc btn-outline-mc">
+            <i class="bi bi-arrow-left"></i> Voltar
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- COMO OBTER AS CREDENCIAIS -->
+  <div class="card-mc">
+    <div class="card-header-mc">
+      <h5><i class="bi bi-question-circle" style="color:var(--primary-l)"></i> Como obter as credenciais do Consys</h5>
+    </div>
+    <div class="card-body-mc">
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>Confirmar que o cliente usa Consys</strong>
+            <p>Verificar a versão no menu Ajuda → Sobre dentro do sistema Consys instalado na farmácia.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>Solicitar ativação do módulo de API</strong>
+            <p>O cliente entra em contato com a Consys e solicita a ativação do módulo de integração externa. Pode ter custo adicional dependendo do plano.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>Registrar o MedControl como parceiro</strong>
+            <p>Acessar <a href="https://www.consysonline.com.br" target="_blank">consysonline.com.br</a> → área de parceiros e solicitar credenciais de integração informando que o MedControl precisa acessar os endpoints de produtos, estoque e lotes.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>Receber e configurar as credenciais aqui</strong>
+            <p>Após aprovação, a Consys fornece a URL base, o Bearer Token e o código da empresa. Basta colar nos campos acima e clicar em Testar Conexão.</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>Primeira sincronização</strong>
+            <p>Clicar em "Sincronizar Agora". O MedControl importará todos os produtos com lote, validade e quantidade do Consys automaticamente.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-top:1rem;margin-bottom:0">
+        <strong>O que será importado automaticamente:</strong>
+        nome do medicamento, código de barras (EAN), fabricante, número do lote, data de validade e quantidade em estoque.
+        Após a primeira importação, as sincronizações seguintes atualizam apenas os dados alterados.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  (function() {
+    const tema = "{{ session.get('tema', 'light') }}";
+    document.documentElement.setAttribute('data-theme', tema);
+    const lbl = document.getElementById('theme-label');
+    if (lbl) lbl.textContent = tema === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+  })();
+  function toggleTheme() {
+    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    document.getElementById('theme-label').textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+    fetch('/preferencias/tema', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tema: newTheme}) });
+  }
+</script>
+</body>
+</html>

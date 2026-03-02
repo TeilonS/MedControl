@@ -35,6 +35,10 @@ from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
 import io, os, json, logging
 import urllib.request, urllib.error
+try:
+    import requests as _requests
+except ImportError:
+    _requests = None
 
 app = Flask(__name__)
 
@@ -874,6 +878,219 @@ def dono_excluir_filial(id):
     flash(f'Filial "{nome}" removida.', 'warning')
     return redirect(url_for('dashboard'))
 
+
+# =============================================================================
+# INTEGRAÇÃO CONSYS ERP
+# =============================================================================
+# Estrutura preparada para quando as credenciais do Consys forem disponibilizadas.
+# Para ativar: configurar base_url, api_key e cod_empresa no painel admin.
+
+def _consys_headers(integracao):
+    """Monta headers padrão para requisições à API do Consys."""
+    return {
+        'Authorization': f'Bearer {integracao.api_key}',
+        'Content-Type': 'application/json',
+        'X-Empresa': str(integracao.cod_empresa or ''),
+    }
+
+def _consys_get(integracao, endpoint):
+    """Faz GET na API do Consys. Retorna (dict|list, None) ou (None, erro_str)."""
+    if _requests is None:
+        return None, 'Biblioteca requests não instalada (pip install requests)'
+    url = f"{integracao.base_url.rstrip('/')}/{endpoint.lstrip('/')}"
+    try:
+        r = _requests.get(url, headers=_consys_headers(integracao), timeout=15)
+        r.raise_for_status()
+        return r.json(), None
+    except Exception as e:
+        return None, str(e)
+
+def _sync_consys(rede_id):
+    """
+    Sincroniza medicamentos do Consys com o MedControl.
+    
+    Endpoints esperados (a confirmar com documentação oficial Consys):
+      GET /api/v1/produtos          → lista de produtos com EAN, nome, fabricante
+      GET /api/v1/estoque           → lotes, validades e quantidades
+    
+    Quando a documentação oficial chegar, ajustar os endpoints abaixo.
+    """
+    integracao = IntegracaoConsys.query.filter_by(rede_id=rede_id, ativa=True).first()
+    if not integracao:
+        return False, 'Integração não configurada ou inativa'
+
+    # ── PRODUTOS ──────────────────────────────────────────────────────────────
+    # TODO: substituir '/api/v1/produtos' pelo endpoint real quando documentação chegar
+    produtos, erro = _consys_get(integracao, '/api/v1/produtos')
+    if erro:
+        integracao.sync_status   = 'erro'
+        integracao.sync_mensagem = f'Erro ao buscar produtos: {erro}'
+        integracao.ultimo_sync   = datetime.utcnow()
+        db.session.commit()
+        return False, integracao.sync_mensagem
+
+    # ── ESTOQUE / LOTES ───────────────────────────────────────────────────────
+    # TODO: substituir '/api/v1/estoque' pelo endpoint real quando documentação chegar
+    estoque, erro = _consys_get(integracao, '/api/v1/estoque')
+    if erro:
+        integracao.sync_status   = 'erro'
+        integracao.sync_mensagem = f'Erro ao buscar estoque: {erro}'
+        integracao.ultimo_sync   = datetime.utcnow()
+        db.session.commit()
+        return False, integracao.sync_mensagem
+
+    # ── MAPEAMENTO ────────────────────────────────────────────────────────────
+    # Monta índice de estoque por código de produto para cruzar com produtos
+    # Estrutura esperada (ajustar conforme JSON real do Consys):
+    #   produtos: [{ "codigo": "123", "ean": "789", "nome": "...", "fabricante": "..." }]
+    #   estoque:  [{ "codigo_produto": "123", "lote": "L01", "validade": "2026-12", "quantidade": 50 }]
+    estoque_idx = {}
+    for item in (estoque or []):
+        cod = str(item.get('codigo_produto') or item.get('codigo') or '')
+        if cod:
+            estoque_idx.setdefault(cod, []).append(item)
+
+    importados = 0
+    atualizados = 0
+
+    for prod in (produtos or []):
+        cod_ext = str(prod.get('codigo') or '')
+        ean     = str(prod.get('ean') or prod.get('codigo_barras') or '')
+        nome    = str(prod.get('nome') or prod.get('descricao') or '')[:200].strip()
+        fab     = str(prod.get('fabricante') or '')[:150].strip()
+
+        if not nome:
+            continue
+
+        lotes = estoque_idx.get(cod_ext, [])
+        if not lotes:
+            continue  # sem estoque, ignora
+
+        for lote_item in lotes:
+            lote     = str(lote_item.get('lote') or 'S/L')[:50]
+            val_str  = str(lote_item.get('validade') or lote_item.get('data_validade') or '')
+            qtd      = int(lote_item.get('quantidade') or lote_item.get('qtd') or 0)
+
+            # Tenta parsear validade em vários formatos (YYYY-MM, YYYY-MM-DD, DD/MM/YYYY)
+            data_val = None
+            for fmt in ('%Y-%m-%d', '%Y-%m', '%d/%m/%Y', '%d/%m/%y'):
+                try:
+                    parsed = datetime.strptime(val_str[:len(fmt.replace('%Y','0000').replace('%m','00').replace('%d','00'))], fmt)
+                    data_val = parsed.date()
+                    break
+                except Exception:
+                    continue
+            if not data_val:
+                continue  # validade inválida, ignora
+
+            # Verifica se já existe pelo código externo + lote
+            med = Medicamento.query.filter_by(
+                rede_id=rede_id, codigo_externo=cod_ext, lote=lote
+            ).first()
+
+            if med:
+                # Atualiza dados existentes
+                med.quantidade     = qtd
+                med.data_validade  = data_val
+                med.codigo_barras  = ean or med.codigo_barras
+                atualizados += 1
+            else:
+                # Cria novo medicamento
+                med = Medicamento(
+                    nome            = nome,
+                    codigo_barras   = ean,
+                    fabricante      = fab,
+                    principio_ativo = '',
+                    lote            = lote,
+                    data_validade   = data_val,
+                    quantidade      = qtd,
+                    preco_unitario  = float(lote_item.get('preco') or 0),
+                    origem_cadastro = 'consys',
+                    codigo_externo  = cod_ext,
+                    rede_id         = rede_id,
+                )
+                db.session.add(med)
+                importados += 1
+
+    integracao.ultimo_sync   = datetime.utcnow()
+    integracao.sync_status   = 'ok'
+    integracao.sync_mensagem = f'{importados} importados, {atualizados} atualizados'
+    db.session.commit()
+    audit('consys_sync', f'rede_id={rede_id} importados={importados} atualizados={atualizados}')
+    return True, integracao.sync_mensagem
+
+
+# ── ROTAS ─────────────────────────────────────────────────────────────────────
+
+@app.route('/integracoes/consys', methods=['GET', 'POST'])
+@login_required
+def integracao_consys():
+    """Tela de configuração da integração Consys (acesso: dono_rede ou superadmin)."""
+    u = get_usuario_atual()
+    if u.perfil not in ('dono_rede', 'superadmin'):
+        flash('Acesso restrito ao dono da rede.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    rede_id = u.rede_id if u.perfil == 'dono_rede' else request.args.get('rede_id', type=int)
+    if not rede_id:
+        flash('Rede não encontrada.', 'danger')
+        return redirect(url_for('dashboard'))
+
+    integracao = IntegracaoConsys.query.filter_by(rede_id=rede_id).first()
+    if not integracao:
+        integracao = IntegracaoConsys(rede_id=rede_id)
+        db.session.add(integracao)
+        db.session.commit()
+
+    if request.method == 'POST':
+        acao = request.form.get('acao', 'salvar')
+
+        if acao == 'salvar':
+            integracao.base_url    = (request.form.get('base_url') or '').strip()[:300]
+            integracao.api_key     = (request.form.get('api_key') or '').strip()[:500]
+            integracao.cod_empresa = (request.form.get('cod_empresa') or '').strip()[:50]
+            integracao.ativa       = request.form.get('ativa') == '1'
+            db.session.commit()
+            audit('consys_config_salva', f'rede_id={rede_id}')
+            flash('Configuração salva com sucesso.', 'success')
+
+        elif acao == 'testar':
+            if not integracao.base_url or not integracao.api_key:
+                flash('Preencha a URL base e a chave de API antes de testar.', 'danger')
+            else:
+                # Teste simples de conectividade — pinga a URL base
+                dados, erro = _consys_get(integracao, '/api/v1/status')
+                if erro:
+                    flash(f'Falha na conexão: {erro}', 'danger')
+                else:
+                    flash('Conexão com o Consys estabelecida com sucesso! ✅', 'success')
+
+        elif acao == 'sincronizar':
+            ok, msg = _sync_consys(rede_id)
+            if ok:
+                flash(f'Sincronização concluída: {msg}', 'success')
+            else:
+                flash(f'Erro na sincronização: {msg}', 'danger')
+
+        return redirect(url_for('integracao_consys', rede_id=rede_id if u.perfil == 'superadmin' else None))
+
+    rede = Rede.query.get_or_404(rede_id)
+    return render_template('integracao_consys.html', integracao=integracao, rede=rede)
+
+
+@app.route('/integracoes/consys/sync', methods=['POST'])
+@login_required
+def consys_sync_ajax():
+    """Endpoint AJAX para sincronização rápida."""
+    u = get_usuario_atual()
+    if u.perfil not in ('dono_rede', 'superadmin'):
+        return json.dumps({'ok': False, 'msg': 'Sem permissão'}), 403
+
+    rede_id = u.rede_id if u.perfil == 'dono_rede' else request.json.get('rede_id')
+    ok, msg = _sync_consys(rede_id)
+    return json.dumps({'ok': ok, 'msg': msg})
+
+
 # =============================================================================
 # PÁGINAS LEGAIS — LGPD
 # =============================================================================
@@ -1081,10 +1298,34 @@ with app.app_context():
             ))
             conn.commit()
     except Exception:
-        # SQLite não suporta IF NOT EXISTS — ignora se coluna já existe
+        pass
+    # Cria tabela de integração Consys se não existir (create_all já faz isso,
+    # mas garantimos aqui para bancos existentes)
+    try:
+        db.create_all()
+    except Exception:
         pass
     seed_database()
 
 if __name__ == '__main__':
     app.run(debug=os.environ.get('FLASK_DEBUG', '0') == '1',
             host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+class IntegracaoConsys(db.Model):
+    """Armazena configuração da integração com o ERP Consys por rede."""
+    __tablename__ = 'integracoes_consys'
+    id              = db.Column(db.Integer, primary_key=True)
+    rede_id         = db.Column(db.Integer, db.ForeignKey('redes.id'), unique=True, nullable=False)
+    ativa           = db.Column(db.Boolean, default=False)
+    base_url        = db.Column(db.String(300), nullable=True)   # ex: https://api.consysonline.com.br
+    api_key         = db.Column(db.String(500), nullable=True)   # Bearer token / chave de API
+    cod_empresa     = db.Column(db.String(50),  nullable=True)   # Código da empresa no Consys
+    ultimo_sync     = db.Column(db.DateTime,    nullable=True)
+    sync_status     = db.Column(db.String(50),  default='nunca') # nunca | ok | erro
+    sync_mensagem   = db.Column(db.String(500), nullable=True)
+    criado_em       = db.Column(db.DateTime,    default=datetime.utcnow)
+    atualizado_em   = db.Column(db.DateTime,    default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    rede = db.relationship('Rede', backref=db.backref('integracao_consys', uselist=False))
+
+
