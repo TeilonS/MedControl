@@ -206,10 +206,129 @@
     .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
     .empty-state i { font-size: 3rem; opacity: .3; margin-bottom: 1rem; display: block; }
 
-    /* ── RESPONSIVE ── */
+    /* ══════════════════════════════════════════
+       RESPONSIVE MOBILE — MedControl
+       ══════════════════════════════════════════ */
+
+    /* ── HAMBURGER BUTTON (visível só no mobile) ── */
+    .btn-hamburger {
+      display: none;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; width: 38px; height: 38px;
+      align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.1rem; color: var(--text);
+      flex-shrink: 0;
+    }
+
+    /* ── OVERLAY escuro ao abrir sidebar no mobile ── */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 99;
+      backdrop-filter: blur(2px);
+    }
+    .sidebar-overlay.active { display: block; }
+
+    /* ── BOTTOM NAV (navegação rápida no rodapé mobile) ── */
+    .bottom-nav {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: var(--card-bg);
+      border-top: 1px solid var(--card-border);
+      padding: .5rem 0 env(safe-area-inset-bottom, .5rem);
+      backdrop-filter: blur(20px);
+    }
+    .bottom-nav-inner { display: flex; justify-content: space-around; align-items: center; }
+    .bn-item {
+      display: flex; flex-direction: column; align-items: center;
+      gap: .2rem; padding: .3rem .8rem; border-radius: 10px;
+      text-decoration: none; color: var(--muted);
+      font-size: .62rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .04em; transition: color .2s; position: relative;
+      background: none; border: none; cursor: pointer;
+    }
+    .bn-item i { font-size: 1.25rem; }
+    .bn-item.active { color: var(--primary-l); }
+    .bn-item .bn-badge {
+      position: absolute; top: 0; right: 6px;
+      background: var(--red); color: white;
+      font-size: .55rem; width: 16px; height: 16px;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 800;
+    }
+
     @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); }
-      .main { margin-left: 0; padding: 1rem; }
+      /* sidebar desliza de fora para dentro */
+      .sidebar {
+        transform: translateX(-100%);
+        transition: transform .28s cubic-bezier(.4,0,.2,1);
+        z-index: 200;
+      }
+      .sidebar.open { transform: translateX(0); }
+
+      /* main ocupa 100% */
+      .main {
+        margin-left: 0 !important;
+        padding: 1rem 1rem 5rem; /* 5rem = espaço para bottom nav */
+      }
+
+      /* topbar mobile */
+      .topbar { margin-bottom: 1rem; }
+      .page-title { font-size: 1.25rem; }
+      .topbar-actions .btn span,
+      .topbar-actions .btn-outline-soft span { display: none; } /* esconde texto nos botões */
+
+      /* hamburguer aparece */
+      .btn-hamburger { display: flex; }
+
+      /* stat cards — 2 colunas no mobile */
+      .col-6 { flex: 0 0 50%; max-width: 50%; }
+      .stat-value { font-size: 1.6rem; }
+
+      /* busca e filtros */
+      .search-bar { flex-wrap: wrap; gap: .5rem; }
+      .filter-pills { flex-wrap: wrap; gap: .35rem; }
+      .pill { font-size: .72rem; padding: .3rem .7rem; }
+
+      /* gráfico some no mobile (não cabe bem) */
+      .col-lg-4.chart-col { display: none; }
+      .col-lg-8 { flex: 0 0 100%; max-width: 100%; }
+
+      /* tabela: esconde colunas menos importantes */
+      .col-hide-mobile { display: none !important; }
+
+      /* cards de medicamento (modo card no mobile) */
+      .med-card-mobile {
+        background: var(--card-bg); border: 1px solid var(--card-border);
+        border-radius: 14px; padding: 1rem; margin-bottom: .75rem;
+      }
+      .med-card-mobile .med-header {
+        display: flex; align-items: flex-start;
+        justify-content: space-between; margin-bottom: .6rem;
+      }
+      .med-card-mobile .med-title { font-weight: 700; font-size: .92rem; color: var(--text); }
+      .med-card-mobile .med-fab   { font-size: .73rem; color: var(--muted); margin-top: .1rem; }
+      .med-card-mobile .med-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem .8rem; margin-bottom: .75rem; }
+      .med-card-mobile .mg-label  { font-size: .67rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+      .med-card-mobile .mg-val    { font-size: .85rem; color: var(--text); font-weight: 500; }
+      .med-card-mobile .med-footer { display: flex; align-items: center; justify-content: space-between; }
+      .med-card-mobile .med-actions { display: flex; gap: .5rem; }
+
+      /* esconde tabela desktop no mobile */
+      .table-desktop { display: none !important; }
+
+      /* bottom nav aparece */
+      .bottom-nav { display: block; }
+
+      /* toast menor */
+      .toast-container { top: .75rem; right: .75rem; left: .75rem; }
+
+      /* modal feedback */
+      .modal-dialog { margin: 1rem; }
+    }
+
+    @media (max-width: 400px) {
+      .main { padding: .75rem .75rem 5rem; }
+      .pill { font-size: .68rem; padding: .25rem .55rem; }
     }
 
     .table { --bs-table-bg: transparent; --bs-table-color: var(--text); --bs-table-hover-bg: rgba(255,255,255,0.02); }
@@ -218,6 +337,8 @@
   </style>
 </head>
 <body>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <!-- ── TOAST FLASH MESSAGES ───────────────────────────────────────────── -->
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -342,9 +463,14 @@
 
   <!-- Topbar -->
   <div class="topbar">
-    <div>
-      <div class="page-title">Dashboard</div>
-      <div style="color:var(--muted);font-size:.82rem;">{{ hoje | datefmt_ptbr }}</div>
+    <div style="display:flex;align-items:center;gap:.7rem;">
+      <button class="btn-hamburger" onclick="toggleSidebar()" aria-label="Menu">
+        <i class="bi bi-list" id="hamburgerIcon"></i>
+      </button>
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div style="color:var(--muted);font-size:.82rem;">{{ hoje | datefmt_ptbr }}</div>
+      </div>
     </div>
     <div class="topbar-actions">
       <a href="{{ url_for('gerar_pdf') }}" class="btn btn-outline-soft">
@@ -477,12 +603,12 @@
         <thead>
           <tr class="table-head-row">
             <th>Medicamento</th>
-            <th>Cód. Barras</th>
+            <th class="col-hide-mobile">Cód. Barras</th>
             <th>Lote</th>
             <th>Validade</th>
             <th>Qtd.</th>
-            <th>Preço Unit.</th>
-            <th>Valor Total</th>
+            <th class="col-hide-mobile">Preço Unit.</th>
+            <th class="col-hide-mobile">Valor Total</th>
             <th>Status</th>
             <th>Ações</th>
           </tr>
@@ -494,7 +620,7 @@
               <div class="med-name">{{ med.nome }}</div>
               {% if med.fabricante %}<div class="med-code">{{ med.fabricante }}</div>{% endif %}
             </td>
-            <td>
+            <td class="col-hide-mobile">
               {% if med.codigo_barras %}
                 <span class="lote-badge">{{ med.codigo_barras }}</span>
               {% else %}
@@ -508,8 +634,8 @@
               </span>
             </td>
             <td><span style="font-weight:600;">{{ med.quantidade }}</span></td>
-            <td class="valor-text">R$ {{ "%.2f"|format(med.preco_unitario)|replace('.', ',') }}</td>
-            <td class="valor-text" style="{% if med.status == 'vencido' %}color:var(--red){% endif %}">
+            <td class="valor-text col-hide-mobile">R$ {{ "%.2f"|format(med.preco_unitario)|replace('.', ',') }}</td>
+            <td class="valor-text col-hide-mobile" style="{% if med.status == 'vencido' %}color:var(--red){% endif %}">
               R$ {{ "%.2f"|format(med.valor_total)|replace('.', ',') }}
             </td>
             <td>
@@ -707,5 +833,31 @@
       });
     }
   </script>
+
+<!-- ── BOTTOM NAV (mobile) ──────────────────────────────────────────────── -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <a href="{{ url_for('dashboard') }}" class="bn-item active">
+      <i class="bi bi-speedometer2"></i>
+      <span>Início</span>
+      {% if stats.vencidos > 0 %}
+      <span class="bn-badge">{{ stats.vencidos }}</span>
+      {% endif %}
+    </a>
+    <a href="{{ url_for('cadastro') }}" class="bn-item">
+      <i class="bi bi-plus-circle"></i>
+      <span>Cadastrar</span>
+    </a>
+    <a href="{{ url_for('gerar_pdf') }}" class="bn-item">
+      <i class="bi bi-file-earmark-pdf"></i>
+      <span>PDF</span>
+    </a>
+    <button class="bn-item" onclick="toggleSidebar()">
+      <i class="bi bi-list"></i>
+      <span>Menu</span>
+    </button>
+  </div>
+</nav>
+
 </body>
 </html>

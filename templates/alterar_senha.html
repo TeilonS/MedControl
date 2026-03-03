@@ -63,6 +63,26 @@
     .theme-toggle { width: 36px; height: 20px; border-radius: 20px; background: var(--primary); border: none; cursor: pointer; position: relative; transition: background .2s; }
     .theme-toggle::after { content:''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; transition: transform .2s; }
     [data-theme="dark"] .theme-toggle::after { transform: translateX(16px); }
+
+    .btn-hamburger {
+      display: none; background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; width: 38px; height: 38px;
+      align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.1rem; color: var(--text); flex-shrink: 0;
+    }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 99; backdrop-filter: blur(2px);
+    }
+    .sidebar-overlay.active { display: block; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); transition: transform .28s cubic-bezier(.4,0,.2,1); z-index: 200; }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0 !important; padding: 1rem 1rem 1.5rem; }
+      .btn-hamburger { display: flex; }
+      .page-title { font-size: 1.2rem !important; }
+      input, select, textarea { font-size: 16px !important; }
+    }
   </style>
 </head>
 <body>
@@ -168,6 +188,9 @@
 
   // Auto-hide alerts
   setTimeout(() => document.querySelectorAll('.alert').forEach(a => a.remove()), 4000);
+
+  function toggleSidebar(){var sb=document.querySelector('.sidebar'),ov=document.getElementById('sidebarOverlay'),ic=document.getElementById('hamburgerIcon');var o=sb.classList.toggle('open');ov.classList.toggle('active',o);if(ic)ic.className=o?'bi bi-x-lg':'bi bi-list';document.body.style.overflow=o?'hidden':'';}
+  function closeSidebar(){var sb=document.querySelector('.sidebar'),ov=document.getElementById('sidebarOverlay'),ic=document.getElementById('hamburgerIcon');sb.classList.remove('open');ov.classList.remove('active');if(ic)ic.className='bi bi-list';document.body.style.overflow='';}
 </script>
 </body>
 </html>
