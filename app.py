@@ -554,7 +554,7 @@ def cadastro():
                 filial_id = request.form.get('filial_id')
                 filial_id = int(filial_id) if filial_id and filial_id.isdigit() else None
                 fu        = Usuario.query.get(filial_id) if filial_id else None
-                rede_id   = fu.rede_id if fu else None
+                rede_id   = fu.rede_id if fu else (u.rede_id if u.is_dono else None)
 
             med = Medicamento(
                 nome            = request.form['nome'].strip()[:200],
@@ -885,6 +885,46 @@ def gerenciar_filiais():
     filiais = Usuario.query.filter_by(rede_id=u.rede_id, perfil='filial').all()
     return render_template('gerenciar_filiais.html', filiais=filiais, usuario=u)
 
+
+
+@app.route('/filiais/criar', methods=['POST'])
+@assinatura_required
+def dono_criar_filial():
+    u = get_usuario_atual()
+    if not u.is_dono:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('dashboard'))
+    try:
+        senha = request.form.get('password', '').strip()
+        username = request.form.get('username', '').strip()[:80]
+        filial_nome = request.form.get('filial_nome', '').strip()[:150]
+
+        if len(senha) < 6:
+            flash('Senha deve ter pelo menos 6 caracteres.', 'danger')
+            return redirect(url_for('gerenciar_filiais'))
+        if not username or not filial_nome:
+            flash('Preencha nome da filial e login.', 'danger')
+            return redirect(url_for('gerenciar_filiais'))
+        if Usuario.query.filter_by(username=username).first():
+            flash(f'Login "{username}" já está em uso. Escolha outro.', 'danger')
+            return redirect(url_for('gerenciar_filiais'))
+
+        filial = Usuario(
+            username    = username,
+            perfil      = 'filial',
+            nome_exibir = filial_nome,
+            filial_nome = filial_nome,
+            rede_id     = u.rede_id,
+        )
+        filial.set_password(senha)
+        db.session.add(filial)
+        db.session.commit()
+        audit('filial_criada_dono', f'filial={filial_nome} rede_id={u.rede_id}')
+        flash(f'Filial "{filial_nome}" criada! Login: {username}', 'success')
+    except Exception as e:
+        app.logger.error(f'Erro criar filial: {e}')
+        flash('Erro ao criar filial. Tente novamente.', 'danger')
+    return redirect(url_for('gerenciar_filiais'))
 
 @app.route('/filial/<int:id>/excluir', methods=['POST'])
 @assinatura_required

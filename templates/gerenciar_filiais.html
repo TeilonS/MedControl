@@ -9,9 +9,9 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    :root{--primary:#0f766e;--primary-l:#14b8a6;--dark:#0f172a;--surface:#1e293b;--border:var(--border);--text:#f1f5f9;--muted:var(--muted);--sw:260px}
+    :root{--primary:#0f766e;--primary-l:#14b8a6;--sw:260px}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex}
+    body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex}
     .sidebar{width:var(--sw);min-height:100vh;background:var(--sb-bg);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100}
     .sb-logo{padding:1.5rem 1.5rem 1rem;border-bottom:1px solid var(--border)}
     .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--primary),var(--primary-l));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.7rem}
@@ -30,8 +30,8 @@
     .pt{font-family:'Syne',sans-serif;font-weight:800;font-size:1.6rem;margin-bottom:.2rem}
     .bc{color:var(--muted);font-size:.82rem;margin-bottom:2rem}
     .bc a{color:var(--primary-l);text-decoration:none}
-    .card-dark{background:var(--sb-bg);border:1px solid var(--border);border-radius:16px;overflow:hidden}
-    .th th{background:var(--surface2);color:var(--muted);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:.9rem 1rem;border-bottom:1px solid var(--border)}
+    .card-dark{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;overflow:hidden}
+    .th th{background:var(--surface2);color:var(--text);opacity:.7;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:.9rem 1rem;border-bottom:1px solid var(--border)}
     .table{--bs-table-bg:transparent;--bs-table-color:var(--text)}
     .table tbody tr{border-bottom:1px solid var(--border)}
     .table tbody tr:last-child{border-bottom:none}
@@ -43,6 +43,9 @@
     .ta.success{border-left:3px solid #22c55e}
     .ta.warning{border-left:3px solid #eab308}
     .ta.danger{border-left:3px solid #ef4444}
+    .form-ctrl{width:100%;background:var(--input-bg);border:1px solid var(--input-border);color:var(--text);border-radius:10px;padding:.6rem .85rem;font-family:'DM Sans',sans-serif;font-size:.88rem}
+    .form-ctrl:focus{outline:none;border-color:var(--primary-l);box-shadow:0 0 0 3px rgba(20,184,166,0.12)}
+    .form-ctrl::placeholder{color:var(--muted)}
     .info-box{background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.15);border-radius:10px;padding:.8rem 1rem;font-size:.82rem;color:#fca5a5;margin-bottom:1.5rem;display:flex;align-items:center;gap:.6rem}
   </style>
 </head>
@@ -79,6 +82,35 @@
   <div class="info-box">
     <i class="bi bi-exclamation-triangle-fill"></i>
     Ao excluir uma filial, os medicamentos cadastrados por ela ficam sem vínculo mas não são apagados. Para adicionar novas filiais, entre em contato com o suporte.
+  </div>
+
+  <!-- FORMULÁRIO ADICIONAR FILIAL -->
+  <div class="card-dark mb-4" style="padding:1.5rem">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:1.2rem;color:var(--primary-l);display:flex;align-items:center;gap:.5rem">
+      <i class="bi bi-plus-circle"></i> Adicionar Nova Filial
+    </div>
+    <form method="POST" action="{{ url_for('dono_criar_filial') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:.3rem;display:block">Nome da Filial</label>
+          <input type="text" name="filial_nome" class="form-ctrl" placeholder="Ex: Unidade Centro" required>
+        </div>
+        <div class="col-12 col-md-3">
+          <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:.3rem;display:block">Login (usuário)</label>
+          <input type="text" name="username" class="form-ctrl" placeholder="Ex: filial_centro" required>
+        </div>
+        <div class="col-12 col-md-3">
+          <label style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:.3rem;display:block">Senha</label>
+          <input type="password" name="password" class="form-ctrl" placeholder="Mín. 6 caracteres" minlength="6" required>
+        </div>
+        <div class="col-12 col-md-2 d-flex align-items-end">
+          <button type="submit" style="width:100%;background:linear-gradient(135deg,var(--primary),var(--primary-l));border:none;color:white;border-radius:10px;padding:.6rem .9rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s">
+            <i class="bi bi-plus-lg me-1"></i>Criar
+          </button>
+        </div>
+      </div>
+    </form>
   </div>
 
   <div class="card-dark">

@@ -188,7 +188,13 @@
         <li class="muted"><i class="bi bi-x-circle-fill"></i><span>Múltiplas filiais</span></li>
         <li class="muted"><i class="bi bi-x-circle-fill"></i><span>Visão consolidada da rede</span></li>
       </ul>
-      <a href="https://wa.me/5577988175300?text=Olá! Tenho interesse no plano Básico do MedControl." target="_blank" class="btn-plan btn-outline">Contratar via WhatsApp</a>
+      <form method="POST" action="{{ url_for('assinar') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="plano" value="basico">
+        <button type="submit" class="btn-plan btn-outline" style="width:100%">
+          <i class="bi bi-credit-card me-2"></i>Assinar agora
+        </button>
+      </form>
     </div>
 
     <!-- PROFISSIONAL -->
@@ -215,7 +221,13 @@
         <li><i class="bi bi-check-circle-fill"></i><span>Login do dono da rede</span></li>
         <li><i class="bi bi-check-circle-fill"></i><span>Visão consolidada da rede</span></li>
       </ul>
-      <a href="https://wa.me/5577988175300?text=Olá! Tenho interesse no plano Profissional do MedControl." target="_blank" class="btn-plan btn-filled">Contratar via WhatsApp</a>
+      <form method="POST" action="{{ url_for('assinar') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="plano" value="profissional">
+        <button type="submit" class="btn-plan btn-filled" style="width:100%">
+          <i class="bi bi-credit-card me-2"></i>Assinar agora
+        </button>
+      </form>
     </div>
 
     <!-- REDE -->
@@ -241,7 +253,13 @@
         <li><i class="bi bi-check-circle-fill"></i><span>Login do dono da rede</span></li>
         <li><i class="bi bi-check-circle-fill"></i><span>Suporte prioritário via WhatsApp</span></li>
       </ul>
-      <a href="https://wa.me/5577988175300?text=Olá! Tenho interesse no plano Rede do MedControl." target="_blank" class="btn-plan btn-outline">Contratar via WhatsApp</a>
+      <form method="POST" action="{{ url_for('assinar') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="plano" value="rede">
+        <button type="submit" class="btn-plan btn-outline" style="width:100%">
+          <i class="bi bi-credit-card me-2"></i>Assinar agora
+        </button>
+      </form>
     </div>
 
   </div>
