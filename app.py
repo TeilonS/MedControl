@@ -64,7 +64,7 @@ app.secret_key = _secret
 _is_prod = os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('DATABASE_URL', '').startswith('postgresql')
 
 # Sessão
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=120)
 app.config['SESSION_COOKIE_HTTPONLY']    = True
 app.config['SESSION_COOKIE_SAMESITE']   = 'Lax'
 app.config['SESSION_COOKIE_SECURE']     = bool(_is_prod)  # HTTPS apenas em produção
@@ -289,6 +289,7 @@ def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'user_id' not in session:
+            session['next'] = request.url
             return redirect(url_for('login'))
         session.permanent = True
         return f(*args, **kwargs)
@@ -381,7 +382,8 @@ def login():
             session['filial_nome'] = usuario.filial_nome or ''
             session['tema']        = usuario.tema or 'light'
             audit('login_ok', f'username={username} perfil={usuario.perfil}')
-            return redirect(url_for('dashboard'))
+            next_url = session.pop('next', None)
+            return redirect(next_url or url_for('dashboard'))
 
         audit('login_falhou', f'username={username}')
         flash('Usuário ou senha incorretos.', 'danger')
@@ -1205,6 +1207,10 @@ def mp_criar_preferencia(rede, plano_key):
         'notification_url': f"{APP_BASE_URL}/webhook/mercadopago",
         'statement_descriptor': 'MEDCONTROL',
         'metadata': {'rede_id': rede.id, 'plano': plano_key},
+        'payment_methods': {
+            'excluded_payment_types': [],
+            'installments': 1,
+        },
     }
 
     try:
