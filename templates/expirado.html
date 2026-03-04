@@ -2,89 +2,58 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MedControl — Assinatura Expirada</title>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <title>MedControl — Assine para Continuar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      min-height: 100vh; background: var(--bg);
-      font-family: 'DM Sans', sans-serif; color: var(--text);
-      display: flex; align-items: center; justify-content: center;
-    }
-    .bg {
-      position: fixed; inset: 0;
-      background: radial-gradient(ellipse 80% 60% at 50% 40%, rgba(239,68,68,0.12) 0%, transparent 70%),
-                  radial-gradient(ellipse 100% 100% at 50% 100%, #020617 0%, #0f172a 100%);
-    }
-    .card {
-      position: relative; z-index: 10;
-      background: rgba(30,41,59,0.9); backdrop-filter: blur(20px);
-      border: 1px solid rgba(239,68,68,0.2); border-radius: 24px;
-      padding: 3rem 2.5rem; max-width: 480px; width: 90%; text-align: center;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
-    }
-    .icon {
-      font-size: 3.5rem; margin-bottom: 1.2rem;
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.08); } }
-    h1 {
-      font-family: 'Syne', sans-serif; font-weight: 800;
-      font-size: 1.8rem; color: #f87171; margin-bottom: .6rem;
-    }
-    p { color: var(--muted); line-height: 1.7; margin-bottom: 1.5rem; }
-    .highlight {
-      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
-      border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.8rem;
-      color: #fca5a5; font-size: .9rem;
-    }
-    .btn-contact {
-      display: inline-block; background: linear-gradient(135deg, #0f766e, #14b8a6);
-      color: white; text-decoration: none; border-radius: 12px;
-      padding: .8rem 2rem; font-family: 'Syne', sans-serif;
-      font-weight: 700; font-size: .95rem; margin-bottom: .8rem;
-      transition: all .2s; box-shadow: 0 4px 20px rgba(20,184,166,0.3);
-    }
-    .btn-contact:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(20,184,166,0.45); color: white; }
-    .btn-logout {
-      display: block; color: var(--sb-text); text-decoration: none;
-      font-size: .85rem; margin-top: .5rem; transition: color .2s;
-    }
-    .btn-logout:hover { color: var(--muted); }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--primary:#0f766e;--primary-l:#14b8a6;--dark:#0a1628;--card:#0f1f35;--border:rgba(20,184,166,0.15);--text:#f1f5f9;--muted:#64748b}
+    body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .card{width:100%;max-width:500px;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:2.5rem 2rem;text-align:center}
+    .icon-wrap{width:72px;height:72px;border-radius:50%;margin:0 auto 1.5rem;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);display:flex;align-items:center;justify-content:center;font-size:2rem}
+    h1{font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;margin-bottom:.6rem}
+    .subtitle{font-size:.9rem;color:var(--muted);line-height:1.6;margin-bottom:2rem}
+    .info-box{background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.15);border-radius:14px;padding:1.2rem;margin-bottom:2rem;text-align:left}
+    .ib-row{display:flex;align-items:center;gap:.7rem;font-size:.85rem;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+    .ib-row:last-child{border:none}
+    .ib-row i{color:var(--primary-l);font-size:.95rem;width:18px}
+    .btn-primary{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;background:linear-gradient(135deg,var(--primary),var(--primary-l));color:white;border:none;font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;padding:.9rem;border-radius:12px;cursor:pointer;text-decoration:none;margin-bottom:.8rem;box-shadow:0 6px 20px rgba(20,184,166,0.3);transition:all .2s}
+    .btn-primary:hover{transform:translateY(-1px);color:white;box-shadow:0 10px 30px rgba(20,184,166,0.4)}
+    .btn-secondary{display:flex;align-items:center;justify-content:center;gap:.5rem;width:100%;background:transparent;border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-size:.85rem;padding:.75rem;border-radius:12px;text-decoration:none;transition:all .2s;margin-bottom:.7rem}
+    .btn-secondary:hover{background:rgba(255,255,255,0.04);color:var(--text)}
+    .logout-link{font-size:.78rem;color:var(--muted);text-decoration:none;display:block;margin-top:.5rem}
+    .logout-link:hover{color:#ef4444}
+    .contact-note{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:.78rem;color:var(--muted);line-height:1.6}
+    .contact-note a{color:var(--primary-l);text-decoration:none}
   </style>
 </head>
 <body>
-  <div class="bg"></div>
-  <div class="card">
-    <div class="icon">🔒</div>
-    <h1>Assinatura Expirada</h1>
-    <p>Seu acesso ao <strong style="color:var(--text);">MedControl</strong> foi encerrado porque o período de assinatura expirou ou foi desativado.</p>
-    <div class="highlight">
-      <strong>Para reativar seu acesso</strong>, entre em contato com o administrador do sistema e efetue o pagamento da mensalidade.
-    </div>
-    <a href="https://wa.me/5577988175300?text=Olá! Preciso reativar meu acesso ao MedControl." target="_blank" class="btn-contact">
-      📱 Falar no WhatsApp
-    </a>
-    <a href="{{ url_for('logout') }}" class="btn-logout">Sair da conta</a>
-  </div>
+<div class="card">
+  <div class="icon-wrap">⏰</div>
+  <h1>Período grátis encerrado</h1>
+  <p class="subtitle">Seu trial de 30 dias terminou. Assine agora para continuar acessando todos os dados e funcionalidades do MedControl.</p>
 
-  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-    (function() {
-      const tema = "{{ session.get('tema', 'light') }}";
-      document.documentElement.setAttribute('data-theme', tema);
-      document.addEventListener('DOMContentLoaded', function() {
-        const lbl = document.getElementById('theme-label');
-        if (lbl) lbl.textContent = tema === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
-      });
-    })();
-    function toggleTheme() {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      const newTheme = isDark ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      const lbl = document.getElementById('theme-label');
-      if (lbl) lbl.textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
-      fetch('/preferencias/tema', {
-        method
+  {% if rede %}
+  <div class="info-box">
+    <div class="ib-row"><i class="bi bi-building"></i><span><strong>{{ rede.nome }}</strong></span></div>
+    <div class="ib-row"><i class="bi bi-envelope"></i><span>{{ rede.email_contato or '—' }}</span></div>
+    <div class="ib-row"><i class="bi bi-clock"></i><span>Trial iniciado em {{ rede.trial_inicio.strftime('%d/%m/%Y') if rede.trial_inicio else '—' }}</span></div>
+  </div>
+  {% endif %}
+
+  <a href="{{ url_for('assinar') }}" class="btn-primary">
+    <i class="bi bi-credit-card"></i> Ver planos e assinar
+  </a>
+  <a href="https://wa.me/5577988175300?text=Olá!%20Preciso%20de%20ajuda%20com%20a%20assinatura%20do%20MedControl." target="_blank" class="btn-secondary">
+    <i class="bi bi-whatsapp" style="color:#22c55e"></i> Falar no WhatsApp antes de assinar
+  </a>
+  <a href="{{ url_for('logout') }}" class="logout-link"><i class="bi bi-box-arrow-right me-1"></i>Sair da conta</a>
+
+  <div class="contact-note">
+    Dúvidas? Entre em contato:<br>
+    <a href="mailto:teilon66@gmail.com">teilon66@gmail.com</a> · <a href="https://wa.me/5577988175300" target="_blank">(77) 9 8817-5300</a>
+  </div>
+</div>
+</body>
+</html>

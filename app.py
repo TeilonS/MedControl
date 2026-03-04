@@ -149,14 +149,37 @@ class Rede(db.Model):
     data_expiracao   = db.Column(db.Date, nullable=True)
     plano            = db.Column(db.String(50), default='mensal')
     data_cadastro    = db.Column(db.DateTime, default=datetime.utcnow)
+    # Self-serve & pagamento
+    trial            = db.Column(db.Boolean, default=True)
+    trial_inicio     = db.Column(db.DateTime, nullable=True)
+    mp_assinatura_id = db.Column(db.String(100), nullable=True)   # ID assinatura Mercado Pago
+    mp_payer_email   = db.Column(db.String(150), nullable=True)   # email pagador MP
     usuarios         = db.relationship('Usuario', backref='rede', lazy=True)
     medicamentos     = db.relationship('Medicamento', backref='rede', lazy=True)
 
     @property
+    def em_trial(self):
+        """True se ainda está dentro do período de trial de 30 dias."""
+        if not self.trial or not self.trial_inicio: return False
+        limite = self.trial_inicio + timedelta(days=30)
+        return datetime.utcnow() < limite
+
+    @property
+    def dias_trial_restantes(self):
+        if not self.trial or not self.trial_inicio: return 0
+        limite = self.trial_inicio + timedelta(days=30)
+        restam = (limite - datetime.utcnow()).days
+        return max(0, restam)
+
+    @property
     def assinatura_ativa(self):
         if not self.ativa: return False
-        if self.data_expiracao and self.data_expiracao < date.today(): return False
-        return True
+        # Trial ativo = acesso liberado
+        if self.em_trial: return True
+        # Assinatura paga com data de expiração válida
+        if self.data_expiracao and self.data_expiracao >= date.today(): return True
+        # Sem expiração definida e não em trial = bloqueia
+        return False
 
     @property
     def dias_restantes(self):
@@ -501,7 +524,8 @@ def dashboard():
 
     return render_template('index.html',
         medicamentos=medicamentos, stats=stats, chart_data=chart_data,
-        hoje=hoje, busca=busca, status_filtro=status,
+        hoje=hoje,
+        rede=u.rede if not u.is_superadmin else None, busca=busca, status_filtro=status,
         filiais=filiais, filial_filtro=filial_filtro, usuario=u,
         alerta_renovacao=u.exibir_alerta_renovacao,
         dias_restantes=u.rede.dias_restantes if u.rede else None,
@@ -1091,6 +1115,277 @@ def consys_sync_ajax():
     return json.dumps({'ok': ok, 'msg': msg})
 
 
+
+# =============================================================================
+# SELF-SERVE — CADASTRO PÚBLICO + MERCADO PAGO
+# =============================================================================
+# Configurar no Railway:
+#   MP_ACCESS_TOKEN  = seu Access Token do Mercado Pago (produção)
+#   MP_WEBHOOK_SECRET = string secreta para validar webhooks (qualquer texto)
+#   APP_BASE_URL     = https://www.medcontrol.app.br
+
+import hashlib, hmac
+
+MP_ACCESS_TOKEN   = os.environ.get('MP_ACCESS_TOKEN', '')
+MP_WEBHOOK_SECRET = os.environ.get('MP_WEBHOOK_SECRET', 'medcontrol_webhook_2024')
+APP_BASE_URL      = os.environ.get('APP_BASE_URL', 'https://www.medcontrol.app.br')
+
+# Preços dos planos em centavos (Mercado Pago usa centavos)
+PLANOS_MP = {
+    'basico':       {'nome': 'MedControl Básico',       'preco': 7900,  'filiais': 1},
+    'profissional': {'nome': 'MedControl Profissional', 'preco': 14900, 'filiais': 5},
+    'rede':         {'nome': 'MedControl Rede',         'preco': 29900, 'filiais': 999},
+}
+
+
+def mp_criar_preferencia(rede, plano_key):
+    """Cria preferência de pagamento no Mercado Pago e retorna o link de checkout."""
+    if not MP_ACCESS_TOKEN:
+        return None, 'MP_ACCESS_TOKEN não configurado'
+
+    plano = PLANOS_MP.get(plano_key)
+    if not plano:
+        return None, 'Plano inválido'
+
+    payload = {
+        'items': [{
+            'title':       plano['nome'],
+            'quantity':    1,
+            'unit_price':  plano['preco'] / 100,
+            'currency_id': 'BRL',
+        }],
+        'payer': {'email': rede.email_contato or ''},
+        'back_urls': {
+            'success': f"{APP_BASE_URL}/pagamento/sucesso",
+            'failure': f"{APP_BASE_URL}/pagamento/falhou",
+            'pending': f"{APP_BASE_URL}/pagamento/pendente",
+        },
+        'auto_return': 'approved',
+        'external_reference': str(rede.id),
+        'notification_url': f"{APP_BASE_URL}/webhook/mercadopago",
+        'statement_descriptor': 'MEDCONTROL',
+        'metadata': {'rede_id': rede.id, 'plano': plano_key},
+    }
+
+    try:
+        data = json.dumps(payload).encode('utf-8')
+        req  = urllib.request.Request(
+            'https://api.mercadopago.com/checkout/preferences',
+            data=data,
+            headers={
+                'Authorization': f'Bearer {MP_ACCESS_TOKEN}',
+                'Content-Type':  'application/json',
+            },
+            method='POST'
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read())
+            # init_point = link de checkout real; sandbox_init_point = testes
+            link = result.get('init_point') or result.get('sandbox_init_point')
+            return link, None
+    except Exception as e:
+        return None, str(e)
+
+
+# ── ROTA: CADASTRO PÚBLICO ────────────────────────────────────────────────
+
+@app.route('/registrar', methods=['GET', 'POST'])
+def registrar():
+    """Cadastro self-serve: cria rede + dono_rede + inicia trial 30 dias."""
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        nome_rede = request.form.get('nome_rede', '').strip()[:200]
+        email     = request.form.get('email', '').strip().lower()[:150]
+        senha     = request.form.get('senha', '')
+        confirma  = request.form.get('confirma_senha', '')
+        telefone  = request.form.get('telefone', '').strip()[:30]
+
+        erros = []
+        if len(nome_rede) < 3:
+            erros.append('Nome da farmácia deve ter pelo menos 3 caracteres.')
+        if '@' not in email or '.' not in email:
+            erros.append('Email inválido.')
+        if len(senha) < 8:
+            erros.append('Senha deve ter pelo menos 8 caracteres.')
+        if senha != confirma:
+            erros.append('As senhas não coincidem.')
+        if Usuario.query.filter_by(username=email).first():
+            erros.append('Este email já está cadastrado. Faça login.')
+
+        if erros:
+            return render_template('registrar.html', erros=erros,
+                                   nome_rede=nome_rede, email=email, telefone=telefone)
+
+        # Cria a rede em trial
+        rede = Rede(
+            nome          = nome_rede,
+            email_contato = email,
+            telefone      = telefone,
+            ativa         = True,
+            plano         = 'trial',
+            trial         = True,
+            trial_inicio  = datetime.utcnow(),
+            # trial de 30 dias — data_expiracao não é necessária durante trial
+        )
+        db.session.add(rede)
+        db.session.flush()  # gera rede.id
+
+        # Cria o usuário dono_rede
+        usuario = Usuario(
+            username      = email,
+            password       = generate_password_hash(senha),
+            perfil        = 'dono_rede',
+            nome_exibir   = nome_rede,
+            rede_id       = rede.id,
+            termos_aceitos= False,
+        )
+        db.session.add(usuario)
+        db.session.commit()
+
+        audit('auto_cadastro', f'rede={nome_rede} email={email}')
+
+        # Loga automaticamente
+        session.permanent = True
+        session['user_id']  = usuario.id
+        session['username'] = usuario.username
+        session['perfil']   = usuario.perfil
+        session['rede_id']  = rede.id
+
+        flash(f'Bem-vindo ao MedControl! Você tem 30 dias grátis para explorar. 🎉', 'success')
+        return redirect(url_for('aceitar_termos'))
+
+    return render_template('registrar.html', erros=[], nome_rede='', email='', telefone='')
+
+
+# ── ROTA: PÁGINA DE ASSINATURA (escolha de plano + checkout) ─────────────
+
+@app.route('/assinar', methods=['GET', 'POST'])
+@login_required
+def assinar():
+    """Tela onde o usuário escolhe o plano e é redirecionado ao Mercado Pago."""
+    u = get_usuario_atual()
+    if u.perfil not in ('dono_rede',):
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        plano_key = request.form.get('plano', 'basico')
+        if plano_key not in PLANOS_MP:
+            flash('Plano inválido.', 'danger')
+            return redirect(url_for('assinar'))
+
+        link, erro = mp_criar_preferencia(u.rede, plano_key)
+        if erro:
+            flash(f'Erro ao gerar pagamento: {erro}', 'danger')
+            return redirect(url_for('assinar'))
+
+        audit('checkout_iniciado', f'rede_id={u.rede_id} plano={plano_key}')
+        return redirect(link)
+
+    rede = u.rede
+    return render_template('assinar.html',
+        rede=rede,
+        planos=PLANOS_MP,
+        dias_trial=rede.dias_trial_restantes if rede else 0,
+        em_trial=rede.em_trial if rede else False,
+    )
+
+
+# ── ROTA: RETORNO DO PAGAMENTO ────────────────────────────────────────────
+
+@app.route('/pagamento/sucesso')
+def pagamento_sucesso():
+    payment_id = request.args.get('payment_id', '')
+    status     = request.args.get('status', '')
+    ref        = request.args.get('external_reference', '')
+    audit('pagamento_retorno', f'status={status} ref={ref} pid={payment_id}')
+    if status == 'approved':
+        flash('Pagamento aprovado! Sua assinatura está ativa. ✅', 'success')
+        # A ativação real ocorre via webhook — aqui é só feedback visual
+    else:
+        flash('Pagamento recebido — aguardando confirmação.', 'warning')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/pagamento/falhou')
+def pagamento_falhou():
+    flash('Pagamento não foi concluído. Tente novamente ou entre em contato.', 'danger')
+    return redirect(url_for('assinar'))
+
+
+@app.route('/pagamento/pendente')
+def pagamento_pendente():
+    flash('Pagamento pendente — você receberá confirmação por email em breve.', 'warning')
+    return redirect(url_for('dashboard'))
+
+
+# ── WEBHOOK MERCADO PAGO ─────────────────────────────────────────────────
+
+@app.route('/webhook/mercadopago', methods=['POST'])
+def webhook_mercadopago():
+    """
+    Recebe notificações do Mercado Pago e ativa/cancela assinaturas.
+    Configurar no painel MP: Integrações → Webhooks → URL = APP_BASE_URL/webhook/mercadopago
+    """
+    data = request.get_json(silent=True) or {}
+    topic = data.get('type') or request.args.get('topic', '')
+    resource_id = (data.get('data') or {}).get('id') or request.args.get('id', '')
+
+    app.logger.info(f'MP Webhook: topic={topic} id={resource_id}')
+
+    if topic not in ('payment', 'merchant_order'):
+        return '', 200  # ignora outros eventos
+
+    if not resource_id or not MP_ACCESS_TOKEN:
+        return '', 200
+
+    # Busca detalhes do pagamento na API do MP
+    try:
+        req = urllib.request.Request(
+            f'https://api.mercadopago.com/v1/payments/{resource_id}',
+            headers={'Authorization': f'Bearer {MP_ACCESS_TOKEN}'},
+            method='GET'
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            payment = json.loads(resp.read())
+    except Exception as e:
+        app.logger.error(f'MP Webhook erro ao buscar pagamento: {e}')
+        return '', 200
+
+    status       = payment.get('status', '')
+    rede_id_str  = str(payment.get('external_reference') or
+                       (payment.get('metadata') or {}).get('rede_id', ''))
+    plano_key    = (payment.get('metadata') or {}).get('plano', 'basico')
+    payer_email  = (payment.get('payer') or {}).get('email', '')
+
+    if not rede_id_str.isdigit():
+        return '', 200
+
+    rede = Rede.query.get(int(rede_id_str))
+    if not rede:
+        return '', 200
+
+    if status == 'approved':
+        # Ativa assinatura por 30 dias a partir de hoje
+        rede.ativa         = True
+        rede.trial         = False   # sai do trial
+        rede.plano         = plano_key
+        rede.data_expiracao = date.today() + timedelta(days=30)
+        rede.mp_assinatura_id = str(resource_id)
+        rede.mp_payer_email   = payer_email
+        db.session.commit()
+        audit('assinatura_ativada', f'rede_id={rede.id} plano={plano_key} payment_id={resource_id}')
+        app.logger.info(f'Assinatura ativada: rede_id={rede.id}')
+
+    elif status in ('cancelled', 'refunded', 'charged_back'):
+        rede.ativa = False
+        db.session.commit()
+        audit('assinatura_cancelada', f'rede_id={rede.id} status={status}')
+
+    return '', 200
+
+
 # =============================================================================
 # PÁGINAS LEGAIS — LGPD
 # =============================================================================
@@ -1303,6 +1598,19 @@ with app.app_context():
     # mas garantimos aqui para bancos existentes)
     try:
         db.create_all()
+    except Exception:
+        pass
+    # Migrar colunas novas da Rede (trial + MP)
+    try:
+        with db.engine.connect() as conn:
+            for col_sql in [
+                "ALTER TABLE redes ADD COLUMN IF NOT EXISTS trial BOOLEAN DEFAULT TRUE",
+                "ALTER TABLE redes ADD COLUMN IF NOT EXISTS trial_inicio TIMESTAMP",
+                "ALTER TABLE redes ADD COLUMN IF NOT EXISTS mp_assinatura_id VARCHAR(100)",
+                "ALTER TABLE redes ADD COLUMN IF NOT EXISTS mp_payer_email VARCHAR(150)",
+            ]:
+                conn.execute(db.text(col_sql))
+            conn.commit()
     except Exception:
         pass
     seed_database()

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="{{ session.get('tema','dark') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Escolha seu Plano</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 3rem 1.5rem; }
+
+    .back-link { display: inline-flex; align-items: center; gap: .4rem; color: var(--muted); font-size: .85rem; text-decoration: none; margin-bottom: 2rem; }
+    .back-link:hover { color: var(--primary-l); }
+
+    /* TRIAL BANNER */
+    .trial-banner {
+      background: linear-gradient(135deg, rgba(20,184,166,0.12), rgba(20,184,166,0.04));
+      border: 1px solid rgba(20,184,166,0.3); border-radius: 16px;
+      padding: 1.3rem 1.6rem; margin-bottom: 2.5rem;
+      display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap;
+    }
+    .trial-icon { font-size: 2rem; }
+    .trial-text { flex: 1; }
+    .trial-text strong { display: block; font-size: 1rem; font-weight: 700; color: var(--primary-l); margin-bottom: .2rem; }
+    .trial-text span { font-size: .85rem; color: var(--muted); }
+    .trial-days {
+      font-family: 'Syne', sans-serif; font-weight: 900;
+      font-size: 2.2rem; color: var(--primary-l); line-height: 1;
+      white-space: nowrap;
+    }
+    .trial-days small { display: block; font-size: .65rem; color: var(--muted); font-family: 'DM Sans', sans-serif; font-weight: 400; text-align: center; }
+
+    /* EXPIRED BANNER */
+    .expired-banner {
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 16px; padding: 1.2rem 1.6rem; margin-bottom: 2rem;
+      display: flex; align-items: center; gap: 1rem;
+      font-size: .9rem; color: #fca5a5;
+    }
+
+    /* HEADER */
+    .plans-header { text-align: center; margin-bottom: 2.5rem; }
+    .plans-header h1 { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 2rem; margin-bottom: .5rem; }
+    .plans-header p { font-size: .9rem; color: var(--muted); }
+    .anvisa-note {
+      display: inline-flex; align-items: center; gap: .5rem;
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
+      color: #fca5a5; font-size: .78rem; padding: .35rem .9rem; border-radius: 20px;
+      margin-top: .7rem;
+    }
+
+    /* PLAN CARDS */
+    .plans-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2.5rem; }
+    .plan-card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 18px; padding: 1.5rem 1.3rem; position: relative;
+      overflow: hidden; cursor: pointer; transition: all .2s;
+    }
+    .plan-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(20,184,166,0.15); }
+    .plan-card.selected {
+      border-color: var(--primary-l);
+      box-shadow: 0 0 0 2px rgba(20,184,166,0.3);
+    }
+    .plan-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--card-border);
+    }
+    .plan-card.featured { border-color: rgba(20,184,166,0.4); }
+    .plan-card.featured::before { background: linear-gradient(90deg, var(--primary), var(--primary-l)); }
+
+    .popular-tag {
+      position: absolute; top: .8rem; right: .8rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      color: white; font-size: .6rem; font-weight: 800;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: .22rem .6rem; border-radius: 20px;
+    }
+    .plan-radio { display: none; }
+    .plan-check {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 2px solid var(--card-border);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: .9rem; transition: all .2s; font-size: .7rem; color: transparent;
+    }
+    .plan-card.selected .plan-check {
+      background: var(--primary-l); border-color: var(--primary-l); color: white;
+    }
+
+    .plan-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: .92rem; margin-bottom: .15rem; }
+    .plan-desc { font-size: .72rem; color: var(--muted); margin-bottom: .9rem; }
+    .plan-price { display: flex; align-items: baseline; gap: .2rem; margin-bottom: .15rem; }
+    .plan-currency { font-size: .85rem; color: var(--primary-l); font-weight: 700; }
+    .plan-val { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 2rem; color: var(--primary-l); line-height: 1; }
+    .plan-period { font-size: .72rem; color: var(--muted); }
+    .plan-annual { font-size: .7rem; color: #f59e0b; margin-bottom: .9rem; font-weight: 600; }
+    .plan-features { list-style: none; }
+    .plan-features li {
+      display: flex; align-items: center; gap: .45rem;
+      font-size: .77rem; color: var(--muted); padding: .25rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .plan-features li:last-child { border: none; }
+    .plan-features li::before { content: '✓'; color: var(--primary-l); font-weight: 800; font-size: .7rem; flex-shrink: 0; }
+
+    /* CHECKOUT BUTTON */
+    .checkout-wrap { text-align: center; }
+    .btn-checkout {
+      display: inline-flex; align-items: center; gap: .7rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      color: white; border: none; font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: 1rem; padding: 1rem 3rem;
+      border-radius: 14px; cursor: pointer; transition: all .2s;
+      box-shadow: 0 6px 24px rgba(20,184,166,0.35);
+      text-decoration: none;
+    }
+    .btn-checkout:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(20,184,166,0.45); color: white; }
+    .checkout-note { font-size: .75rem; color: var(--muted); margin-top: .8rem; }
+    .mp-logo { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; color: var(--muted); }
+
+    /* GARANTIAS */
+    .garantias { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--card-border); }
+    .garantia-item { display: flex; align-items: center; gap: .5rem; font-size: .78rem; color: var(--muted); }
+    .garantia-item i { font-size: 1rem; color: var(--primary-l); }
+
+    @media (max-width: 640px) {
+      .plans-grid { grid-template-columns: 1fr; }
+      .trial-days { font-size: 1.8rem; }
+      .btn-checkout { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="page-wrap">
+  <a href="{{ url_for('dashboard') }}" class="back-link"><i class="bi bi-arrow-left"></i> Voltar ao Dashboard</a>
+
+  <!-- TRIAL BANNER ou EXPIRADO -->
+  {% if em_trial and dias_trial > 0 %}
+  <div class="trial-banner">
+    <div class="trial-icon">🎁</div>
+    <div class="trial-text">
+      <strong>Você está no período grátis</strong>
+      <span>Após o trial, escolha um plano para continuar usando o MedControl.</span>
+    </div>
+    <div class="trial-days">{{ dias_trial }}<small>dias restantes</small></div>
+  </div>
+  {% else %}
+  <div class="expired-banner">
+    <i class="bi bi-exclamation-triangle-fill" style="font-size:1.3rem;color:#ef4444;flex-shrink:0"></i>
+    <span>Seu período grátis encerrou. Escolha um plano para continuar usando o MedControl.</span>
+  </div>
+  {% endif %}
+
+  <!-- HEADER -->
+  <div class="plans-header">
+    <h1>Escolha seu plano</h1>
+    <p>Invista menos que R$3/dia para proteger seu estoque e evitar multas.</p>
+    <div class="anvisa-note"><i class="bi bi-shield-exclamation"></i> Multa ANVISA pode chegar a R$75.000</div>
+  </div>
+
+  <!-- PLANOS -->
+  <form method="POST" action="{{ url_for('assinar') }}" id="planoForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="plano" id="planoSelecionado" value="profissional">
+
+    <div class="plans-grid">
+      <!-- BÁSICO -->
+      <div class="plan-card" onclick="selecionarPlano('basico', this)">
+        <div class="plan-check" id="check-basico">✓</div>
+        <div class="plan-name">Básico</div>
+        <div class="plan-desc">1 filial · até 500 medicamentos</div>
+        <div class="plan-price">
+          <span class="plan-currency">R$</span>
+          <span class="plan-val">79</span>
+          <span class="plan-period">/mês</span>
+        </div>
+        <div class="plan-annual">ou R$699/ano</div>
+        <ul class="plan-features">
+          <li>Alertas 30 e 60 dias</li>
+          <li>Relatórios em PDF</li>
+          <li>Leitor de código de barras</li>
+          <li>Suporte via WhatsApp</li>
+        </ul>
+      </div>
+
+      <!-- PROFISSIONAL (destaque) -->
+      <div class="plan-card featured selected" onclick="selecionarPlano('profissional', this)">
+        <div class="popular-tag">⭐ Popular</div>
+        <div class="plan-check" id="check-profissional">✓</div>
+        <div class="plan-name">Profissional</div>
+        <div class="plan-desc">Até 5 filiais · ilimitado</div>
+        <div class="plan-price">
+          <span class="plan-currency">R$</span>
+          <span class="plan-val">149</span>
+          <span class="plan-period">/mês</span>
+        </div>
+        <div class="plan-annual">ou R$1.299/ano</div>
+        <ul class="plan-features">
+          <li>Tudo do Básico</li>
+          <li>Painel do dono da rede</li>
+          <li>Visão consolidada filiais</li>
+          <li>Prioridade no suporte</li>
+        </ul>
+      </div>
+
+      <!-- REDE -->
+      <div class="plan-card" onclick="selecionarPlano('rede', this)">
+        <div class="plan-check" id="check-rede">✓</div>
+        <div class="plan-name">Rede</div>
+        <div class="plan-desc">Filiais ilimitadas</div>
+        <div class="plan-price">
+          <span class="plan-currency">R$</span>
+          <span class="plan-val">299</span>
+          <span class="plan-period">/mês</span>
+        </div>
+        <div class="plan-annual">ou R$2.599/ano</div>
+        <ul class="plan-features">
+          <li>Tudo do Profissional</li>
+          <li>Filiais ilimitadas</li>
+          <li>Suporte prioritário</li>
+          <li>Onboarding assistido</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- BOTÃO CHECKOUT -->
+    <div class="checkout-wrap">
+      <button type="submit" class="btn-checkout">
+        <i class="bi bi-credit-card"></i> Pagar com Mercado Pago
+      </button>
+      <div class="checkout-note">
+        <div class="mp-logo"><i class="bi bi-shield-check" style="color:#00b1ea"></i> Pagamento seguro via Mercado Pago · Pix, cartão ou boleto</div>
+        <div style="margin-top:.3rem">Você será redirecionado para o ambiente de pagamento seguro do Mercado Pago.</div>
+      </div>
+    </div>
+  </form>
+
+  <!-- GARANTIAS -->
+  <div class="garantias">
+    <div class="garantia-item"><i class="bi bi-shield-check"></i> Dados seguros (LGPD)</div>
+    <div class="garantia-item"><i class="bi bi-arrow-counterclockwise"></i> Cancele quando quiser</div>
+    <div class="garantia-item"><i class="bi bi-whatsapp"></i> Suporte via WhatsApp</div>
+    <div class="garantia-item"><i class="bi bi-cloud-check"></i> 100% online</div>
+  </div>
+
+</div>
+
+<script>
+function selecionarPlano(plano, el) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('planoSelecionado').value = plano;
+}
+</script>
+</body>
+</html>

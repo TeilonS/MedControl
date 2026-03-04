@@ -492,6 +492,18 @@
   </div>
   {% endif %}
 
+  <!-- BANNER TRIAL -->
+  {% if session.perfil == 'dono_rede' and rede and rede.em_trial %}
+  <div style="background:linear-gradient(135deg,rgba(20,184,166,0.1),rgba(20,184,166,0.04));border:1px solid rgba(20,184,166,0.25);border-radius:14px;padding:.9rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;">
+    <span style="font-size:1.3rem">🎁</span>
+    <div style="flex:1">
+      <strong style="color:var(--primary-l);font-size:.9rem">Trial grátis — {{ rede.dias_trial_restantes }} dia(s) restante(s)</strong>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.1rem">Explore o MedControl sem compromisso. Ao final, escolha um plano para continuar.</div>
+    </div>
+    <a href="{{ url_for('assinar') }}" style="background:linear-gradient(135deg,var(--primary),var(--primary-l));color:white;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;padding:.5rem 1.1rem;border-radius:10px;text-decoration:none;white-space:nowrap">Ver planos</a>
+  </div>
+  {% endif %}
+
   <!-- STAT CARDS -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-xl">
