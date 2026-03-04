@@ -13,12 +13,11 @@
 
     /* ── SIDEBAR ── */
     .sidebar {
-      width: var(--sidebar-w); height: 100vh;
+      width: var(--sidebar-w); min-height: 100vh;
       background: var(--card-bg);
       border-right: 1px solid var(--sb-border);
       display: flex; flex-direction: column;
       position: fixed; top: 0; left: 0; z-index: 100;
-      overflow: hidden;
     }
     .sidebar-logo {
       padding: 1.5rem 1.5rem 1rem;
@@ -33,10 +32,7 @@
     }
     .sidebar-logo h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); }
     .sidebar-logo span { font-size: .75rem; color: var(--muted); }
-    .sidebar-nav { padding: 1rem; flex: 1; overflow-y: auto; overflow-x: hidden; }
-    .sidebar-nav::-webkit-scrollbar { width: 3px; }
-    .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
-    .sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+    .sidebar-nav { padding: 1rem; flex: 1; }
     .nav-section-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #475569; padding: .6rem .5rem .3rem; }
     .nav-item { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; cursor: pointer; text-decoration: none; transition: all .2s; margin-bottom: .15rem; }
     .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
@@ -45,7 +41,6 @@
     .nav-item .badge { margin-left: auto; font-size: .65rem; }
     .sidebar-footer {
       padding: 1rem; border-top: 1px solid var(--sb-border);
-      flex-shrink: 0;
     }
     .user-chip {
       display: flex; align-items: center; gap: .7rem;
@@ -94,7 +89,7 @@
     .stat-card.green::before  { background: var(--green); }
     .stat-card.teal::before  { background: var(--primary-l); }
     .stat-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
-    .stat-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 2rem; margin: .3rem 0; }
+    .stat-value { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 2rem; margin: .3rem 0; font-variant-numeric: lining-nums tabular-nums; letter-spacing: -.02em; }
     .stat-icon { position: absolute; right: 1.2rem; top: 1.2rem; font-size: 1.4rem; opacity: .25; }
     .stat-sub { font-size: .75rem; color: var(--muted); }
 
@@ -206,129 +201,10 @@
     .empty-state { text-align: center; padding: 4rem 2rem; color: var(--muted); }
     .empty-state i { font-size: 3rem; opacity: .3; margin-bottom: 1rem; display: block; }
 
-    /* ══════════════════════════════════════════
-       RESPONSIVE MOBILE — MedControl
-       ══════════════════════════════════════════ */
-
-    /* ── HAMBURGER BUTTON (visível só no mobile) ── */
-    .btn-hamburger {
-      display: none;
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 10px; width: 38px; height: 38px;
-      align-items: center; justify-content: center;
-      cursor: pointer; font-size: 1.1rem; color: var(--text);
-      flex-shrink: 0;
-    }
-
-    /* ── OVERLAY escuro ao abrir sidebar no mobile ── */
-    .sidebar-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.55); z-index: 99;
-      backdrop-filter: blur(2px);
-    }
-    .sidebar-overlay.active { display: block; }
-
-    /* ── BOTTOM NAV (navegação rápida no rodapé mobile) ── */
-    .bottom-nav {
-      display: none;
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-      background: var(--card-bg);
-      border-top: 1px solid var(--card-border);
-      padding: .5rem 0 env(safe-area-inset-bottom, .5rem);
-      backdrop-filter: blur(20px);
-    }
-    .bottom-nav-inner { display: flex; justify-content: space-around; align-items: center; }
-    .bn-item {
-      display: flex; flex-direction: column; align-items: center;
-      gap: .2rem; padding: .3rem .8rem; border-radius: 10px;
-      text-decoration: none; color: var(--muted);
-      font-size: .62rem; font-weight: 600; text-transform: uppercase;
-      letter-spacing: .04em; transition: color .2s; position: relative;
-      background: none; border: none; cursor: pointer;
-    }
-    .bn-item i { font-size: 1.25rem; }
-    .bn-item.active { color: var(--primary-l); }
-    .bn-item .bn-badge {
-      position: absolute; top: 0; right: 6px;
-      background: var(--red); color: white;
-      font-size: .55rem; width: 16px; height: 16px;
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-weight: 800;
-    }
-
+    /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
-      /* sidebar desliza de fora para dentro */
-      .sidebar {
-        transform: translateX(-100%);
-        transition: transform .28s cubic-bezier(.4,0,.2,1);
-        z-index: 200;
-      }
-      .sidebar.open { transform: translateX(0); }
-
-      /* main ocupa 100% */
-      .main {
-        margin-left: 0 !important;
-        padding: 1rem 1rem 5rem; /* 5rem = espaço para bottom nav */
-      }
-
-      /* topbar mobile */
-      .topbar { margin-bottom: 1rem; }
-      .page-title { font-size: 1.25rem; }
-      .topbar-actions .btn span,
-      .topbar-actions .btn-outline-soft span { display: none; } /* esconde texto nos botões */
-
-      /* hamburguer aparece */
-      .btn-hamburger { display: flex; }
-
-      /* stat cards — 2 colunas no mobile */
-      .col-6 { flex: 0 0 50%; max-width: 50%; }
-      .stat-value { font-size: 1.6rem; }
-
-      /* busca e filtros */
-      .search-bar { flex-wrap: wrap; gap: .5rem; }
-      .filter-pills { flex-wrap: wrap; gap: .35rem; }
-      .pill { font-size: .72rem; padding: .3rem .7rem; }
-
-      /* gráfico some no mobile (não cabe bem) */
-      .col-lg-4.chart-col { display: none; }
-      .col-lg-8 { flex: 0 0 100%; max-width: 100%; }
-
-      /* tabela: esconde colunas menos importantes */
-      .col-hide-mobile { display: none !important; }
-
-      /* cards de medicamento (modo card no mobile) */
-      .med-card-mobile {
-        background: var(--card-bg); border: 1px solid var(--card-border);
-        border-radius: 14px; padding: 1rem; margin-bottom: .75rem;
-      }
-      .med-card-mobile .med-header {
-        display: flex; align-items: flex-start;
-        justify-content: space-between; margin-bottom: .6rem;
-      }
-      .med-card-mobile .med-title { font-weight: 700; font-size: .92rem; color: var(--text); }
-      .med-card-mobile .med-fab   { font-size: .73rem; color: var(--muted); margin-top: .1rem; }
-      .med-card-mobile .med-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem .8rem; margin-bottom: .75rem; }
-      .med-card-mobile .mg-label  { font-size: .67rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
-      .med-card-mobile .mg-val    { font-size: .85rem; color: var(--text); font-weight: 500; }
-      .med-card-mobile .med-footer { display: flex; align-items: center; justify-content: space-between; }
-      .med-card-mobile .med-actions { display: flex; gap: .5rem; }
-
-      /* esconde tabela desktop no mobile */
-      .table-desktop { display: none !important; }
-
-      /* bottom nav aparece */
-      .bottom-nav { display: block; }
-
-      /* toast menor */
-      .toast-container { top: .75rem; right: .75rem; left: .75rem; }
-
-      /* modal feedback */
-      .modal-dialog { margin: 1rem; }
-    }
-
-    @media (max-width: 400px) {
-      .main { padding: .75rem .75rem 5rem; }
-      .pill { font-size: .68rem; padding: .25rem .55rem; }
+      .sidebar { transform: translateX(-100%); }
+      .main { margin-left: 0; padding: 1rem; }
     }
 
     .table { --bs-table-bg: transparent; --bs-table-color: var(--text); --bs-table-hover-bg: rgba(255,255,255,0.02); }
@@ -337,8 +213,6 @@
   </style>
 </head>
 <body>
-
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
 <!-- ── TOAST FLASH MESSAGES ───────────────────────────────────────────── -->
 {% with messages = get_flashed_messages(with_categories=true) %}
@@ -384,12 +258,6 @@
       <i class="bi bi-braces"></i> API REST
       <span class="badge" style="background:rgba(20,184,166,0.2);color:var(--primary-l);margin-left:auto;">v1</span>
     </a>
-    {% if session.perfil in ['dono_rede', 'superadmin'] %}
-    <a href="{{ url_for('integracao_consys') }}" class="nav-item">
-      <i class="bi bi-plugin"></i> Consys ERP
-      <span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b;margin-left:auto;font-size:.6rem">Em breve</span>
-    </a>
-    {% endif %}
     {% if session.perfil == 'superadmin' %}
     <a href="{{ url_for('admin_dashboard') }}" class="nav-item">
       <i class="bi bi-building"></i> Redes & Clientes
@@ -409,19 +277,13 @@
             style="background:transparent;border:none;width:100%;text-align:left;cursor:pointer;">
       <i class="bi bi-chat-heart"></i> Enviar Feedback
     </button>
-    <a href="{{ url_for('alterar_senha') }}" class="nav-item">
-      <i class="bi bi-shield-lock"></i> Alterar Senha
-    </a>
-
-    <div class="nav-section-title mt-3">Legal</div>
-    <a href="{{ url_for('politica_privacidade') }}" class="nav-item">
-      <i class="bi bi-shield-check"></i> Política de Privacidade
-    </a>
-    <a href="{{ url_for('termos_uso') }}" class="nav-item">
-      <i class="bi bi-file-text"></i> Termos de Uso
-    </a>
 
     <div style="margin-top: .8rem;">
+      <div class="integration-item">
+        <div class="dot"></div>
+        <span>Consys ERP</span>
+        <span class="tag">Em breve</span>
+      </div>
       <div class="integration-item">
         <div class="dot"></div>
         <span>SNGPC / ANVISA</span>
@@ -463,14 +325,9 @@
 
   <!-- Topbar -->
   <div class="topbar">
-    <div style="display:flex;align-items:center;gap:.7rem;">
-      <button class="btn-hamburger" onclick="toggleSidebar()" aria-label="Menu">
-        <i class="bi bi-list" id="hamburgerIcon"></i>
-      </button>
-      <div>
-        <div class="page-title">Dashboard</div>
-        <div style="color:var(--muted);font-size:.82rem;">{{ hoje | datefmt_ptbr }}</div>
-      </div>
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div style="color:var(--muted);font-size:.82rem;">{{ hoje.strftime('%A, %d de %B de %Y') }}</div>
     </div>
     <div class="topbar-actions">
       <a href="{{ url_for('gerar_pdf') }}" class="btn btn-outline-soft">
@@ -489,18 +346,6 @@
     <span style="font-size:.88rem;color:#fdba74">
       <strong>Atenção:</strong> Sua assinatura expira em <strong>{{ dias_restantes }} dia(s)</strong>. Entre em contato para renovar e manter o acesso.
     </span>
-  </div>
-  {% endif %}
-
-  <!-- BANNER TRIAL -->
-  {% if session.perfil == 'dono_rede' and rede and rede.em_trial %}
-  <div style="background:linear-gradient(135deg,rgba(20,184,166,0.1),rgba(20,184,166,0.04));border:1px solid rgba(20,184,166,0.25);border-radius:14px;padding:.9rem 1.2rem;margin-bottom:1.2rem;display:flex;align-items:center;gap:.9rem;flex-wrap:wrap;">
-    <span style="font-size:1.3rem">🎁</span>
-    <div style="flex:1">
-      <strong style="color:var(--primary-l);font-size:.9rem">Trial grátis — {{ rede.dias_trial_restantes }} dia(s) restante(s)</strong>
-      <div style="font-size:.78rem;color:var(--muted);margin-top:.1rem">Explore o MedControl sem compromisso. Ao final, escolha um plano para continuar.</div>
-    </div>
-    <a href="{{ url_for('assinar') }}" style="background:linear-gradient(135deg,var(--primary),var(--primary-l));color:white;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;padding:.5rem 1.1rem;border-radius:10px;text-decoration:none;white-space:nowrap">Ver planos</a>
   </div>
   {% endif %}
 
@@ -606,7 +451,7 @@
         Medicamentos
         {% if busca %}<span style="color:var(--muted); font-weight:400; font-size:.82rem;"> — filtrando por "{{ busca }}"</span>{% endif %}
       </span>
-      <span style="color:var(--muted); font-size:.8rem;">{{ total_filtrado }} item(s)</span>
+      <span style="color:var(--muted); font-size:.8rem;">{{ medicamentos|length }} item(s)</span>
     </div>
 
     {% if medicamentos %}
@@ -615,12 +460,12 @@
         <thead>
           <tr class="table-head-row">
             <th>Medicamento</th>
-            <th class="col-hide-mobile">Cód. Barras</th>
+            <th>Cód. Barras</th>
             <th>Lote</th>
             <th>Validade</th>
             <th>Qtd.</th>
-            <th class="col-hide-mobile">Preço Unit.</th>
-            <th class="col-hide-mobile">Valor Total</th>
+            <th>Preço Unit.</th>
+            <th>Valor Total</th>
             <th>Status</th>
             <th>Ações</th>
           </tr>
@@ -632,7 +477,7 @@
               <div class="med-name">{{ med.nome }}</div>
               {% if med.fabricante %}<div class="med-code">{{ med.fabricante }}</div>{% endif %}
             </td>
-            <td class="col-hide-mobile">
+            <td>
               {% if med.codigo_barras %}
                 <span class="lote-badge">{{ med.codigo_barras }}</span>
               {% else %}
@@ -646,8 +491,8 @@
               </span>
             </td>
             <td><span style="font-weight:600;">{{ med.quantidade }}</span></td>
-            <td class="valor-text col-hide-mobile">R$ {{ "%.2f"|format(med.preco_unitario)|replace('.', ',') }}</td>
-            <td class="valor-text col-hide-mobile" style="{% if med.status == 'vencido' %}color:var(--red){% endif %}">
+            <td class="valor-text">R$ {{ "%.2f"|format(med.preco_unitario)|replace('.', ',') }}</td>
+            <td class="valor-text" style="{% if med.status == 'vencido' %}color:var(--red){% endif %}">
               R$ {{ "%.2f"|format(med.valor_total)|replace('.', ',') }}
             </td>
             <td>
@@ -662,7 +507,6 @@
               </a>
               <form method="POST" action="{{ url_for('excluir', id=med.id) }}" style="display:inline"
                     onsubmit="return confirm('Excluir {{ med.nome }}?')">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-action del" title="Excluir">
                   <i class="bi bi-trash3"></i>
                 </button>
@@ -673,38 +517,6 @@
         </tbody>
       </table>
     </div>
-
-    {% if total_paginas > 1 %}
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:1rem 1.5rem; border-top:1px solid var(--card-border);">
-      <span style="font-size:.82rem; color:var(--muted);">
-        Página {{ pagina }} de {{ total_paginas }} — {{ total_filtrado }} item(s)
-      </span>
-      <div style="display:flex; gap:.4rem;">
-        {% if pagina > 1 %}
-        <a href="?{{ request.query_string.decode().replace('pagina='~pagina, 'pagina='~(pagina-1)) if 'pagina=' in request.query_string.decode() else request.query_string.decode()~'&pagina='~(pagina-1) }}"
-           style="padding:.4rem .85rem; border-radius:8px; background:var(--surface2); border:1px solid var(--card-border); color:var(--text); text-decoration:none; font-size:.82rem;">
-          ← Anterior
-        </a>
-        {% endif %}
-        {% for p in range(1, total_paginas+1) %}
-          {% if p == pagina %}
-          <span style="padding:.4rem .85rem; border-radius:8px; background:var(--primary); color:white; font-size:.82rem; font-weight:700;">{{ p }}</span>
-          {% elif p <= 3 or p >= total_paginas-1 or (p >= pagina-1 and p <= pagina+1) %}
-          <a href="?{{ request.query_string.decode().replace('pagina='~pagina, 'pagina='~p) if 'pagina=' in request.query_string.decode() else request.query_string.decode()~'&pagina='~p }}"
-             style="padding:.4rem .85rem; border-radius:8px; background:var(--surface2); border:1px solid var(--card-border); color:var(--text); text-decoration:none; font-size:.82rem;">
-            {{ p }}
-          </a>
-          {% endif %}
-        {% endfor %}
-        {% if pagina < total_paginas %}
-        <a href="?{{ request.query_string.decode().replace('pagina='~pagina, 'pagina='~(pagina+1)) if 'pagina=' in request.query_string.decode() else request.query_string.decode()~'&pagina='~(pagina+1) }}"
-           style="padding:.4rem .85rem; border-radius:8px; background:var(--surface2); border:1px solid var(--card-border); color:var(--text); text-decoration:none; font-size:.82rem;">
-          Próxima →
-        </a>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
     {% else %}
     <div class="empty-state">
       <i class="bi bi-inbox"></i>
@@ -776,19 +588,18 @@
 <!-- ── MODAL FEEDBACK ──────────────────────────────────────────────────── -->
 <div class="modal fade" id="feedbackModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background:var(--card-bg);border:1px solid var(--card-border);border-radius:20px;">
-      <div class="modal-header" style="border-bottom:1px solid var(--card-border);">
-        <h5 class="modal-title" style="color:var(--text)" style="font-family:'Syne',sans-serif;font-weight:700;">
+    <div class="modal-content" style="background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:20px;">
+      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.07);">
+        <h5 class="modal-title text-white" style="font-family:'Syne',sans-serif;font-weight:700;">
           <i class="bi bi-chat-heart me-2" style="color:#14b8a6"></i>Enviar Feedback
         </h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <form method="POST" action="/feedback">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="modal-body" style="padding:1.5rem;">
           <div class="mb-3">
-            <label style="color:var(--muted);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Categoria</label>
-            <select name="categoria" style="width:100%;background:var(--input-bg,var(--surface2));border:1px solid var(--card-border);color:var(--text);border-radius:12px;padding:.65rem .9rem;font-family:'DM Sans',sans-serif;">
+            <label style="color:#94a3b8;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Categoria</label>
+            <select name="categoria" style="width:100%;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.09);color:#f1f5f9;border-radius:12px;padding:.65rem .9rem;font-family:'DM Sans',sans-serif;">
               <option value="Sugestão">💡 Sugestão de melhoria</option>
               <option value="Bug">🐛 Reportar bug</option>
               <option value="Elogio">⭐ Elogio</option>
@@ -797,17 +608,17 @@
             </select>
           </div>
           <div class="mb-1">
-            <label style="color:var(--muted);font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Mensagem <span style="color:#ef4444">*</span></label>
+            <label style="color:#94a3b8;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Mensagem <span style="color:#ef4444">*</span></label>
             <textarea name="mensagem" rows="5" required placeholder="Descreva sua sugestão, problema ou elogio..."
-              style="width:100%;background:var(--input-bg,var(--surface2));border:1px solid var(--card-border);color:var(--text);border-radius:12px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;resize:vertical;"></textarea>
+              style="width:100%;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.09);color:#f1f5f9;border-radius:12px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;resize:vertical;"></textarea>
           </div>
           <div style="font-size:.75rem;color:#475569;margin-top:.4rem;">
             <i class="bi bi-info-circle me-1"></i>Seu feedback será enviado diretamente ao desenvolvedor.
           </div>
         </div>
-        <div class="modal-footer" style="border-top:1px solid var(--card-border);padding:1rem 1.5rem;gap:.7rem;">
+        <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.07);padding:1rem 1.5rem;gap:.7rem;">
           <button type="button" class="btn" data-bs-dismiss="modal"
-                  style="background:transparent;border:1px solid var(--card-border);color:var(--muted);border-radius:10px;padding:.6rem 1.2rem;">
+                  style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:#94a3b8;border-radius:10px;padding:.6rem 1.2rem;">
             Cancelar
           </button>
           <button type="submit"
@@ -845,31 +656,5 @@
       });
     }
   </script>
-
-<!-- ── BOTTOM NAV (mobile) ──────────────────────────────────────────────── -->
-<nav class="bottom-nav">
-  <div class="bottom-nav-inner">
-    <a href="{{ url_for('dashboard') }}" class="bn-item active">
-      <i class="bi bi-speedometer2"></i>
-      <span>Início</span>
-      {% if stats.vencidos > 0 %}
-      <span class="bn-badge">{{ stats.vencidos }}</span>
-      {% endif %}
-    </a>
-    <a href="{{ url_for('cadastro') }}" class="bn-item">
-      <i class="bi bi-plus-circle"></i>
-      <span>Cadastrar</span>
-    </a>
-    <a href="{{ url_for('gerar_pdf') }}" class="bn-item">
-      <i class="bi bi-file-earmark-pdf"></i>
-      <span>PDF</span>
-    </a>
-    <button class="bn-item" onclick="toggleSidebar()">
-      <i class="bi bi-list"></i>
-      <span>Menu</span>
-    </button>
-  </div>
-</nav>
-
 </body>
 </html>
