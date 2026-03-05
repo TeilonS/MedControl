@@ -1480,6 +1480,10 @@ def _enviar_email(destinatario, assunto, html):
             result = json.loads(resp.read())
             app.logger.info(f'Email enviado via Resend id={result.get("id")} para={destinatario}')
         return True, None
+    except urllib.error.HTTPError as e:
+        body = e.read().decode('utf-8', errors='replace')
+        app.logger.error(f'Resend 403 para {destinatario}: status={e.code} body={body}')
+        return False, f'HTTP {e.code}: {body}'
     except Exception as e:
         app.logger.error(f'Erro ao enviar email para {destinatario}: {e}')
         return False, str(e)
