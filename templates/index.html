@@ -327,7 +327,7 @@
   <div class="topbar">
     <div>
       <div class="page-title">Dashboard</div>
-      <div style="color:var(--muted);font-size:.82rem;">{%- set dias_pt = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'] -%}{%- set meses_pt = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] -%}{{ dias_pt[hoje.weekday()] }}, {{ hoje.day:02d }} de {{ meses_pt[hoje.month-1] }} de {{ hoje.year }}</div>
+      <div style="color:var(--muted);font-size:.82rem;">{%- set dias_pt = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'] -%}{%- set meses_pt = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] -%}{{ dias_pt[hoje.weekday()] }}, {{ '%02d' % hoje.day }} de {{ meses_pt[hoje.month-1] }} de {{ hoje.year }}</div>
     </div>
     <div class="topbar-actions">
       <a href="{{ url_for('gerar_pdf') }}" class="btn btn-outline-soft">
