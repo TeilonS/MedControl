@@ -378,7 +378,10 @@ def login():
             flash('Preencha usuário e senha.', 'danger')
             return render_template('login.html')
 
-        usuario = Usuario.query.filter_by(username=username).first()
+        # Busca case-insensitive: tenta exato primeiro, depois lowercase
+        usuario = Usuario.query.filter(
+            db.func.lower(Usuario.username) == username.lower()
+        ).first()
 
         if usuario and usuario.check_password(password):
             if not usuario.assinatura_ok:
