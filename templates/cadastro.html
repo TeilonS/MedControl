@@ -35,7 +35,7 @@
     .logout-btn { color: #ef4444; text-decoration: none; font-size: .78rem; }
 
     /* MAIN */
-    .main { margin-left: var(--sidebar-w); flex: 1; padding: 2rem; }
+    .main { margin-left: var(--sidebar-w, 260px); flex: 1; padding: 2rem; min-width: 0; }
     .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; margin-bottom: .2rem; }
     .breadcrumb-soft { color: var(--muted); font-size: .82rem; margin-bottom: 2rem; }
     .breadcrumb-soft a { color: var(--primary-l); text-decoration: none; }
@@ -124,6 +124,13 @@
       background: rgba(0,0,0,0.55); z-index: 99; backdrop-filter: blur(2px);
     }
     .sidebar-overlay.active { display: block; }
+    @media (max-width: 992px) {
+      .sidebar { transform: translateX(-100%);
+      }
+    }
+    @media (max-width: 992px) {
+      .main { margin-left: 0 !important; }
+    }
     @media (max-width: 768px) {
       .sidebar { transform: translateX(-100%); transition: transform .28s cubic-bezier(.4,0,.2,1); z-index: 200; }
       .sidebar.open { transform: translateX(0); }
@@ -165,7 +172,7 @@
 </aside>
 
 <!-- MAIN -->
-<main class="main">
+<main class="main" style="margin-left:260px;min-width:0">
   <div class="page-title">{{ 'Editar Medicamento' if modo == 'editar' else 'Novo Medicamento' }}</div>
   <div class="breadcrumb-soft">
     <a href="{{ url_for('dashboard') }}">Dashboard</a> / 

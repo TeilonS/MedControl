@@ -477,12 +477,15 @@ def aceitar_termos():
 @app.route('/')
 @assinatura_required
 def dashboard():
+    u = get_usuario_atual()
+    if u.is_superadmin:
+        return redirect(url_for('admin_redes'))
+
     hoje          = date.today()
     busca         = request.args.get('busca', '').strip()
     status        = request.args.get('status', '')
     filial_filtro = request.args.get('filial', '')
     pagina        = request.args.get('pagina', 1, type=int)
-    u             = get_usuario_atual()
     query         = get_medicamentos_query()
 
     if busca:
