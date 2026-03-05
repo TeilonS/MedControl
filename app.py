@@ -33,8 +33,8 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
-import io, os, json, logging
-import urllib.request, urllib.error
+import io, os, json, logging, random, string
+import urllib.request, urllib.error, urllib.parse
 try:
     import requests as _requests
 except ImportError:
@@ -208,6 +208,9 @@ class Usuario(db.Model):
     tema              = db.Column(db.String(10), default='light')
     termos_aceitos    = db.Column(db.Boolean, default=False, nullable=False)
     termos_aceitos_em = db.Column(db.DateTime, nullable=True)
+    email_confirmado  = db.Column(db.Boolean, default=False, nullable=False)
+    email_codigo      = db.Column(db.String(10), nullable=True)
+    email_codigo_exp  = db.Column(db.DateTime, nullable=True)
 
     @property
     def is_superadmin(self): return self.perfil == 'superadmin'
@@ -305,6 +308,9 @@ def assinatura_required(f):
         if not u or not u.assinatura_ok:
             return redirect(url_for('assinatura_expirada'))
         # Força leitura e aceite dos termos antes de qualquer rota
+        # Email precisa ser confirmado antes de usar o app
+        if not u.is_superadmin and not u.email_confirmado:
+            return redirect(url_for('confirmar_email'))
         if not u.aceitou_termos:
             return redirect(url_for('aceitar_termos'))
         return f(*args, **kwargs)
@@ -1299,8 +1305,13 @@ def registrar():
         session['perfil']   = usuario.perfil
         session['rede_id']  = rede.id
 
-        flash(f'Bem-vindo ao MedControl! Você tem 30 dias grátis para explorar. 🎉', 'success')
-        return redirect(url_for('aceitar_termos'))
+        # Enviar código de confirmação por email
+        ok_email, _ = _enviar_codigo_confirmacao(usuario)
+        if ok_email:
+            flash('Conta criada! Enviamos um código de confirmação para seu email.', 'success')
+        else:
+            flash('Conta criada! Não conseguimos enviar o email — confirme depois nas configurações.', 'warning')
+        return redirect(url_for('confirmar_email'))
 
     return render_template('registrar.html', erros=[], nome_rede='', email='', telefone='')
 
@@ -1431,6 +1442,221 @@ def webhook_mercadopago():
 
     return '', 200
 
+
+
+# =============================================================================
+# EMAIL — SMTP GMAIL
+# =============================================================================
+# Configurar no Railway:
+#   GMAIL_USER   = seu.email@gmail.com
+#   GMAIL_PASS   = senha de app (não a senha normal — gerar em myaccount.google.com/apppasswords)
+
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+RESEND_FROM    = os.environ.get('RESEND_FROM', 'MedControl <noreply@medcontrol.app.br>')
+
+
+def _enviar_email(destinatario, assunto, html):
+    """Envia email via Resend API. Retorna (True, None) ou (False, erro_str)."""
+    if not RESEND_API_KEY:
+        app.logger.warning('RESEND_API_KEY não configurada')
+        return False, 'Email não configurado no servidor'
+    try:
+        payload = json.dumps({
+            'from':    RESEND_FROM,
+            'to':      [destinatario],
+            'subject': assunto,
+            'html':    html,
+        }).encode('utf-8')
+        req = urllib.request.Request(
+            'https://api.resend.com/emails',
+            data    = payload,
+            headers = {
+                'Authorization': f'Bearer {RESEND_API_KEY}',
+                'Content-Type':  'application/json',
+            },
+            method = 'POST'
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = json.loads(resp.read())
+            app.logger.info(f'Email enviado via Resend id={result.get("id")} para={destinatario}')
+        return True, None
+    except Exception as e:
+        app.logger.error(f'Erro ao enviar email para {destinatario}: {e}')
+        return False, str(e)
+
+
+def _gerar_codigo():
+    """Gera código numérico de 6 dígitos."""
+    return ''.join(random.choices(string.digits, k=6))
+
+
+def _enviar_codigo_confirmacao(usuario):
+    """Gera código, salva no banco e envia por email. Retorna (True/False, msg)."""
+    codigo = _gerar_codigo()
+    usuario.email_codigo     = codigo
+    usuario.email_codigo_exp = datetime.utcnow() + timedelta(hours=24)
+    db.session.commit()
+
+    html = f"""
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:480px;margin:0 auto;background:#0a1628;border-radius:16px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#0f766e,#14b8a6);padding:2rem;text-align:center">
+        <div style="font-size:2rem">💊</div>
+        <h1 style="color:white;font-size:1.4rem;margin:.5rem 0 0">MedControl</h1>
+      </div>
+      <div style="padding:2rem;color:#f1f5f9">
+        <p style="margin:0 0 1rem;font-size:.95rem">Olá, <strong>{usuario.nome_exibir or usuario.username}</strong>!</p>
+        <p style="margin:0 0 1.5rem;color:#94a3b8;font-size:.88rem">Use o código abaixo para confirmar seu email e ativar sua conta:</p>
+        <div style="background:#142033;border:2px solid rgba(20,184,166,0.3);border-radius:14px;padding:1.5rem;text-align:center;margin-bottom:1.5rem">
+          <div style="font-size:2.4rem;font-weight:900;letter-spacing:.3em;color:#14b8a6;font-family:monospace">{codigo}</div>
+          <div style="font-size:.75rem;color:#64748b;margin-top:.5rem">Válido por 24 horas</div>
+        </div>
+        <p style="font-size:.78rem;color:#475569;margin:0">Se você não criou uma conta no MedControl, ignore este email.</p>
+      </div>
+    </div>
+    """
+    return _enviar_email(usuario.username, '🔐 Código de confirmação — MedControl', html)
+
+
+def _enviar_notificacao_validade(usuario, medicamentos_proximos):
+    """Envia email com lista de medicamentos vencendo em 30 dias."""
+    if not medicamentos_proximos:
+        return
+    destinatario = usuario.username  # username = email
+    nome = usuario.nome_exibir or usuario.username
+
+    linhas = ""
+    for m in medicamentos_proximos:
+        dias = (m.data_validade - date.today()).days
+        cor = "#ef4444" if dias <= 7 else "#f59e0b" if dias <= 15 else "#14b8a6"
+        linhas += f"""
+        <tr>
+          <td style="padding:.6rem .8rem;border-bottom:1px solid #1e293b;color:#f1f5f9;font-size:.85rem">{m.nome}</td>
+          <td style="padding:.6rem .8rem;border-bottom:1px solid #1e293b;color:#94a3b8;font-size:.83rem">{m.lote}</td>
+          <td style="padding:.6rem .8rem;border-bottom:1px solid #1e293b;font-size:.83rem">
+            <span style="color:{cor};font-weight:700">{m.data_validade.strftime('%d/%m/%Y')}</span>
+          </td>
+          <td style="padding:.6rem .8rem;border-bottom:1px solid #1e293b;font-size:.83rem">
+            <span style="background:{cor}22;color:{cor};padding:.2rem .6rem;border-radius:20px;font-size:.75rem;font-weight:700">{dias} dias</span>
+          </td>
+        </tr>"""
+
+    html = f"""
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:600px;margin:0 auto;background:#0a1628;border-radius:16px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,#0f766e,#14b8a6);padding:1.5rem 2rem;display:flex;align-items:center;gap:1rem">
+        <div style="font-size:1.8rem">⚠️</div>
+        <div>
+          <h1 style="color:white;font-size:1.1rem;margin:0">Alerta de Validade — MedControl</h1>
+          <p style="color:rgba(255,255,255,0.8);font-size:.8rem;margin:.2rem 0 0">{len(medicamentos_proximos)} medicamento(s) vencem em até 30 dias</p>
+        </div>
+      </div>
+      <div style="padding:1.5rem 2rem;color:#f1f5f9">
+        <p style="margin:0 0 1.2rem;font-size:.9rem">Olá <strong>{nome}</strong>, os seguintes medicamentos precisam de atenção:</p>
+        <table style="width:100%;border-collapse:collapse;background:#0f1f35;border-radius:12px;overflow:hidden">
+          <thead>
+            <tr style="background:#142033">
+              <th style="padding:.7rem .8rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Medicamento</th>
+              <th style="padding:.7rem .8rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Lote</th>
+              <th style="padding:.7rem .8rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Validade</th>
+              <th style="padding:.7rem .8rem;text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b">Dias</th>
+            </tr>
+          </thead>
+          <tbody>{linhas}</tbody>
+        </table>
+        <div style="margin-top:1.5rem;text-align:center">
+          <a href="https://www.medcontrol.app.br" style="background:linear-gradient(135deg,#0f766e,#14b8a6);color:white;text-decoration:none;padding:.7rem 2rem;border-radius:10px;font-weight:700;font-size:.9rem;display:inline-block">
+            Abrir MedControl →
+          </a>
+        </div>
+        <p style="font-size:.72rem;color:#475569;margin-top:1.5rem;text-align:center">
+          Você recebe este email pois sua conta MedControl tem alertas de validade ativos.
+        </p>
+      </div>
+    </div>
+    """
+    _enviar_email(destinatario, f'⚠️ {len(medicamentos_proximos)} medicamento(s) vencem em 30 dias — MedControl', html)
+
+
+# Rota para disparar notificações (chamada por cron/scheduler ou manualmente)
+@app.route('/sistema/notificacoes', methods=['POST'])
+def disparar_notificacoes():
+    """
+    Dispara emails de alerta de validade para todos os usuários dono_rede.
+    Chamar via cron diário — protegido por CRON_SECRET.
+    Ex: POST /sistema/notificacoes com header X-Cron-Secret: <valor>
+    """
+    secret = request.headers.get('X-Cron-Secret', '')
+    cron_secret = os.environ.get('CRON_SECRET', '')
+    if not cron_secret or secret != cron_secret:
+        return jsonify({'ok': False, 'msg': 'Não autorizado'}), 403
+
+    hoje  = date.today()
+    limit = hoje + timedelta(days=30)
+    donos = Usuario.query.filter_by(perfil='dono_rede').all()
+    enviados = 0
+
+    for dono in donos:
+        if not dono.rede or not dono.rede.assinatura_ativa:
+            continue
+        meds = Medicamento.query.filter(
+            Medicamento.rede_id == dono.rede_id,
+            Medicamento.data_validade >= hoje,
+            Medicamento.data_validade <= limit,
+        ).order_by(Medicamento.data_validade.asc()).all()
+        if meds:
+            _enviar_notificacao_validade(dono, meds)
+            enviados += 1
+
+    audit('notificacoes_enviadas', f'total={enviados}')
+    return jsonify({'ok': True, 'enviados': enviados})
+
+
+# =============================================================================
+# CONFIRMAÇÃO DE EMAIL
+# =============================================================================
+
+@app.route('/confirmar-email', methods=['GET', 'POST'])
+@login_required
+def confirmar_email():
+    u = get_usuario_atual()
+
+    # Superadmin e usuários já confirmados passam direto
+    if u.is_superadmin or u.email_confirmado:
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        acao = request.form.get('acao', 'confirmar')
+
+        if acao == 'reenviar':
+            ok, erro = _enviar_codigo_confirmacao(u)
+            if ok:
+                flash('Novo código enviado para seu email!', 'success')
+            else:
+                flash(f'Erro ao enviar email: {erro}', 'danger')
+            return redirect(url_for('confirmar_email'))
+
+        codigo = request.form.get('codigo', '').strip()
+        if not codigo:
+            flash('Digite o código recebido por email.', 'danger')
+            return render_template('confirmar_email.html', usuario=u)
+
+        # Verifica expiração
+        if u.email_codigo_exp and datetime.utcnow() > u.email_codigo_exp:
+            flash('Código expirado. Clique em "Reenviar código".', 'danger')
+            return render_template('confirmar_email.html', usuario=u)
+
+        if u.email_codigo and codigo == u.email_codigo:
+            u.email_confirmado  = True
+            u.email_codigo      = None
+            u.email_codigo_exp  = None
+            db.session.commit()
+            audit('email_confirmado', f'username={u.username}')
+            flash('Email confirmado! Bem-vindo ao MedControl 🎉', 'success')
+            return redirect(url_for('aceitar_termos'))
+        else:
+            audit('email_codigo_invalido', f'username={u.username}')
+            flash('Código incorreto. Verifique seu email e tente novamente.', 'danger')
+
+    return render_template('confirmar_email.html', usuario=u)
 
 # =============================================================================
 # PÁGINAS LEGAIS — LGPD
@@ -1600,7 +1826,9 @@ def seed_database():
                                nome_exibir='Filial Centro', filial_nome='Unidade Centro',
                                rede_id=rede_demo.id)
         dono_demo.set_password('demo123')
+        dono_demo.email_confirmado = True
         filial_demo.set_password('demo123')
+        filial_demo.email_confirmado = True
         db.session.add_all([dono_demo, filial_demo])
         db.session.flush()
         db.session.add_all([
@@ -1631,12 +1859,14 @@ with app.app_context():
     # Migração: adiciona colunas novas se não existirem (PostgreSQL e SQLite)
     try:
         with db.engine.connect() as conn:
-            conn.execute(db.text(
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS termos_aceitos BOOLEAN DEFAULT FALSE"
-            ))
-            conn.execute(db.text(
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS termos_aceitos_em TIMESTAMP"
-            ))
+            for col_sql in [
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS termos_aceitos BOOLEAN DEFAULT FALSE",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS termos_aceitos_em TIMESTAMP",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_confirmado BOOLEAN DEFAULT FALSE",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_codigo VARCHAR(10)",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_codigo_exp TIMESTAMP",
+            ]:
+                conn.execute(db.text(col_sql))
             conn.commit()
     except Exception:
         pass

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Confirmar Email</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #0f766e; --primary-l: #14b8a6; --teal-xl: #5eead4;
+      --dark: #0a1628; --card: #0f1f35; --border: rgba(20,184,166,0.15);
+      --text: #f1f5f9; --muted: #64748b;
+    }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dark); color: var(--text);
+      min-height: 100vh; display: flex;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background: radial-gradient(ellipse at 20% 50%, rgba(15,118,110,0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(20,184,166,0.06) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .card {
+      width: 100%; max-width: 420px; position: relative;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 24px; padding: 2.5rem 2rem;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    }
+
+    .email-icon {
+      width: 68px; height: 68px; border-radius: 50%; margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, rgba(15,118,110,0.2), rgba(20,184,166,0.1));
+      border: 1px solid rgba(20,184,166,0.3);
+      display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif; font-weight: 900;
+      font-size: 1.5rem; text-align: center; margin-bottom: .5rem;
+    }
+    .subtitle {
+      text-align: center; font-size: .85rem; color: var(--muted);
+      line-height: 1.6; margin-bottom: 2rem;
+    }
+    .subtitle strong { color: var(--primary-l); }
+
+    /* CÓDIGO INPUT */
+    .code-wrap {
+      display: flex; gap: .6rem; justify-content: center; margin-bottom: 1.5rem;
+    }
+    .code-box {
+      width: 52px; height: 60px; background: rgba(255,255,255,0.04);
+      border: 2px solid rgba(255,255,255,0.08); border-radius: 14px;
+      text-align: center; font-size: 1.6rem; font-weight: 700;
+      color: var(--text); font-family: 'DM Sans', monospace;
+      caret-color: var(--primary-l); transition: all .2s;
+      -moz-appearance: textfield;
+    }
+    .code-box::-webkit-inner-spin-button,
+    .code-box::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .code-box:focus {
+      outline: none; border-color: var(--primary-l);
+      box-shadow: 0 0 0 3px rgba(20,184,166,0.15);
+      background: rgba(20,184,166,0.05);
+    }
+    .code-box.filled { border-color: rgba(20,184,166,0.4); }
+
+    /* HIDDEN INPUT */
+    #codigo-hidden { display: none; }
+
+    .btn-confirm {
+      width: 100%; background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      border: none; color: white; font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: .95rem; padding: .85rem;
+      border-radius: 12px; cursor: pointer; transition: all .2s;
+      box-shadow: 0 6px 20px rgba(20,184,166,0.3); margin-bottom: 1rem;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+    }
+    .btn-confirm:hover { transform: translateY(-1px); box-shadow: 0 8px 28px rgba(20,184,166,0.4); }
+    .btn-confirm:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .divider { display: flex; align-items: center; gap: .8rem; margin: .8rem 0; }
+    .divider hr { flex: 1; border-color: rgba(255,255,255,0.06); }
+    .divider span { font-size: .72rem; color: var(--muted); }
+
+    .btn-resend {
+      width: 100%; background: transparent;
+      border: 1px solid rgba(255,255,255,0.08); color: var(--muted);
+      font-size: .85rem; padding: .75rem; border-radius: 12px;
+      cursor: pointer; transition: all .2s; margin-bottom: .7rem;
+      display: flex; align-items: center; justify-content: center; gap: .5rem;
+    }
+    .btn-resend:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+
+    .logout-link {
+      display: block; text-align: center; font-size: .78rem;
+      color: var(--muted); text-decoration: none; margin-top: .5rem;
+    }
+    .logout-link:hover { color: #ef4444; }
+
+    /* FLASH */
+    .alert {
+      border-radius: 10px; padding: .8rem 1rem; margin-bottom: 1.2rem;
+      font-size: .83rem; display: flex; align-items: center; gap: .6rem;
+    }
+    .alert-danger  { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.25);  color: #fca5a5; }
+    .alert-success { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.25);  color: #86efac; }
+    .alert-warning { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.25); color: #fcd34d; }
+
+    /* STEPS */
+    .steps {
+      display: flex; gap: .5rem; justify-content: center; margin-bottom: 2rem;
+    }
+    .step {
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .72rem; color: var(--muted);
+    }
+    .step-dot {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .68rem; font-weight: 700; flex-shrink: 0;
+    }
+    .step.done .step-dot  { background: rgba(20,184,166,0.2); color: var(--primary-l); border: 1px solid rgba(20,184,166,0.3); }
+    .step.active .step-dot { background: var(--primary-l); color: white; }
+    .step.pending .step-dot { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid rgba(255,255,255,0.08); }
+    .step-line { width: 24px; height: 1px; background: rgba(255,255,255,0.08); }
+
+    @media (max-width: 400px) {
+      .code-box { width: 44px; height: 52px; font-size: 1.4rem; border-radius: 10px; }
+      .card { padding: 2rem 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- STEPS -->
+  <div class="steps">
+    <div class="step done"><div class="step-dot">✓</div><span>Cadastro</span></div>
+    <div class="step-line"></div>
+    <div class="step active"><div class="step-dot">2</div><span>Confirmar</span></div>
+    <div class="step-line"></div>
+    <div class="step pending"><div class="step-dot">3</div><span>Termos</span></div>
+    <div class="step-line"></div>
+    <div class="step pending"><div class="step-dot">4</div><span>Usar</span></div>
+  </div>
+
+  <div class="email-icon">📧</div>
+  <h1>Confirme seu email</h1>
+  <p class="subtitle">
+    Enviamos um código de 6 dígitos para<br>
+    <strong>{{ usuario.username }}</strong>.<br>
+    <span style="font-size:.78rem">Verifique também a pasta de spam.</span>
+  </p>
+
+  <!-- FLASH MESSAGES -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+          <i class="bi bi-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- FORM CONFIRMAR -->
+  <form method="POST" action="{{ url_for('confirmar_email') }}" id="formConfirmar">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="acao" value="confirmar">
+    <input type="hidden" name="codigo" id="codigo-hidden">
+
+    <div class="code-wrap">
+      <input type="number" class="code-box" id="d1" maxlength="1" min="0" max="9" inputmode="numeric">
+      <input type="number" class="code-box" id="d2" maxlength="1" min="0" max="9" inputmode="numeric">
+      <input type="number" class="code-box" id="d3" maxlength="1" min="0" max="9" inputmode="numeric">
+      <input type="number" class="code-box" id="d4" maxlength="1" min="0" max="9" inputmode="numeric">
+      <input type="number" class="code-box" id="d5" maxlength="1" min="0" max="9" inputmode="numeric">
+      <input type="number" class="code-box" id="d6" maxlength="1" min="0" max="9" inputmode="numeric">
+    </div>
+
+    <button type="submit" class="btn-confirm" id="btnConfirmar" disabled>
+      <i class="bi bi-check-circle"></i> Confirmar email
+    </button>
+  </form>
+
+  <div class="divider"><hr><span>não recebeu?</span><hr></div>
+
+  <!-- FORM REENVIAR -->
+  <form method="POST" action="{{ url_for('confirmar_email') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="acao" value="reenviar">
+    <button type="submit" class="btn-resend">
+      <i class="bi bi-arrow-clockwise"></i> Reenviar código
+    </button>
+  </form>
+
+  <a href="{{ url_for('logout') }}" class="logout-link">
+    <i class="bi bi-box-arrow-right me-1"></i>Sair e usar outra conta
+  </a>
+
+</div>
+
+<script>
+const boxes = [
+  document.getElementById('d1'),
+  document.getElementById('d2'),
+  document.getElementById('d3'),
+  document.getElementById('d4'),
+  document.getElementById('d5'),
+  document.getElementById('d6'),
+];
+const hidden  = document.getElementById('codigo-hidden');
+const btnConf = document.getElementById('btnConfirmar');
+
+function updateHidden() {
+  const code = boxes.map(b => b.value.slice(-1)).join('');
+  hidden.value = code;
+  const complete = code.length === 6 && /^\d{6}$/.test(code);
+  btnConf.disabled = !complete;
+  boxes.forEach((b, i) => {
+    b.classList.toggle('filled', b.value !== '');
+  });
+}
+
+boxes.forEach((box, idx) => {
+  box.addEventListener('input', () => {
+    // Garante só 1 dígito
+    if (box.value.length > 1) box.value = box.value.slice(-1);
+    updateHidden();
+    if (box.value && idx < 5) boxes[idx + 1].focus();
+  });
+
+  box.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !box.value && idx > 0) {
+      boxes[idx - 1].focus();
+      boxes[idx - 1].value = '';
+      updateHidden();
+    }
+    if (e.key === 'ArrowLeft'  && idx > 0) boxes[idx - 1].focus();
+    if (e.key === 'ArrowRight' && idx < 5) boxes[idx + 1].focus();
+  });
+
+  // Colar código completo
+  box.addEventListener('paste', e => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+    text.split('').slice(0, 6).forEach((ch, i) => {
+      if (boxes[i]) boxes[i].value = ch;
+    });
+    updateHidden();
+    const last = Math.min(text.length, 5);
+    boxes[last].focus();
+  });
+});
+
+// Auto-submit quando todos preenchidos
+document.getElementById('formConfirmar').addEventListener('submit', () => {
+  btnConf.disabled = true;
+  btnConf.innerHTML = '<i class="bi bi-hourglass-split"></i> Verificando...';
+});
+
+// Foca no primeiro campo ao carregar
+boxes[0].focus();
+</script>
+</body>
+</html>
