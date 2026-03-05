@@ -335,7 +335,7 @@ def get_usuario_atual():
 
 def get_medicamentos_query():
     u = get_usuario_atual()
-    if u.is_superadmin: return Medicamento.query
+    if u.is_superadmin: return Medicamento.query.filter_by(id=None)  # superadmin nao tem dados proprios
     elif u.is_dono:     return Medicamento.query.filter_by(rede_id=u.rede_id)
     else:               return Medicamento.query.filter_by(filial_id=u.id)
 
