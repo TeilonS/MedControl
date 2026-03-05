@@ -479,7 +479,7 @@ def aceitar_termos():
 def dashboard():
     u = get_usuario_atual()
     if u.is_superadmin:
-        return redirect(url_for('admin_redes'))
+        return redirect(url_for('admin_dashboard'))
 
     hoje          = date.today()
     busca         = request.args.get('busca', '').strip()
