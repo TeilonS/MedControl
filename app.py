@@ -36,6 +36,11 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 import io, os, json, logging, random, string
 import urllib.request, urllib.error, urllib.parse
 try:
+    import resend as resend_sdk
+    RESEND_SDK = True
+except ImportError:
+    RESEND_SDK = False
+try:
     import requests as _requests
 except ImportError:
     _requests = None
@@ -1456,36 +1461,23 @@ RESEND_FROM    = os.environ.get('RESEND_FROM', 'MedControl <noreply@medcontrol.a
 
 
 def _enviar_email(destinatario, assunto, html):
-    """Envia email via Resend API. Retorna (True, None) ou (False, erro_str)."""
+    """Envia email via Resend SDK. Retorna (True, None) ou (False, erro_str)."""
     if not RESEND_API_KEY:
         app.logger.warning('RESEND_API_KEY não configurada')
         return False, 'Email não configurado no servidor'
     try:
-        payload = json.dumps({
+        resend_sdk.api_key = RESEND_API_KEY
+        params = {
             'from':    RESEND_FROM,
             'to':      [destinatario],
             'subject': assunto,
             'html':    html,
-        }).encode('utf-8')
-        req = urllib.request.Request(
-            'https://api.resend.com/emails',
-            data    = payload,
-            headers = {
-                'Authorization': f'Bearer {RESEND_API_KEY}',
-                'Content-Type':  'application/json',
-            },
-            method = 'POST'
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            result = json.loads(resp.read())
-            app.logger.info(f'Email enviado via Resend id={result.get("id")} para={destinatario}')
+        }
+        result = resend_sdk.Emails.send(params)
+        app.logger.info(f'Email enviado via Resend SDK id={result.get("id")} para={destinatario}')
         return True, None
-    except urllib.error.HTTPError as e:
-        body = e.read().decode('utf-8', errors='replace')
-        app.logger.error(f'Resend 403 para {destinatario}: status={e.code} body={body}')
-        return False, f'HTTP {e.code}: {body}'
     except Exception as e:
-        app.logger.error(f'Erro ao enviar email para {destinatario}: {e}')
+        app.logger.error(f'Erro Resend SDK para {destinatario}: {e}')
         return False, str(e)
 
 
