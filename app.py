@@ -313,8 +313,8 @@ def assinatura_required(f):
         if not u or not u.assinatura_ok:
             return redirect(url_for('assinatura_expirada'))
         # Força leitura e aceite dos termos antes de qualquer rota
-        # Email precisa ser confirmado antes de usar o app
-        if not u.is_superadmin and not u.email_confirmado:
+        # Email precisa ser confirmado apenas para dono_rede (filiais são criadas pelo dono)
+        if u.is_dono and not u.email_confirmado:
             return redirect(url_for('confirmar_email'))
         if not u.aceitou_termos:
             return redirect(url_for('aceitar_termos'))
@@ -923,11 +923,12 @@ def dono_criar_filial():
             return redirect(url_for('gerenciar_filiais'))
 
         filial = Usuario(
-            username    = username,
-            perfil      = 'filial',
-            nome_exibir = filial_nome,
-            filial_nome = filial_nome,
-            rede_id     = u.rede_id,
+            username         = username,
+            perfil           = 'filial',
+            nome_exibir      = filial_nome,
+            filial_nome      = filial_nome,
+            rede_id          = u.rede_id,
+            email_confirmado = True,  # filiais não precisam confirmar email
         )
         filial.set_password(senha)
         db.session.add(filial)
