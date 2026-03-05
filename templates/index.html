@@ -455,7 +455,7 @@
         Medicamentos
         {% if busca %}<span style="color:var(--muted); font-weight:400; font-size:.82rem;"> — filtrando por "{{ busca }}"</span>{% endif %}
       </span>
-      <span style="color:var(--muted); font-size:.8rem;">{{ medicamentos|length }} item(s)</span>
+      <span style="color:var(--muted); font-size:.8rem;" id="meds-count">{{ medicamentos|length }} item(s)</span>
     </div>
 
     {% if medicamentos %}
@@ -474,7 +474,7 @@
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody id="meds-tbody">
           {% for med in medicamentos %}
           <tr class="row-{{ med.status }}">
             <td>
@@ -523,7 +523,7 @@
       </table>
     </div>
     {% else %}
-    <div class="empty-state">
+    <div class="empty-state" id="empty-state" style="display:{% if not medicamentos %}block{% else %}none{% endif %}">
       <i class="bi bi-inbox"></i>
       <div style="font-family:'Syne',sans-serif; font-weight:700; font-size:1.1rem; margin-bottom:.4rem;">Nenhum medicamento encontrado</div>
       <div style="font-size:.88rem;">Tente ajustar os filtros ou <a href="{{ url_for('cadastro') }}" style="color:var(--primary-l)">cadastre um novo</a>.</div>
@@ -661,5 +661,84 @@
       });
     }
   </script>
+
+  <script>
+  // ── BUSCA AJAX — atualiza só a tabela sem reload ──────────────────────
+  (function() {
+    const form    = document.querySelector('form[action*="dashboard"]');
+    const tbody   = document.getElementById('meds-tbody');
+    const counter = document.getElementById('meds-count');
+    const empty   = document.getElementById('empty-state');
+    if (!form || !tbody) return;
+
+    const STATUS_LABELS = {
+      vencido:   '<span class="chip chip-vencido">● Vencido</span>',
+      alerta_30: '<span class="chip chip-alerta_30">● Vence em 30 dias</span>',
+      alerta_60: '<span class="chip chip-alerta_60">● Vence em 60 dias</span>',
+      ok:        '<span class="chip chip-ok">● OK</span>',
+    };
+
+    function buildRow(m) {
+      const editBtn  = `<a href="${m.edit_url}" class="btn-action edit" title="Editar"><i class="bi bi-pencil-square"></i></a>`;
+      const delForm  = `<form method="POST" action="/excluir/${m.id}" style="display:inline" onsubmit="return confirm('Excluir ${m.nome}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn-action del" title="Excluir"><i class="bi bi-trash3"></i></button></form>`;
+      const barcode  = m.codigo_barras ? `<span class="lote-badge">${m.codigo_barras}</span>` : '—';
+      const lote     = `<span class="lote-badge">${m.lote}</span>`;
+      const isExpired = m.status === 'vencido';
+      const validadeClass = isExpired ? 'style="color:#ef4444;font-weight:600"' : '';
+      const statusBorder = m.status === 'vencido' ? 'border-left:3px solid #ef4444' : m.status === 'alerta_30' ? 'border-left:3px solid #f97316' : m.status === 'alerta_60' ? 'border-left:3px solid #eab308' : '';
+      const subNome = m.fabricante ? `<div class="med-code">${m.fabricante}</div>` : (m.filial_nome ? `<div class="med-code">${m.filial_nome}</div>` : '');
+
+      return `<tr style="${statusBorder}">
+        <td><div class="med-name">${m.nome}</div>${subNome}</td>
+        <td>${barcode}</td>
+        <td>${lote}</td>
+        <td ${validadeClass}>${m.validade}</td>
+        <td>${m.quantidade}</td>
+        <td>${m.preco}</td>
+        <td>${m.total}</td>
+        <td>${STATUS_LABELS[m.status] || m.status}</td>
+        <td style="white-space:nowrap">${editBtn} ${delForm}</td>
+      </tr>`;
+    }
+
+    function doSearch() {
+      const fd     = new FormData(form);
+      const params = new URLSearchParams(fd).toString();
+
+      fetch(`/api/busca?${params}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.json())
+        .then(data => {
+          tbody.innerHTML = data.medicamentos.map(buildRow).join('');
+          if (counter) counter.textContent = `${data.total} item(s)`;
+          if (empty) empty.style.display = data.total === 0 ? 'block' : 'none';
+          if (document.getElementById('meds-table'))
+            document.getElementById('meds-table').style.display = data.total === 0 ? 'none' : '';
+        })
+        .catch(() => form.submit()); // fallback para reload normal
+    }
+
+    // Submit via Enter ou botão — interceptar
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      doSearch();
+      // Atualizar URL sem reload
+      const fd = new FormData(form);
+      const params = new URLSearchParams(fd).toString();
+      history.replaceState(null, '', `?${params}`);
+    });
+
+    // Select de filial já tem onchange="this.form.submit()" — substituir por AJAX
+    const filialSelect = form.querySelector('select[name="filial"]');
+    if (filialSelect) {
+      filialSelect.removeAttribute('onchange');
+      filialSelect.addEventListener('change', function() {
+        doSearch();
+        const fd = new FormData(form);
+        history.replaceState(null, '', `?${new URLSearchParams(fd).toString()}`);
+      });
+    }
+  })();
+  </script>
+
 </body>
 </html>

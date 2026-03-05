@@ -142,7 +142,7 @@
           <label class="form-label">Usuário</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-            <input type="text" name="username" class="form-control" placeholder="admin" required autofocus>
+            <input type="text" name="username" class="form-control" placeholder="seu@email.com ou usuário" required autofocus autocomplete="username" style="text-overflow:ellipsis;">
           </div>
         </div>
         <div class="mb-4">
@@ -156,6 +156,11 @@
           <i class="bi bi-box-arrow-in-right me-2"></i>Entrar no Sistema
         </button>
       </form>
+
+      <div style="text-align:center;margin-top:1.4rem;border-top:1px solid rgba(255,255,255,0.07);padding-top:1.2rem;">
+        <span style="color:#475569;font-size:.85rem;">Ainda não tem conta?</span>
+        <a href="{{ url_for('registrar') }}" style="color:var(--primary-light);font-weight:600;text-decoration:none;font-size:.85rem;margin-left:.4rem;">Criar conta grátis →</a>
+      </div>
 
       
     </div>

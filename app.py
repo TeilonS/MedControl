@@ -641,6 +641,68 @@ def excluir(id):
     return redirect(url_for('dashboard'))
 
 
+
+
+# =============================================================================
+# API BUSCA AJAX — retorna medicamentos em JSON para o dashboard
+# =============================================================================
+@app.route('/api/busca')
+@assinatura_required
+def api_busca():
+    u             = get_usuario_atual()
+    busca         = request.args.get('busca', '').strip()
+    status_filtro = request.args.get('status', '')
+    filial_filtro = request.args.get('filial', '')
+
+    query = get_medicamentos_query()
+
+    if busca:
+        query = query.filter(db.or_(
+            Medicamento.nome.ilike(f'%{busca}%'),
+            Medicamento.lote.ilike(f'%{busca}%'),
+            Medicamento.codigo_barras.ilike(f'%{busca}%')
+        ))
+
+    if filial_filtro and (u.is_dono or u.is_superadmin):
+        try:
+            query = query.filter_by(filial_id=int(filial_filtro))
+        except (ValueError, TypeError):
+            pass
+
+    query = query.order_by(Medicamento.data_validade.asc())
+    todos = query.all()
+
+    if status_filtro:
+        todos = [m for m in todos if m.status == status_filtro]
+
+    def fmt_brl(v):
+        return f"R$ {v:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+
+    meds = []
+    for m in todos:
+        # Buscar nome da filial
+        filial_nome = None
+        if m.filial_id:
+            filial_u = Usuario.query.get(m.filial_id)
+            filial_nome = filial_u.filial_nome or filial_u.username if filial_u else None
+
+        meds.append({
+            'id':           m.id,
+            'nome':         m.nome,
+            'fabricante':   m.fabricante or '',
+            'codigo_barras': m.codigo_barras or '',
+            'lote':         m.lote,
+            'validade':     m.data_validade.strftime('%d/%m/%Y'),
+            'quantidade':   m.quantidade,
+            'preco':        fmt_brl(m.preco_unitario),
+            'total':        fmt_brl(m.preco_unitario * m.quantidade),
+            'status':       m.status,
+            'filial_nome':  filial_nome,
+            'edit_url':     url_for('editar', id=m.id),
+        })
+
+    return jsonify({'medicamentos': meds, 'total': len(meds)})
+
 # =============================================================================
 # FEEDBACK
 # =============================================================================
