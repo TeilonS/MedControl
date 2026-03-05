@@ -410,16 +410,11 @@
                    value="{{ busca }}">
           </div>
           <div class="filter-pills">
-            <a href="{{ url_for('dashboard', busca=busca) }}"
-               class="pill p-all {% if not status_filtro %}active{% endif %}">Todos</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='vencido') }}"
-               class="pill p-red {% if status_filtro == 'vencido' %}active{% endif %}">Vencidos</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='alerta_30') }}"
-               class="pill p-orange {% if status_filtro == 'alerta_30' %}active{% endif %}">30 dias</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='alerta_60') }}"
-               class="pill p-yellow {% if status_filtro == 'alerta_60' %}active{% endif %}">60 dias</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='ok') }}"
-               class="pill p-green {% if status_filtro == 'ok' %}active{% endif %}">OK</a>
+            <button type="button" class="pill p-all {% if not status_filtro %}active{% endif %}" data-status="">Todos</button>
+            <button type="button" class="pill p-red {% if status_filtro == 'vencido' %}active{% endif %}" data-status="vencido">Vencidos</button>
+            <button type="button" class="pill p-orange {% if status_filtro == 'alerta_30' %}active{% endif %}" data-status="alerta_30">30 dias</button>
+            <button type="button" class="pill p-yellow {% if status_filtro == 'alerta_60' %}active{% endif %}" data-status="alerta_60">60 dias</button>
+            <button type="button" class="pill p-green {% if status_filtro == 'ok' %}active{% endif %}" data-status="ok">OK</button>
           </div>
           {% if filiais %}
           <select name="filial" class="search-input" style="max-width:200px;padding-left:.8rem">
@@ -666,6 +661,15 @@
   // ── BUSCA AJAX — atualiza só a tabela sem reload ──────────────────────
   (function() {
     const form    = document.querySelector('form[action*="dashboard"]');
+    // Input hidden para status (pills não estão dentro do form)
+    let statusInput = form.querySelector('input[name="status"]');
+    if (!statusInput) {
+      statusInput = document.createElement('input');
+      statusInput.type = 'hidden';
+      statusInput.name = 'status';
+      statusInput.value = '';
+      form.appendChild(statusInput);
+    }
     const tbody   = document.getElementById('meds-tbody');
     const counter = document.getElementById('meds-count');
     const empty   = document.getElementById('empty-state');
@@ -727,7 +731,7 @@
       history.replaceState(null, '', `?${params}`);
     });
 
-    // Select de filial já tem onchange="this.form.submit()" — substituir por AJAX
+    // Select de filial
     const filialSelect = form.querySelector('select[name="filial"]');
     if (filialSelect) {
       filialSelect.removeAttribute('onchange');
@@ -737,6 +741,18 @@
         history.replaceState(null, '', `?${new URLSearchParams(fd).toString()}`);
       });
     }
+
+    // Pills de status — clique atualiza hidden input e dispara AJAX
+    document.querySelectorAll('.pill[data-status]').forEach(pill => {
+      pill.addEventListener('click', function() {
+        document.querySelectorAll('.pill[data-status]').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        statusInput.value = this.dataset.status;
+        doSearch();
+        const fd = new FormData(form);
+        history.replaceState(null, '', `?${new URLSearchParams(fd).toString()}`);
+      });
+    });
   })();
   </script>
 

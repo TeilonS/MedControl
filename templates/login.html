@@ -139,10 +139,10 @@
       <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
-          <label class="form-label">Usuário</label>
+          <label class="form-label">Email</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
-            <input type="text" name="username" class="form-control" placeholder="seu@email.com ou usuário" required autofocus autocomplete="username" style="text-overflow:ellipsis;">
+            <input type="email" name="username" class="form-control" placeholder="seu@email.com.br" required autofocus autocomplete="username" style="text-overflow:ellipsis;">
           </div>
         </div>
         <div class="mb-4">
