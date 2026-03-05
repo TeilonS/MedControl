@@ -406,19 +406,19 @@
                    value="{{ busca }}">
           </div>
           <div class="filter-pills">
-            <a href="{{ url_for('dashboard', busca=busca) }}"
+            <a href="{{ url_for('dashboard', busca=busca, filial=filial_filtro) }}"
                class="pill p-all {% if not status_filtro %}active{% endif %}">Todos</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='vencido') }}"
+            <a href="{{ url_for('dashboard', busca=busca, status='vencido', filial=filial_filtro) }}"
                class="pill p-red {% if status_filtro == 'vencido' %}active{% endif %}">Vencidos</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='alerta_30') }}"
+            <a href="{{ url_for('dashboard', busca=busca, status='alerta_30', filial=filial_filtro) }}"
                class="pill p-orange {% if status_filtro == 'alerta_30' %}active{% endif %}">30 dias</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='alerta_60') }}"
+            <a href="{{ url_for('dashboard', busca=busca, status='alerta_60', filial=filial_filtro) }}"
                class="pill p-yellow {% if status_filtro == 'alerta_60' %}active{% endif %}">60 dias</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='ok') }}"
+            <a href="{{ url_for('dashboard', busca=busca, status='ok', filial=filial_filtro) }}"
                class="pill p-green {% if status_filtro == 'ok' %}active{% endif %}">OK</a>
           </div>
           {% if filiais %}
-          <select name="filial" class="search-input" style="max-width:200px;padding-left:.8rem">
+          <select name="filial" class="search-input" style="max-width:200px;padding-left:.8rem" onchange="this.form.submit()">
             <option value="">Todas as filiais</option>
             {% for f in filiais %}
             <option value="{{ f.id }}" {% if filial_filtro == f.id|string %}selected{% endif %}>{{ f.filial_nome or f.username }}</option>

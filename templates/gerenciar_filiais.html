@@ -137,6 +137,7 @@
             </td>
             <td>
               <form method="POST" action="{{ url_for('dono_excluir_filial', id=f.id) }}" onsubmit="return confirm('Excluir a filial {{ f.filial_nome or f.username }}? Esta ação não pode ser desfeita.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-del"><i class="bi bi-trash3 me-1"></i>Excluir filial</button>
               </form>
             </td>

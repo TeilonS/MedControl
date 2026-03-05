@@ -131,7 +131,7 @@
       .btn-hamburger { display: flex; }
       .page-title { font-size: 1.2rem !important; }
       input, select, textarea { font-size: 16px !important; }
-  }
+    } .main { margin-left: 0; padding: 1rem; } }
   </style>
 </head>
 <body>
@@ -207,6 +207,20 @@
                  placeholder="Ex.: Dipirona Sódica 500mg"
                  value="{{ med.nome if med else '' }}">
         </div>
+
+        {% if filiais %}
+        <div class="col-12 col-md-6">
+          <label>Filial <span style="color:#ef4444">*</span></label>
+          <select name="filial_id" class="form-select" required>
+            <option value="">Selecione a filial...</option>
+            {% for f in filiais %}
+            <option value="{{ f.id }}" {% if med and med.filial_id == f.id %}selected{% endif %}>
+              {{ f.filial_nome or f.username }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
 
         <div class="col-12 col-md-6">
           <label>Fabricante / Laboratório</label>
