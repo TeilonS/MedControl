@@ -478,9 +478,6 @@ def aceitar_termos():
 @assinatura_required
 def dashboard():
     u = get_usuario_atual()
-    if u.is_superadmin:
-        return redirect(url_for('admin_dashboard'))
-
     hoje          = date.today()
     busca         = request.args.get('busca', '').strip()
     status        = request.args.get('status', '')
