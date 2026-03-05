@@ -327,7 +327,7 @@
   <div class="topbar">
     <div>
       <div class="page-title">Dashboard</div>
-      <div style="color:var(--muted);font-size:.82rem;">{{ hoje.strftime('%A, %d de %B de %Y') }}</div>
+      <div style="color:var(--muted);font-size:.82rem;">{%- set dias_pt = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'] -%}{%- set meses_pt = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] -%}{{ dias_pt[hoje.weekday()] }}, {{ hoje.day:02d }} de {{ meses_pt[hoje.month-1] }} de {{ hoje.year }}</div>
     </div>
     <div class="topbar-actions">
       <a href="{{ url_for('gerar_pdf') }}" class="btn btn-outline-soft">
@@ -406,19 +406,19 @@
                    value="{{ busca }}">
           </div>
           <div class="filter-pills">
-            <a href="{{ url_for('dashboard', busca=busca, filial=filial_filtro) }}"
+            <a href="{{ url_for('dashboard', busca=busca) }}"
                class="pill p-all {% if not status_filtro %}active{% endif %}">Todos</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='vencido', filial=filial_filtro) }}"
+            <a href="{{ url_for('dashboard', busca=busca, status='vencido') }}"
                class="pill p-red {% if status_filtro == 'vencido' %}active{% endif %}">Vencidos</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='alerta_30', filial=filial_filtro) }}"
+            <a href="{{ url_for('dashboard', busca=busca, status='alerta_30') }}"
                class="pill p-orange {% if status_filtro == 'alerta_30' %}active{% endif %}">30 dias</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='alerta_60', filial=filial_filtro) }}"
+            <a href="{{ url_for('dashboard', busca=busca, status='alerta_60') }}"
                class="pill p-yellow {% if status_filtro == 'alerta_60' %}active{% endif %}">60 dias</a>
-            <a href="{{ url_for('dashboard', busca=busca, status='ok', filial=filial_filtro) }}"
+            <a href="{{ url_for('dashboard', busca=busca, status='ok') }}"
                class="pill p-green {% if status_filtro == 'ok' %}active{% endif %}">OK</a>
           </div>
           {% if filiais %}
-          <select name="filial" class="search-input" style="max-width:200px;padding-left:.8rem" onchange="this.form.submit()">
+          <select name="filial" class="search-input" style="max-width:200px;padding-left:.8rem">
             <option value="">Todas as filiais</option>
             {% for f in filiais %}
             <option value="{{ f.id }}" {% if filial_filtro == f.id|string %}selected{% endif %}>{{ f.filial_nome or f.username }}</option>
@@ -507,6 +507,7 @@
               </a>
               <form method="POST" action="{{ url_for('excluir', id=med.id) }}" style="display:inline"
                     onsubmit="return confirm('Excluir {{ med.nome }}?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-action del" title="Excluir">
                   <i class="bi bi-trash3"></i>
                 </button>
@@ -590,10 +591,10 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content" style="background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:20px;">
       <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.07);">
-        <h5 class="modal-title text-white" style="font-family:'Syne',sans-serif;font-weight:700;">
+        <h5 class="modal-title" style="font-family:'Syne',sans-serif;font-weight:700;color:var(--text);">
           <i class="bi bi-chat-heart me-2" style="color:#14b8a6"></i>Enviar Feedback
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: var(--btn-close-filter, none);"></button>
       </div>
       <form method="POST" action="/feedback">
         <div class="modal-body" style="padding:1.5rem;">
@@ -616,9 +617,9 @@
             <i class="bi bi-info-circle me-1"></i>Seu feedback será enviado diretamente ao desenvolvedor.
           </div>
         </div>
-        <div class="modal-footer" style="border-top:1px solid rgba(255,255,255,0.07);padding:1rem 1.5rem;gap:.7rem;">
+        <div class="modal-footer" style="border-top:1px solid var(--card-border);padding:1rem 1.5rem;gap:.7rem;">
           <button type="button" class="btn" data-bs-dismiss="modal"
-                  style="background:transparent;border:1px solid rgba(255,255,255,0.12);color:#94a3b8;border-radius:10px;padding:.6rem 1.2rem;">
+                  style="background:transparent;border:1px solid var(--card-border);color:var(--muted);border-radius:10px;padding:.6rem 1.2rem;">
             Cancelar
           </button>
           <button type="submit"
