@@ -335,7 +335,7 @@ def get_usuario_atual():
 
 def get_medicamentos_query():
     u = get_usuario_atual()
-    if u.is_superadmin: return Medicamento.query.filter_by(id=None)  # superadmin nao tem dados proprios
+    if u.is_superadmin: return Medicamento.query
     elif u.is_dono:     return Medicamento.query.filter_by(rede_id=u.rede_id)
     else:               return Medicamento.query.filter_by(filial_id=u.id)
 
@@ -477,12 +477,12 @@ def aceitar_termos():
 @app.route('/')
 @assinatura_required
 def dashboard():
-    u = get_usuario_atual()
     hoje          = date.today()
     busca         = request.args.get('busca', '').strip()
     status        = request.args.get('status', '')
     filial_filtro = request.args.get('filial', '')
     pagina        = request.args.get('pagina', 1, type=int)
+    u             = get_usuario_atual()
     query         = get_medicamentos_query()
 
     if busca:
@@ -1248,6 +1248,7 @@ def mp_criar_preferencia(rede, plano_key):
 # ── ROTA: CADASTRO PÚBLICO ────────────────────────────────────────────────
 
 @app.route('/registrar', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def registrar():
     """Cadastro self-serve: cria rede + dono_rede + inicia trial 30 dias."""
     if 'user_id' in session:
