@@ -338,7 +338,7 @@ def get_usuario_atual():
 
 def get_medicamentos_query():
     u = get_usuario_atual()
-    if u.is_superadmin: return Medicamento.query.filter(Medicamento.id == None)  # superadmin nao acessa medicamentos
+    if u.is_superadmin: return Medicamento.query
     elif u.is_dono:     return Medicamento.query.filter_by(rede_id=u.rede_id)
     else:               return Medicamento.query.filter_by(filial_id=u.id)
 
@@ -1793,6 +1793,20 @@ def termos_uso():
 # =============================================================================
 # PREFERÊNCIAS DE TEMA
 # =============================================================================
+
+@app.route('/preferencias/nome', methods=['POST'])
+@login_required
+def atualizar_nome_exibir():
+    u = get_usuario_atual()
+    nome = request.json.get('nome', '').strip()[:150]
+    if len(nome) < 2:
+        return jsonify({'ok': False, 'erro': 'Nome muito curto.'}), 400
+    u.nome_exibir = nome
+    db.session.commit()
+    session['nome_exibir'] = nome
+    audit('nome_atualizado', f'username={u.username} nome={nome}')
+    return jsonify({'ok': True})
+
 
 @app.route('/preferencias/tema', methods=['POST'])
 @login_required

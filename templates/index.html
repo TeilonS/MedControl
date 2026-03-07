@@ -307,9 +307,9 @@
         <button class="theme-toggle" id="themeToggle" title="Alternar tema" onclick="toggleTheme()"></button>
       </div>
     <div class="user-chip">
-      <div class="user-avatar">{{ session.username[0].upper() }}</div>
-      <div>
-        <div class="user-name">{{ session.username }}</div>
+      <div class="user-avatar">{{ (session.nome_exibir or session.username)[0].upper() }}</div>
+      <div style="min-width:0;flex:1">
+        <div class="user-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ session.nome_exibir or session.username }}</div>
         <div class="user-role">
           {% if session.perfil == 'superadmin' %}Super Admin
           {% elif session.perfil == 'dono_rede' %}Dono da Rede
@@ -317,9 +317,14 @@
           {% else %}{{ session.perfil }}{% endif %}
         </div>
       </div>
-      <a href="{{ url_for('logout') }}" class="logout-btn ms-auto" title="Sair">
-        <i class="bi bi-box-arrow-right"></i>
-      </a>
+      <div style="display:flex;flex-direction:column;gap:.3rem;margin-left:auto;flex-shrink:0">
+        <a href="{{ url_for('alterar_senha') }}" title="Alterar senha" class="logout-btn" style="color:var(--muted)">
+          <i class="bi bi-key-fill"></i>
+        </a>
+        <a href="{{ url_for('logout') }}" class="logout-btn" title="Sair">
+          <i class="bi bi-box-arrow-right"></i>
+        </a>
+      </div>
     </div>
   </div>
 </aside>

@@ -1,134 +1,110 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="{{ session.get('tema', 'light') }}">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MedControl — Alterar Senha</title>
+  <title>MedControl — Minha Conta</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
   <style>
-    body { display: flex; font-family: 'DM Sans', sans-serif; }
-    .sidebar {
-      width: var(--sidebar-w); min-height: 100vh;
-      background: var(--card-bg); border-right: 1px solid var(--sb-border);
-      display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100;
+    :root { --primary: #0f766e; --primary-l: #14b8a6; --sw: 260px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; }
+
+    /* ── SIDEBAR (igual ao index) ── */
+    .sidebar { width: var(--sw); min-height: 100vh; background: var(--sb-bg); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+    .sb-logo { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--border); }
+    .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--primary), var(--primary-l)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: .7rem; }
+    .sb-logo h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); }
+    .sb-logo span { font-size: .75rem; color: var(--muted); }
+    .sb-nav { padding: 1rem; flex: 1; }
+    .nt { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--sb-text); padding: .6rem .5rem .3rem; }
+    .ni { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; text-decoration: none; transition: all .2s; margin-bottom: .15rem; }
+    .ni:hover { background: var(--surface2) !important; color: var(--text) !important; }
+    .ni.active { background: linear-gradient(135deg, rgba(15,118,110,0.25), rgba(20,184,166,0.12)); color: var(--primary-l); border: 1px solid rgba(20,184,166,0.2); }
+    .ni i { font-size: 1rem; width: 20px; text-align: center; }
+    .sb-foot { padding: 1rem; border-top: 1px solid var(--border); }
+    .user-chip { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; background: var(--surface2); border-radius: 10px; }
+    .user-avatar { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-l)); display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 700; color: white; }
+
+    /* ── MAIN ── */
+    .main { margin-left: var(--sw); flex: 1; padding: 2rem; max-width: 700px; }
+    .pt { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; margin-bottom: .2rem; }
+    .bc { color: var(--muted); font-size: .82rem; margin-bottom: 2rem; }
+    .bc a { color: var(--primary-l); text-decoration: none; }
+
+    .card-sec { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 1.8rem; margin-bottom: 1.5rem; }
+    .card-sec h3 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; color: var(--primary-l); margin-bottom: 1.4rem; display: flex; align-items: center; gap: .5rem; }
+    label { display: block; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: .4rem; }
+    .form-control {
+      width: 100%; background: var(--input-bg); border: 1px solid var(--input-border);
+      color: var(--text); border-radius: 10px; padding: .7rem .9rem;
+      font-family: 'DM Sans', sans-serif; font-size: .9rem; transition: all .2s;
     }
-    .sidebar-logo { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--sb-border); }
-    .logo-icon {
-      width: 42px; height: 42px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-l));
-      border-radius: 12px; display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; margin-bottom: .7rem; box-shadow: 0 4px 16px rgba(20,184,166,0.3);
-    }
-    .sidebar-logo h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); }
-    .sidebar-logo span { font-size: .75rem; color: var(--muted); }
-    .sidebar-nav { padding: 1rem; flex: 1; }
-    .nav-section-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #475569; padding: .6rem .5rem .3rem; }
-    .nav-item { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; text-decoration: none; transition: all .2s; margin-bottom: .15rem; }
-    .nav-item:hover { background: var(--surface2); color: var(--text); }
-    .nav-item.active { background: linear-gradient(135deg, rgba(15,118,110,0.25), rgba(20,184,166,0.12)); color: var(--primary-l); border: 1px solid rgba(20,184,166,0.2); }
-    .nav-item i { font-size: 1rem; width: 20px; text-align: center; }
-    .sidebar-footer { padding: 1rem; border-top: 1px solid var(--sb-border); }
-    .user-chip { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; background: var(--surface2); border-radius: 10px; border: 1px solid var(--border); }
-    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-l)); display: flex; align-items: center; justify-content: center; font-size: .85rem; color: white; }
-    .user-name { font-size: .85rem; font-weight: 600; color: var(--text); }
-    .user-role { font-size: .7rem; color: var(--muted); }
-    .logout-btn { color: #ef4444; text-decoration: none; font-size: .78rem; }
-    .main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; background: var(--bg); padding: 2rem; }
-    .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; color: var(--text); }
-    .form-card {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 16px; padding: 2rem; max-width: 480px;
-    }
-    .fc {
+    .form-control:focus { outline: none; border-color: var(--primary-l); box-shadow: 0 0 0 3px rgba(20,184,166,0.12); color: var(--text); }
+    .form-control::placeholder { color: var(--muted); }
+    .input-group-text {
       background: var(--input-bg); border: 1px solid var(--input-border);
-      color: var(--input-text); border-radius: 10px; padding: .65rem .9rem;
-      font-family: 'DM Sans', sans-serif; width: 100%; transition: all .2s;
+      border-right: none; color: var(--muted); border-radius: 10px 0 0 10px; padding: .7rem .9rem;
     }
-    .fc:focus { outline: none; border-color: var(--primary-l); box-shadow: 0 0 0 3px rgba(20,184,166,0.15); }
-    .fc::placeholder { color: var(--muted); }
-    label { font-size: .82rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .4rem; display: block; }
+    .input-group .form-control { border-left: none; border-radius: 0 10px 10px 0; }
     .btn-save {
       background: linear-gradient(135deg, var(--primary), var(--primary-l));
-      color: white; border: none; border-radius: 10px; padding: .75rem 1.5rem;
+      border: none; border-radius: 10px; color: white;
       font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem;
-      width: 100%; cursor: pointer; transition: all .2s;
+      padding: .7rem 1.6rem; cursor: pointer; transition: all .2s;
+      box-shadow: 0 4px 14px rgba(20,184,166,0.25);
     }
     .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(20,184,166,0.35); }
-    .hint { font-size: .78rem; color: var(--muted); margin-top: .3rem; }
-    .theme-toggle-wrap { display: flex; align-items: center; gap: .6rem; margin-bottom: .8rem; }
-    .theme-toggle-label { font-size: .78rem; color: var(--muted); }
-    .theme-toggle { width: 36px; height: 20px; border-radius: 20px; background: var(--primary); border: none; cursor: pointer; position: relative; transition: background .2s; }
-    .theme-toggle::after { content:''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: white; transition: transform .2s; }
-    [data-theme="dark"] .theme-toggle::after { transform: translateX(16px); }
+    .alert-danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; border-radius: 10px; font-size: .85rem; padding: .7rem 1rem; margin-bottom: 1rem; }
+    .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); color: #86efac; border-radius: 10px; font-size: .85rem; padding: .7rem 1rem; margin-bottom: 1rem; }
+    .alert-warning { background: rgba(234,179,8,0.1); border: 1px solid rgba(234,179,8,0.2); color: #fde047; border-radius: 10px; font-size: .85rem; padding: .7rem 1rem; margin-bottom: 1rem; }
+    .info-row { display: flex; align-items: center; gap: .7rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .88rem; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; min-width: 90px; }
+    .info-val { color: var(--text); font-weight: 500; }
+    #nome-feedback { font-size: .8rem; margin-top: .4rem; display: none; }
 
-    .btn-hamburger {
-      display: none; background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 10px; width: 38px; height: 38px;
-      align-items: center; justify-content: center;
-      cursor: pointer; font-size: 1.1rem; color: var(--text); flex-shrink: 0;
-    }
-    .sidebar-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.55); z-index: 99; backdrop-filter: blur(2px);
-    }
-    .sidebar-overlay.active { display: block; }
-    @media (max-width: 768px) {
-      .sidebar { transform: translateX(-100%); transition: transform .28s cubic-bezier(.4,0,.2,1); z-index: 200; }
-      .sidebar.open { transform: translateX(0); }
-      .main { margin-left: 0 !important; padding: 1rem 1rem 1.5rem; }
-      .btn-hamburger { display: flex; }
-      .page-title { font-size: 1.2rem !important; }
-      input, select, textarea { font-size: 16px !important; }
+    @media (max-width: 992px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1.2rem; }
     }
   </style>
 </head>
 <body>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% for cat, msg in messages %}
-    <div class="alert alert-{{ 'danger' if cat == 'danger' else 'success' if cat == 'success' else 'warning' }}"
-         style="position:fixed;top:1rem;right:1rem;z-index:9999;min-width:300px;border-radius:12px;">
-      {{ msg }}
-    </div>
-  {% endfor %}
-{% endwith %}
-
 <aside class="sidebar">
-  <div class="sidebar-logo">
+  <div class="sb-logo">
     <div class="logo-icon">💊</div>
     <h2>MedControl</h2>
-    <span>Controle de Validade v1.0</span>
+    <span>{{ usuario.rede.nome if usuario.rede else 'Sistema' }}</span>
   </div>
-  <nav class="sidebar-nav">
-    <div class="nav-section-title">Principal</div>
-    <a href="{{ url_for('dashboard') }}" class="nav-item"><i class="bi bi-speedometer2"></i> Dashboard</a>
-    <a href="{{ url_for('cadastro') }}" class="nav-item"><i class="bi bi-plus-circle"></i> Novo Medicamento</a>
-    <a href="{{ url_for('gerar_pdf') }}" class="nav-item"><i class="bi bi-file-earmark-pdf"></i> Exportar PDF</a>
-    <div class="nav-section-title mt-3">Conta</div>
-    <a href="{{ url_for('alterar_senha') }}" class="nav-item active"><i class="bi bi-shield-lock"></i> Alterar Senha</a>
-    {% if session.perfil == 'superadmin' %}
-    <a href="{{ url_for('admin_dashboard') }}" class="nav-item"><i class="bi bi-building"></i> Redes & Clientes</a>
+  <nav class="sb-nav">
+    <div class="nt">Principal</div>
+    <a href="{{ url_for('dashboard') }}" class="ni"><i class="bi bi-speedometer2"></i> Dashboard</a>
+    <a href="{{ url_for('cadastro') }}" class="ni"><i class="bi bi-plus-circle"></i> Novo Medicamento</a>
+    {% if usuario.is_dono %}
+    <a href="{{ url_for('gerenciar_filiais') }}" class="ni"><i class="bi bi-shop"></i> Minhas Filiais</a>
     {% endif %}
   </nav>
-  <div class="sidebar-footer">
-    <div class="theme-toggle-wrap">
+  <div class="sb-foot">
+    <div class="theme-toggle-wrap" style="margin-bottom:.5rem">
       <span class="theme-toggle-label" id="theme-label">☀️ Modo claro</span>
       <button class="theme-toggle" id="themeToggle" title="Alternar tema" onclick="toggleTheme()"></button>
     </div>
     <div class="user-chip">
-      <div class="user-avatar">{{ session.username[0].upper() }}</div>
-      <div>
-        <div class="user-name">{{ session.username }}</div>
-        <div class="user-role">
-          {% if session.perfil == 'superadmin' %}Super Admin
-          {% elif session.perfil == 'dono_rede' %}Dono da Rede
-          {% else %}Filial{% endif %}
+      <div class="user-avatar">{{ (session.nome_exibir or session.username)[0].upper() }}</div>
+      <div style="min-width:0;flex:1">
+        <div style="font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ session.nome_exibir or session.username }}</div>
+        <div style="font-size:.7rem;color:var(--muted)">
+          {% if session.perfil == 'dono_rede' %}Dono da Rede
+          {% elif session.perfil == 'filial' %}{{ session.filial_nome or 'Filial' }}
+          {% else %}{{ session.perfil }}{% endif %}
         </div>
       </div>
-      <a href="{{ url_for('logout') }}" class="logout-btn ms-auto" title="Sair">
+      <a href="{{ url_for('logout') }}" style="color:#ef4444;text-decoration:none;font-size:.85rem;margin-left:auto" title="Sair">
         <i class="bi bi-box-arrow-right"></i>
       </a>
     </div>
@@ -136,61 +112,145 @@
 </aside>
 
 <main class="main">
-  <div class="topbar mb-4">
-    <div class="page-title">🔒 Alterar Senha</div>
-    <div style="color:var(--muted);font-size:.82rem;">Atualize sua senha de acesso</div>
+  <div class="pt">Minha Conta</div>
+  <div class="bc"><a href="{{ url_for('dashboard') }}">Dashboard</a> / Minha Conta</div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="alert-{{ category }} mb-3"><i class="bi bi-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}-fill me-2"></i>{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- INFORMAÇÕES DA CONTA -->
+  <div class="card-sec">
+    <h3><i class="bi bi-person-circle"></i> Informações da Conta</h3>
+    <div class="info-row">
+      <span class="info-label">Usuário</span>
+      <span class="info-val"><code style="background:var(--surface2);padding:2px 8px;border-radius:6px;font-size:.85rem">{{ usuario.username }}</code></span>
+    </div>
+    {% if usuario.email %}
+    <div class="info-row">
+      <span class="info-label">Email</span>
+      <span class="info-val">{{ usuario.email }}</span>
+    </div>
+    {% endif %}
+    <div class="info-row">
+      <span class="info-label">Perfil</span>
+      <span class="info-val">
+        {% if usuario.perfil == 'dono_rede' %}Dono da Rede
+        {% elif usuario.perfil == 'filial' %}Filial — {{ usuario.filial_nome or usuario.username }}
+        {% else %}{{ usuario.perfil }}{% endif %}
+      </span>
+    </div>
   </div>
 
-  <div class="form-card">
+  <!-- NOME DE EXIBIÇÃO -->
+  <div class="card-sec">
+    <h3><i class="bi bi-tag"></i> Nome de Exibição</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.2rem">Este nome aparece na sidebar e nos relatórios. Não altera seu usuário de login.</p>
+    <div class="mb-3">
+      <label>Nome de exibição</label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+        <input type="text" id="nome-input" class="form-control"
+          value="{{ usuario.nome_exibir or usuario.username }}"
+          placeholder="Ex: Farmácia Central" maxlength="150">
+      </div>
+      <div id="nome-feedback"></div>
+    </div>
+    <button type="button" class="btn-save" onclick="salvarNome()">
+      <i class="bi bi-check2 me-1"></i>Salvar nome
+    </button>
+  </div>
+
+  <!-- ALTERAR SENHA -->
+  <div class="card-sec">
+    <h3><i class="bi bi-shield-lock"></i> Alterar Senha</h3>
     <form method="POST" action="{{ url_for('alterar_senha') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
       <div class="mb-3">
         <label>Senha atual</label>
-        <input type="password" name="senha_atual" class="fc" placeholder="Digite sua senha atual" required autocomplete="current-password">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+          <input type="password" name="senha_atual" class="form-control" placeholder="••••••••" required>
+        </div>
       </div>
-
       <div class="mb-3">
         <label>Nova senha</label>
-        <input type="password" name="nova_senha" class="fc" placeholder="Mínimo 6 caracteres" required autocomplete="new-password">
-        <div class="hint">Use letras, números e símbolos para uma senha forte.</div>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" name="nova_senha" class="form-control" placeholder="Mínimo 6 caracteres" required minlength="6">
+        </div>
       </div>
-
       <div class="mb-4">
         <label>Confirmar nova senha</label>
-        <input type="password" name="confirma_senha" class="fc" placeholder="Repita a nova senha" required autocomplete="new-password">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+          <input type="password" name="confirma_senha" class="form-control" placeholder="Repita a nova senha" required>
+        </div>
       </div>
-
       <button type="submit" class="btn-save">
-        <i class="bi bi-shield-check me-2"></i> Salvar nova senha
+        <i class="bi bi-shield-check me-1"></i>Alterar senha
       </button>
     </form>
-
-    <div class="text-center mt-3">
-      <a href="{{ url_for('dashboard') }}" style="font-size:.82rem;color:var(--muted);text-decoration:none;">
-        <i class="bi bi-arrow-left me-1"></i>Voltar ao Dashboard
-      </a>
-    </div>
   </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  const temaAtual = document.documentElement.getAttribute('data-theme') || 'light';
-  const lbl = document.getElementById('theme-label');
-  if (lbl) lbl.textContent = temaAtual === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+  (function() {
+    const tema = "{{ session.get('tema', 'light') }}";
+    document.documentElement.setAttribute('data-theme', tema);
+    document.addEventListener('DOMContentLoaded', function() {
+      const lbl = document.getElementById('theme-label');
+      if (lbl) lbl.textContent = tema === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+    });
+  })();
 
   function toggleTheme() {
-    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const newTheme = isDark ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
-    document.getElementById('theme-label').textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
-    fetch('/preferencias/tema', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({tema: newTheme}) });
+    const lbl = document.getElementById('theme-label');
+    if (lbl) lbl.textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
+    fetch('/preferencias/tema', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tema: newTheme })
+    });
   }
 
-  // Auto-hide alerts
-  setTimeout(() => document.querySelectorAll('.alert').forEach(a => a.remove()), 4000);
-
-  function toggleSidebar(){var sb=document.querySelector('.sidebar'),ov=document.getElementById('sidebarOverlay'),ic=document.getElementById('hamburgerIcon');var o=sb.classList.toggle('open');ov.classList.toggle('active',o);if(ic)ic.className=o?'bi bi-x-lg':'bi bi-list';document.body.style.overflow=o?'hidden':'';}
-  function closeSidebar(){var sb=document.querySelector('.sidebar'),ov=document.getElementById('sidebarOverlay'),ic=document.getElementById('hamburgerIcon');sb.classList.remove('open');ov.classList.remove('active');if(ic)ic.className='bi bi-list';document.body.style.overflow='';}
+  function salvarNome() {
+    const nome = document.getElementById('nome-input').value.trim();
+    const fb   = document.getElementById('nome-feedback');
+    if (nome.length < 2) {
+      fb.style.display = 'block';
+      fb.style.color   = '#fca5a5';
+      fb.textContent   = 'Nome deve ter pelo menos 2 caracteres.';
+      return;
+    }
+    fetch('/preferencias/nome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome })
+    })
+    .then(r => r.json())
+    .then(data => {
+      fb.style.display = 'block';
+      if (data.ok) {
+        fb.style.color = '#86efac';
+        fb.textContent = '✓ Nome atualizado! Recarregue a página para ver na sidebar.';
+      } else {
+        fb.style.color = '#fca5a5';
+        fb.textContent = data.erro || 'Erro ao salvar.';
+      }
+    })
+    .catch(() => {
+      fb.style.display = 'block';
+      fb.style.color   = '#fca5a5';
+      fb.textContent   = 'Erro de conexão. Tente novamente.';
+    });
+  }
 </script>
 </body>
 </html>
