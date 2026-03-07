@@ -13,7 +13,7 @@
 
 O **MedControl** é um sistema web multi-tenant para controle de validade de medicamentos, voltado para farmácias independentes e redes farmacêuticas. Permite que donos de rede e filiais cadastrem, monitorem e exportem relatórios de medicamentos com alertas automáticos de vencimento.
 
-Acesse em produção: **[medcontrol.app.br](https://medcontrol.app.br)**
+Acesse em produção: **[www.medcontrol.app.br](https://www.medcontrol.app.br)**
 
 ---
 
@@ -153,7 +153,7 @@ A API Key é gerada por rede/filial no painel administrativo.
 ### Base URL
 
 ```
-https://medcontrol.app.br/api/v1
+https://www.medcontrol.app.br/api/v1
 ```
 
 ---
@@ -260,14 +260,14 @@ Remove um medicamento.
 ```bash
 # Listar medicamentos
 curl -H "X-API-Key: sua_chave" \
-     https://medcontrol.app.br/api/v1/medicamentos
+     https://www.medcontrol.app.br/api/v1/medicamentos
 
 # Cadastrar medicamento
 curl -X POST \
      -H "X-API-Key: sua_chave" \
      -H "Content-Type: application/json" \
      -d '{"nome":"Dipirona 500mg","lote":"LT-001","data_validade":"2027-01-01","quantidade":100}' \
-     https://medcontrol.app.br/api/v1/medicamentos
+     https://www.medcontrol.app.br/api/v1/medicamentos
 ```
 
 ### Exemplo de Integração (Python)
@@ -276,7 +276,7 @@ curl -X POST \
 import requests
 
 API_KEY = "sua_api_key"
-BASE_URL = "https://medcontrol.app.br/api/v1"
+BASE_URL = "https://www.medcontrol.app.br/api/v1"
 
 headers = {"X-API-Key": API_KEY, "Content-Type": "application/json"}
 
@@ -340,12 +340,12 @@ Este projeto é distribuído sob a **Business Source License 1.1 (BSL 1.1)**.
 
 O código se tornará **open-source (Apache 2.0)** em **01/01/2029**.
 
-Para licenciamento comercial ou parcerias, entre em contato: contato@medcontrol.app.br
+Para licenciamento comercial ou parcerias, entre em contato: teilon66@gmail.com
 
 ---
 
 ## 📞 Contato & Suporte
 
-- **Site:** [medcontrol.app.br](https://medcontrol.app.br)
+- **Site:** [www.medcontrol.app.br](https://www.medcontrol.app.br)
 - **WhatsApp:** [+55 77 98817-5300](https://wa.me/5577988175300)
-- **E-mail:** contato@medcontrol.app.br
+- **E-mail:** teilon66@gmail.com
