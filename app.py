@@ -315,6 +315,8 @@ def assinatura_required(f):
             return redirect(url_for('assinatura_expirada'))
         # Força leitura e aceite dos termos antes de qualquer rota
         # Email precisa ser confirmado apenas para dono_rede (filiais são criadas pelo dono)
+        if u.is_dono and not u.email:
+            return redirect(url_for("completar_cadastro"))
         if u.is_dono and not u.email_confirmado:
             return redirect(url_for('confirmar_email'))
         if not u.aceitou_termos:
@@ -1683,6 +1685,48 @@ def disparar_notificacoes():
 # =============================================================================
 # CONFIRMAÇÃO DE EMAIL
 # =============================================================================
+
+@app.route('/completar-cadastro', methods=['GET', 'POST'])
+@login_required
+def completar_cadastro():
+    u = get_usuario_atual()
+
+    # Só donos sem email precisam completar; demais passam direto
+    if not u.is_dono or u.email:
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()[:150]
+
+        if '@' not in email or '.' not in email:
+            flash('Email inválido. Verifique e tente novamente.', 'danger')
+            return render_template('completar_cadastro.html', usuario=u)
+
+        # Garante unicidade de email
+        conflito = Usuario.query.filter(
+            db.func.lower(Usuario.email) == email,
+            Usuario.id != u.id
+        ).first()
+        if conflito:
+            flash('Este email já está em uso por outra conta.', 'danger')
+            return render_template('completar_cadastro.html', usuario=u)
+
+        u.email = email
+        u.email_confirmado = False
+        db.session.commit()
+        audit('email_cadastrado', f'username={u.username} email={email}')
+
+        # Envia código de confirmação
+        ok, erro = _enviar_codigo_confirmacao(u)
+        if ok:
+            flash('Email salvo! Enviamos um código de confirmação.', 'success')
+        else:
+            flash('Email salvo! Não foi possível enviar o código agora — tente reenviar na próxima tela.', 'warning')
+
+        return redirect(url_for('confirmar_email'))
+
+    return render_template('completar_cadastro.html', usuario=u)
+
 
 @app.route('/confirmar-email', methods=['GET', 'POST'])
 @login_required
