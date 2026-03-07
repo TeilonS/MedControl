@@ -658,22 +658,20 @@
   </script>
 
   <script>
-  // ── BUSCA AJAX — atualiza só a tabela sem reload ──────────────────────
+  // ── BUSCA AJAX — estado explícito, sem depender de FormData para pills ──
   (function() {
     const form    = document.querySelector('form[action*="dashboard"]');
-    // Input hidden para status (pills não estão dentro do form)
-    let statusInput = form.querySelector('input[name="status"]');
-    if (!statusInput) {
-      statusInput = document.createElement('input');
-      statusInput.type = 'hidden';
-      statusInput.name = 'status';
-      statusInput.value = '';
-      form.appendChild(statusInput);
-    }
     const tbody   = document.getElementById('meds-tbody');
     const counter = document.getElementById('meds-count');
     const empty   = document.getElementById('empty-state');
     if (!form || !tbody) return;
+
+    // Estado centralizado — fonte da verdade para os filtros
+    let state = {
+      busca:  form.querySelector('input[name="busca"]')?.value || '',
+      status: '{{ status_filtro }}',
+      filial: '{{ filial_filtro }}'
+    };
 
     const STATUS_LABELS = {
       vencido:   '<span class="chip chip-vencido">● Vencido</span>',
@@ -683,31 +681,34 @@
     };
 
     function buildRow(m) {
-      const editBtn  = `<a href="${m.edit_url}" class="btn-action edit" title="Editar"><i class="bi bi-pencil-square"></i></a>`;
-      const delForm  = `<form method="POST" action="/excluir/${m.id}" style="display:inline" onsubmit="return confirm('Excluir ${m.nome}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn-action del" title="Excluir"><i class="bi bi-trash3"></i></button></form>`;
-      const barcode  = m.codigo_barras ? `<span class="lote-badge">${m.codigo_barras}</span>` : '—';
-      const lote     = `<span class="lote-badge">${m.lote}</span>`;
-      const isExpired = m.status === 'vencido';
-      const validadeClass = isExpired ? 'style="color:#ef4444;font-weight:600"' : '';
-      const statusBorder = m.status === 'vencido' ? 'border-left:3px solid #ef4444' : m.status === 'alerta_30' ? 'border-left:3px solid #f97316' : m.status === 'alerta_60' ? 'border-left:3px solid #eab308' : '';
-      const subNome = m.fabricante ? `<div class="med-code">${m.fabricante}</div>` : (m.filial_nome ? `<div class="med-code">${m.filial_nome}</div>` : '');
+      const editBtn = `<a href="${m.edit_url}" class="btn-action edit" title="Editar"><i class="bi bi-pencil-square"></i></a>`;
+      const delForm = `<form method="POST" action="/excluir/${m.id}" style="display:inline" onsubmit="return confirm('Excluir ${m.nome}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn-action del" title="Excluir"><i class="bi bi-trash3"></i></button></form>`;
+      const barcode = m.codigo_barras ? `<span class="lote-badge">${m.codigo_barras}</span>` : '—';
+      const lote    = `<span class="lote-badge">${m.lote}</span>`;
+      const validadeClass = m.status === 'vencido' ? 'style="color:#ef4444;font-weight:600"' : '';
+      const statusBorder  = m.status === 'vencido' ? 'border-left:3px solid #ef4444'
+                          : m.status === 'alerta_30' ? 'border-left:3px solid #f97316'
+                          : m.status === 'alerta_60' ? 'border-left:3px solid #eab308' : '';
+      const subNome = m.fabricante
+        ? `<div class="med-code">${m.fabricante}</div>`
+        : (m.filial_nome ? `<div class="med-code">${m.filial_nome}</div>` : '');
 
       return `<tr style="${statusBorder}">
         <td><div class="med-name">${m.nome}</div>${subNome}</td>
-        <td>${barcode}</td>
-        <td>${lote}</td>
+        <td>${barcode}</td><td>${lote}</td>
         <td ${validadeClass}>${m.validade}</td>
-        <td>${m.quantidade}</td>
-        <td>${m.preco}</td>
-        <td>${m.total}</td>
+        <td>${m.quantidade}</td><td>${m.preco}</td><td>${m.total}</td>
         <td>${STATUS_LABELS[m.status] || m.status}</td>
         <td style="white-space:nowrap">${editBtn} ${delForm}</td>
       </tr>`;
     }
 
     function doSearch() {
-      const fd     = new FormData(form);
-      const params = new URLSearchParams(fd).toString();
+      const params = new URLSearchParams({
+        busca:  state.busca,
+        status: state.status,
+        filial: state.filial
+      }).toString();
 
       fetch(`/api/busca?${params}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json())
@@ -715,20 +716,18 @@
           tbody.innerHTML = data.medicamentos.map(buildRow).join('');
           if (counter) counter.textContent = `${data.total} item(s)`;
           if (empty) empty.style.display = data.total === 0 ? 'block' : 'none';
-          if (document.getElementById('meds-table'))
-            document.getElementById('meds-table').style.display = data.total === 0 ? 'none' : '';
+          const tbl = document.getElementById('meds-table');
+          if (tbl) tbl.style.display = data.total === 0 ? 'none' : '';
+          history.replaceState(null, '', `?${params}`);
         })
-        .catch(() => form.submit()); // fallback para reload normal
+        .catch(() => form.submit());
     }
 
-    // Submit via Enter ou botão — interceptar
+    // Submit (Enter ou botão lupa)
     form.addEventListener('submit', function(e) {
       e.preventDefault();
+      state.busca = form.querySelector('input[name="busca"]').value;
       doSearch();
-      // Atualizar URL sem reload
-      const fd = new FormData(form);
-      const params = new URLSearchParams(fd).toString();
-      history.replaceState(null, '', `?${params}`);
     });
 
     // Select de filial
@@ -736,21 +735,18 @@
     if (filialSelect) {
       filialSelect.removeAttribute('onchange');
       filialSelect.addEventListener('change', function() {
+        state.filial = this.value;
         doSearch();
-        const fd = new FormData(form);
-        history.replaceState(null, '', `?${new URLSearchParams(fd).toString()}`);
       });
     }
 
-    // Pills de status — clique atualiza hidden input e dispara AJAX
+    // Pills de status — atualiza state.status diretamente
     document.querySelectorAll('.pill[data-status]').forEach(pill => {
       pill.addEventListener('click', function() {
         document.querySelectorAll('.pill[data-status]').forEach(p => p.classList.remove('active'));
         this.classList.add('active');
-        statusInput.value = this.dataset.status;
+        state.status = this.dataset.status;
         doSearch();
-        const fd = new FormData(form);
-        history.replaceState(null, '', `?${new URLSearchParams(fd).toString()}`);
       });
     });
   })();
