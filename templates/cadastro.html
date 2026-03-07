@@ -154,6 +154,70 @@
       .main { margin-left: 0 !important; padding: 1rem 1rem 5rem !important; }
       .mobile-nav { display: block; }
     }
+
+    /* ── MOBILE BOTTOM NAV ── */
+    .mobile-nav {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+      background: var(--sb-bg); border-top: 1px solid var(--border);
+      padding: 0;
+    }
+
+    /* Faixa superior da nav: avatar + nome + toggle */
+    .mobile-nav-top {
+      display: flex; align-items: center; gap: .7rem;
+      padding: .55rem 1rem .45rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .mobile-nav-avatar {
+      width: 28px; height: 28px; min-width: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700; color: white; flex-shrink: 0;
+    }
+    .mobile-nav-user { font-size: .78rem; font-weight: 600; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mobile-nav-role { font-size: .65rem; color: var(--muted); }
+    .mobile-theme-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: .3rem .55rem; font-size: .8rem;
+      cursor: pointer; color: var(--text); display: flex; align-items: center; gap: .3rem;
+      white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* Linha inferior: ítens de navegação */
+    .mobile-nav-items {
+      display: flex; align-items: center;
+      padding: .3rem .5rem calc(.3rem + env(safe-area-inset-bottom));
+    }
+    .mobile-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: .15rem;
+      color: var(--muted); text-decoration: none; font-size: .6rem; font-weight: 600;
+      padding: .3rem 0; flex: 1;
+      background: none; border: none; cursor: pointer; transition: color .2s;
+    }
+    .mobile-nav-item i { font-size: 1.25rem; }
+    .mobile-nav-item.active { color: var(--primary-l); }
+    .mobile-nav-item:hover { color: var(--primary-l); }
+
+    /* Botão CTA central "Novo" */
+    .mobile-nav-cta {
+      display: flex; flex-direction: column; align-items: center; gap: .15rem;
+      text-decoration: none; font-size: .6rem; font-weight: 700; flex: 1;
+      color: white;
+    }
+    .mobile-nav-cta-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; color: white;
+      box-shadow: 0 4px 14px rgba(20,184,166,0.4);
+      margin-top: -10px;
+    }
+    @media (max-width: 992px) {
+      .sidebar { display: none !important; }
+      .main { margin-left: 0 !important; padding-bottom: 6rem !important; }
+      .mobile-nav { display: block; }
+    }
   </style>
 </head>
 <body>
@@ -585,6 +649,7 @@ document.getElementById('preco_unitario').addEventListener('input', function() {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const newTheme = isDark ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', newTheme);
+    const mBtn = document.getElementById('mobileThemeBtn'); if(mBtn) mBtn.textContent = newTheme==='dark'?'🌙 Escuro':'☀️ Claro';
       const lbl = document.getElementById('theme-label');
       if (lbl) lbl.textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
       fetch('/preferencias/tema', {
@@ -600,13 +665,45 @@ document.getElementById('preco_unitario').addEventListener('input', function() {
 
 <!-- ── MOBILE BOTTOM NAV ── -->
 <nav class="mobile-nav">
-  <div class="mobile-nav-inner">
-    <a href="{{ url_for('dashboard') }}" class="mobile-nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
-    <a href="{{ url_for('cadastro') }}" class="mobile-nav-item cta active"><i class="bi bi-plus-lg"></i><span>Novo</span></a>
+  <!-- Faixa: usuário + toggle tema -->
+  <div class="mobile-nav-top">
+    <div class="mobile-nav-avatar">{{ (session.nome_exibir or session.username or '?')[0].upper() }}</div>
+    <div style="flex:1;min-width:0">
+      <div class="mobile-nav-user">{{ session.nome_exibir or session.username }}</div>
+      <div class="mobile-nav-role">
+        {%- if session.perfil == 'superadmin' %}Super Admin
+        {%- elif session.perfil == 'dono_rede' %}Dono da Rede
+        {%- elif session.perfil == 'filial' %}{{ session.filial_nome or 'Filial' }}
+        {%- else %}{{ session.perfil }}{%- endif %}
+      </div>
+    </div>
+    <button class="mobile-theme-btn" onclick="toggleTheme()" id="mobileThemeBtn">☀️ Claro</button>
+  </div>
+  <!-- Ítens de navegação -->
+  <div class="mobile-nav-items">
+    <a href="{{ url_for('dashboard') }}" class="mobile-nav-item">
+      <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('alterar_senha') }}" class="mobile-nav-item">
+      <i class="bi bi-person-circle"></i><span>Conta</span>
+    </a>
+    <!-- CTA central -->
+    <a href="{{ url_for('cadastro') }}" class="mobile-nav-cta">
+      <div class="mobile-nav-cta-icon"><i class="bi bi-plus-lg"></i></div>
+      <span style="color:var(--primary-l);margin-top:.1rem">Novo</span>
+    </a>
     <a href="{{ url_for('gerenciar_filiais') }}" class="mobile-nav-item"><i class="bi bi-shop"></i><span>Filiais</span></a>
-    <a href="{{ url_for('alterar_senha') }}" class="mobile-nav-item"><i class="bi bi-person-circle"></i><span>Conta</span></a>
-    <a href="{{ url_for('logout') }}" class="mobile-nav-item"><i class="bi bi-box-arrow-right"></i><span>Sair</span></a>
+    <a href="{{ url_for('logout') }}" class="mobile-nav-item">
+      <i class="bi bi-box-arrow-right"></i><span>Sair</span>
+    </a>
   </div>
 </nav>
+<script>
+  (function(){
+    const t = document.documentElement.getAttribute('data-theme') || 'light';
+    const btn = document.getElementById('mobileThemeBtn');
+    if (btn) btn.textContent = t === 'dark' ? '🌙 Escuro' : '☀️ Claro';
+  })();
+</script>
 </body>
 </html>
