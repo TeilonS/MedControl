@@ -1,207 +1,342 @@
-# MedControl — Sistema de Controle de Validade de Medicamentos
+# 💊 MedControl
 
-Sistema profissional multi-tenant para controle de validade de medicamentos. Suporta múltiplas redes de farmácias com isolamento de dados por filial, dashboard analítico, geração de relatórios PDF, API REST e arquitetura preparada para integrações externas.
+> **SaaS de controle de validade de medicamentos para farmácias e redes farmacêuticas.**
 
----
-
-## Instalação
-
-```bash
-# 1. Clonar e entrar no projeto
-git clone <repositorio>
-cd validade_med
-
-# 2. Criar ambiente virtual e instalar dependências
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# 3. Definir variáveis de ambiente obrigatórias
-export SECRET_KEY="sua-chave-secreta-longa-e-aleatoria"
-export ADMIN_USER="admin"
-export ADMIN_PASS="sua-senha-segura"
-
-# 4. Iniciar o servidor
-python app.py
-
-# 5. Acessar no navegador
-http://localhost:5000
-```
-
-> **Produção (Railway):** configure todas as variáveis via painel de Variables. O app recusa iniciar sem `SECRET_KEY` e `ADMIN_PASS`.
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat&logo=flask)](https://flask.palletsprojects.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?style=flat&logo=supabase)](https://supabase.com)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ---
 
-## Estrutura do Projeto
+## 📋 Sobre o Projeto
+
+O **MedControl** é um sistema web multi-tenant para controle de validade de medicamentos, voltado para farmácias independentes e redes farmacêuticas. Permite que donos de rede e filiais cadastrem, monitorem e exportem relatórios de medicamentos com alertas automáticos de vencimento.
+
+Acesse em produção: **[medcontrol.app.br](https://medcontrol.app.br)**
+
+---
+
+## ✨ Funcionalidades
+
+- **Dashboard em tempo real** com cards de status (Vencidos, 30 dias, 60 dias, OK)
+- **Cadastro de medicamentos** com código de barras (EAN-13), lote, validade, fabricante e preço
+- **Alertas automáticos por e-mail** próximos ao vencimento
+- **Exportação em PDF** do estoque completo
+- **Análise de Perdas** com gráfico de prejuízo por vencimento
+- **Multi-tenant**: cada rede tem suas próprias filiais e usuários isolados
+- **API REST** para integração com ERPs e sistemas externos (Consys, Tasy, SNGPC)
+- **Modo claro/escuro** responsivo, com suporte mobile completo
+- **Painel Admin** para gerenciamento de redes, planos e assinaturas
+
+---
+
+## 🏗️ Arquitetura
+
+### Stack
+
+| Camada | Tecnologia |
+|--------|-----------|
+| Backend | Python 3.11 + Flask 3 |
+| ORM | SQLAlchemy |
+| Banco de dados | PostgreSQL (Supabase) |
+| E-mail | Resend |
+| Frontend | Bootstrap 5 + Vanilla JS |
+| Fontes | Syne + DM Sans (Google Fonts) |
+
+### Estrutura de Perfis (Multi-tenant)
 
 ```
-validade_med/
-├── app.py                          # Aplicação principal — rotas, modelos e lógica
-├── requirements.txt                # Dependências Python
-├── README.md
+superadmin
+└── Gerencia todas as redes e planos
+
+dono_rede
+└── Acessa todas as filiais da sua rede
+
+filial
+└── Acessa apenas o estoque da própria filial
+```
+
+### Estrutura de Pastas
+
+```
+medcontrol/
+├── app.py                  # Aplicação principal (rotas, models, lógica)
+├── requirements.txt
 ├── static/
 │   └── css/
-│       ├── theme.css               # Sistema de temas claro/escuro
-│       └── style.css               # Estilos extras
+│       └── theme.css       # Variáveis de tema claro/escuro
 └── templates/
-    ├── login.html                  # Autenticação
-    ├── index.html                  # Dashboard principal com paginação
-    ├── cadastro.html               # Formulário cadastro/edição de medicamentos
-    ├── expirado.html               # Tela de assinatura expirada
-    ├── alterar_senha.html          # Troca de senha pelo usuário
-    ├── planos.html                 # Página de planos e preços
-    ├── gerenciar_filiais.html      # Gerenciamento de filiais (dono_rede)
+    ├── index.html          # Dashboard principal
+    ├── cadastro.html       # Cadastro de medicamentos
+    ├── planos.html         # Planos & Preços
+    ├── alterar_senha.html  # Minha Conta
+    ├── gerenciar_filiais.html
     └── admin/
-        ├── dashboard.html          # Painel superadmin — redes e clientes
-        ├── rede_form.html          # Formulário nova rede
-        ├── rede_detalhe.html       # Detalhe da rede com filiais
-        └── confirmar_exclusao.html # Confirmação server-side de exclusão
+        ├── dashboard.html  # Painel superadmin
+        ├── rede_detalhe.html
+        └── rede_form.html
 ```
 
 ---
 
-## Hierarquia de Acesso
+## 🚀 Rodando Localmente
 
-O sistema usa arquitetura **multi-tenant** com três níveis de perfil:
+### Pré-requisitos
 
-| Perfil | Acesso |
-|---|---|
-| `superadmin` | Acesso total — gerencia redes, assinaturas, filiais e todos os dados |
-| `dono_rede` | Visualiza e edita todas as filiais da sua rede |
-| `filial` | Gerencia somente o estoque da própria filial |
+- Python 3.11+
+- PostgreSQL (ou conta no [Supabase](https://supabase.com) — plano gratuito funciona)
+- Conta no [Resend](https://resend.com) para envio de e-mails (opcional em dev)
+
+### Instalação
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/seu-usuario/medcontrol.git
+cd medcontrol
+
+# 2. Crie e ative o ambiente virtual
+python -m venv venv
+source venv/bin/activate      # Linux/Mac
+venv\Scripts\activate         # Windows
+
+# 3. Instale as dependências
+pip install -r requirements.txt
+
+# 4. Configure as variáveis de ambiente
+cp .env.example .env
+# Edite o .env com suas credenciais
+```
+
+### Variáveis de Ambiente
+
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+DATABASE_URL=postgresql://usuario:senha@host:5432/medcontrol
+SECRET_KEY=sua_chave_secreta_aqui
+RESEND_API_KEY=re_xxxxxxxxxxxx
+RESEND_FROM=noreply@medcontrol.app.br
+ADMIN_PASS=senha_do_superadmin
+CRON_SECRET=chave_para_cron_jobs
+```
+
+> ⚠️ **Nunca commite o arquivo `.env`**. Ele já está no `.gitignore`.
+
+### Rodando
+
+```bash
+flask run
+# Acesse: http://localhost:5000
+```
+
+Na primeira execução, as tabelas são criadas automaticamente via `db.create_all()`.
+
+O superadmin padrão é criado com o usuário `admin` e a senha definida em `ADMIN_PASS`.
 
 ---
 
-## Funcionalidades
+## 🔌 API REST
 
-- **Dashboard** com cards de status, gráfico de perdas (Prejuízo vs. Em estoque) e filtros em tempo real
-- **CRUD completo** de medicamentos com validação de todos os campos
-- **Classificação automática**: Vencido / Vence em 30 dias / Vence em 60 dias / OK
-- **Paginação** — 20 itens por página para performance com grandes volumes
-- **Busca** por nome, lote ou código de barras
-- **Filtro por filial** disponível para superadmin e dono_rede
-- **Relatório PDF** profissional gerado com ReportLab (resumo + tabela completa)
-- **API REST** para integração com sistemas externos
-- **Feedback** integrado com Telegram (notificação em tempo real)
-- **Tema claro/escuro** persistido por usuário no banco de dados
-- **Troca de senha** pelo próprio usuário com verificação da senha atual
-- **Gerenciamento de assinaturas** com data de expiração, renovação e bloqueio por rede
-- **Alertas de renovação** automáticos quando faltam ≤ 10 dias para expirar
+O MedControl expõe uma API REST para integração com ERPs e sistemas externos (Consys, Tasy, SNGPC, MV, etc.).
+
+### Autenticação
+
+Todas as requisições devem incluir a API Key no header:
+
+```http
+X-API-Key: sua_api_key_aqui
+```
+
+A API Key é gerada por rede/filial no painel administrativo.
+
+### Base URL
+
+```
+https://medcontrol.app.br/api/v1
+```
 
 ---
 
-## API REST
+### Endpoints
 
-Todos os endpoints exigem autenticação por sessão.
+#### `GET /medicamentos`
 
-### Listar medicamentos
-```
-GET /api/v1/medicamentos
-GET /api/v1/medicamentos?status=vencido
-GET /api/v1/medicamentos?status=alerta_30
-GET /api/v1/medicamentos?status=alerta_60
-GET /api/v1/medicamentos?status=ok
+Lista todos os medicamentos da rede/filial autenticada.
+
+**Resposta:**
+```json
+[
+  {
+    "id": 1,
+    "nome": "Dipirona Sódica 500mg",
+    "codigo_barras": "7891234567890",
+    "lote": "LT-2024-001",
+    "fabricante": "EMS",
+    "data_validade": "2026-06-30",
+    "quantidade": 100,
+    "preco_unitario": 2.50,
+    "status": "ok",
+    "filial_id": 3
+  }
+]
 ```
 
-### Buscar por código de barras
-```
-GET /api/v1/medicamentos/barcode/{codigo}
-```
+---
 
-### Criar medicamento via API
-```
-POST /api/v1/medicamentos
-Content-Type: application/json
+#### `POST /medicamentos`
 
+Cadastra um novo medicamento via integração externa.
+
+**Body (JSON):**
+```json
 {
-  "nome": "Dipirona 500mg",
-  "codigo_barras": "7891234567890",
-  "lote": "LT-2024-001",
-  "data_validade": "2025-12-31",
-  "quantidade": 100,
-  "preco_unitario": 2.50,
-  "codigo_externo": "CONSYS-001",
-  "origem_cadastro": "api_consys"
+  "nome": "Amoxicilina 500mg",
+  "codigo_barras": "7891234500001",
+  "lote": "LT-2025-042",
+  "fabricante": "Medley",
+  "data_validade": "2027-03-15",
+  "quantidade": 50,
+  "preco_unitario": 8.90,
+  "filial_id": 3,
+  "origem": "consys",
+  "codigo_externo": "CONSYS-00142"
+}
+```
+
+**Campos obrigatórios:** `nome`, `lote`, `data_validade`, `quantidade`
+
+**Resposta de sucesso (`201 Created`):**
+```json
+{
+  "ok": true,
+  "id": 42,
+  "message": "Medicamento cadastrado com sucesso"
+}
+```
+
+**Resposta de erro (`400 Bad Request`):**
+```json
+{
+  "ok": false,
+  "error": "Campo 'data_validade' é obrigatório"
 }
 ```
 
 ---
 
-## Segurança
+#### `PUT /medicamentos/{id}`
 
-Todas as medidas de segurança já estão implementadas em produção:
+Atualiza um medicamento existente.
 
-| Medida | Status |
-|---|---|
-| Senhas com hash `scrypt` (werkzeug) | ✅ Ativo |
-| `SECRET_KEY` obrigatória via variável de ambiente | ✅ Ativo |
-| `ADMIN_PASS` obrigatória via variável de ambiente | ✅ Ativo |
-| CSRF protection em todos os formulários POST (Flask-WTF) | ✅ Ativo |
-| Rate limiting no login — 10 tentativas/min por IP | ✅ Ativo |
-| Session timeout — 30 minutos de inatividade | ✅ Ativo |
-| Cookie seguro — `HttpOnly`, `SameSite=Lax`, `Secure` em produção | ✅ Ativo |
-| Headers HTTP — `X-Frame-Options`, `CSP`, `HSTS`, `X-Content-Type-Options` | ✅ Ativo |
-| Logs de auditoria — login, logout, cadastro, edição e exclusão | ✅ Ativo |
-| Isolamento multi-tenant — filial só acessa os próprios dados | ✅ Ativo |
-| Confirmação server-side para exclusão permanente de rede | ✅ Ativo |
-| Input validation com `try/except` em todos os POSTs | ✅ Ativo |
-| Sanitização do código de barras na API | ✅ Ativo |
-| `debug=False` controlado por variável de ambiente | ✅ Ativo |
+**Body (JSON):** mesmos campos do `POST` (todos opcionais).
 
 ---
 
-## Variáveis de Ambiente
+#### `DELETE /medicamentos/{id}`
 
-| Variável | Obrigatória | Descrição |
-|---|---|---|
-| `SECRET_KEY` | ✅ Sim | Chave para assinatura de sessões. Gere com: `python -c "import secrets; print(secrets.token_hex(32))"` |
-| `ADMIN_PASS` | ✅ Sim | Senha do superadmin criada no primeiro boot |
-| `DATABASE_URL` | ✅ Em produção | URL do PostgreSQL (Railway/Supabase). SQLite é usado localmente |
-| `ADMIN_USER` | Não | Username do superadmin (padrão: `admin`) |
-| `TELEGRAM_TOKEN` | Não | Token do bot Telegram para notificações de feedback |
-| `TELEGRAM_CHAT_ID` | Não | ID do chat/grupo que receberá os feedbacks |
-| `RESET_DB` | Não | Defina como `1` para recriar todas as tabelas (⚠️ apaga os dados) |
-| `FLASK_DEBUG` | Não | Defina como `1` para ativar debug (nunca em produção) |
+Remove um medicamento.
 
----
-
-## Banco de Dados
-
-- **Local:** SQLite (`medcontrol.db`) criado automaticamente
-- **Produção:** PostgreSQL via Supabase ou Railway
-- O `db.create_all()` cria as tabelas automaticamente no primeiro boot
-- Para adicionar colunas em tabelas existentes, use `ALTER TABLE` diretamente no banco:
-
-```sql
--- Exemplo: adicionar coluna tema (se necessário em migração manual)
-ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS tema VARCHAR(10) DEFAULT 'light';
+**Resposta (`200 OK`):**
+```json
+{ "ok": true, "message": "Medicamento removido" }
 ```
 
 ---
 
-## Integrações Futuras
+### Status dos Medicamentos
 
-| Sistema | Status | Endpoint planejado |
-|---|---|---|
-| Consys ERP | Em breve | `POST /api/v1/sync/consys` |
-| SNGPC / ANVISA | Em breve | `POST /api/v1/sync/sngpc` |
-| Tasy / MV | Em breve | `POST /api/v1/sync/tasy` |
-| ANVISA Lookup | Em breve | `GET /api/v1/anvisa/lookup` |
+| Valor | Significado |
+|-------|-------------|
+| `vencido` | Data de validade já passou |
+| `30_dias` | Vence em até 30 dias |
+| `60_dias` | Vence entre 31 e 60 dias |
+| `ok` | Vence em mais de 60 dias |
 
 ---
 
-## Stack Técnica
+### Exemplo de Integração (curl)
 
-| Componente | Tecnologia |
-|---|---|
-| Backend | Python 3.13 + Flask 3.0 |
-| ORM | Flask-SQLAlchemy 3.1 |
-| Banco (produção) | PostgreSQL via psycopg3 |
-| Banco (local) | SQLite |
-| Segurança | Flask-WTF (CSRF), Flask-Limiter, Werkzeug |
-| PDF | ReportLab |
-| Frontend | Bootstrap 5.3 + Bootstrap Icons + Chart.js |
-| Fontes | Syne + DM Sans (Google Fonts) |
-| Deploy | Railway (Gunicorn) |
-| Banco hospedado | Supabase |
-| Notificações | Telegram Bot API |
+```bash
+# Listar medicamentos
+curl -H "X-API-Key: sua_chave" \
+     https://medcontrol.app.br/api/v1/medicamentos
+
+# Cadastrar medicamento
+curl -X POST \
+     -H "X-API-Key: sua_chave" \
+     -H "Content-Type: application/json" \
+     -d '{"nome":"Dipirona 500mg","lote":"LT-001","data_validade":"2027-01-01","quantidade":100}' \
+     https://medcontrol.app.br/api/v1/medicamentos
+```
+
+### Exemplo de Integração (Python)
+
+```python
+import requests
+
+API_KEY = "sua_api_key"
+BASE_URL = "https://medcontrol.app.br/api/v1"
+
+headers = {"X-API-Key": API_KEY, "Content-Type": "application/json"}
+
+# Cadastrar medicamento
+payload = {
+    "nome": "Omeprazol 20mg",
+    "lote": "LT-2025-099",
+    "data_validade": "2027-06-01",
+    "quantidade": 200,
+    "preco_unitario": 12.00,
+    "origem": "consys"
+}
+
+response = requests.post(f"{BASE_URL}/medicamentos", json=payload, headers=headers)
+print(response.json())
+```
+
+---
+
+## 📧 Alertas de Vencimento (Cron Job)
+
+O endpoint `/cron/alertas` deve ser chamado diariamente por um scheduler externo para disparar e-mails de alerta.
+
+```http
+POST /cron/alertas
+Authorization: Bearer {CRON_SECRET}
+```
+
+Você pode usar [cron-job.org](https://cron-job.org) (gratuito) apontando para esse endpoint.
+
+---
+
+## 🔒 Segurança
+
+- Senhas armazenadas com hash `bcrypt`
+- Proteção CSRF em todos os formulários (`Flask-WTF`)
+- Sessões server-side com `SECRET_KEY`
+- Isolamento total entre redes (multi-tenant por `rede_id`)
+- Variáveis sensíveis exclusivamente em variáveis de ambiente
+
+---
+
+## 🤝 Contribuindo
+
+1. Fork o projeto
+2. Crie uma branch: `git checkout -b feature/minha-feature`
+3. Commit: `git commit -m 'feat: minha feature'`
+4. Push: `git push origin feature/minha-feature`
+5. Abra um Pull Request
+
+---
+
+## 📄 Licença
+
+Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais detalhes.
+
+---
+
+## 📞 Contato & Suporte
+
+- **Site:** [medcontrol.app.br](https://medcontrol.app.br)
+- **WhatsApp:** [+55 77 98817-5300](https://wa.me/5577988175300)
+- **E-mail:** contato@medcontrol.app.br
