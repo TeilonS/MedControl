@@ -67,9 +67,37 @@
     .info-val { color: var(--text); font-weight: 500; }
     #nome-feedback { font-size: .8rem; margin-top: .4rem; display: none; }
 
+
+    /* ── MOBILE BOTTOM NAV ── */
+    .mobile-nav {
+      display: none;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: var(--sb-bg); border-top: 1px solid var(--border);
+      padding: .5rem 0 calc(.5rem + env(safe-area-inset-bottom));
+    }
+    .mobile-nav-inner {
+      display: flex; justify-content: space-around; align-items: center;
+    }
+    .mobile-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: .2rem;
+      color: var(--muted); text-decoration: none; font-size: .65rem; font-weight: 600;
+      padding: .3rem .5rem; border-radius: 10px; transition: color .2s; min-width: 56px;
+      background: none; border: none; cursor: pointer;
+    }
+    .mobile-nav-item i { font-size: 1.3rem; }
+    .mobile-nav-item.active, .mobile-nav-item:hover { color: var(--primary-l); }
+    .mobile-nav-item.cta {
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      color: white; border-radius: 14px; padding: .4rem .8rem;
+    }
+    .mobile-nav-item.cta:hover { color: white; opacity: .9; }
     @media (max-width: 992px) {
-      .sidebar { display: none; }
-      .main { margin-left: 0; padding: 1.2rem; }
+      .sidebar { display: none !important; }
+      .main { margin-left: 0 !important; }
+      .mobile-nav { display: block; }
+    }
+    @media (max-width: 992px) {
+      .main { padding: 1.2rem 1rem 5rem !important; max-width: 100%; }
     }
   </style>
 </head>
@@ -252,5 +280,16 @@
     });
   }
 </script>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <a href="{{ url_for('dashboard') }}" class="mobile-nav-item"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+    <a href="{{ url_for('cadastro') }}" class="mobile-nav-item cta"><i class="bi bi-plus-lg"></i><span>Novo</span></a>
+    <a href="{{ url_for('gerenciar_filiais') }}" class="mobile-nav-item"><i class="bi bi-shop"></i><span>Filiais</span></a>
+    <a href="{{ url_for('alterar_senha') }}" class="mobile-nav-item active"><i class="bi bi-person-circle"></i><span>Conta</span></a>
+    <a href="{{ url_for('logout') }}" class="mobile-nav-item"><i class="bi bi-box-arrow-right"></i><span>Sair</span></a>
+  </div>
+</nav>
 </body>
 </html>
