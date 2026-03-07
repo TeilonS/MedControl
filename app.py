@@ -205,6 +205,7 @@ class Usuario(db.Model):
     __tablename__ = 'usuarios'
     id           = db.Column(db.Integer, primary_key=True)
     username     = db.Column(db.String(80), unique=True, nullable=False)
+    email        = db.Column(db.String(150), nullable=True)   # email real para envio de mensagens
     password     = db.Column(db.String(200), nullable=False)
     perfil       = db.Column(db.String(20), default='filial')
     nome_exibir  = db.Column(db.String(150), nullable=True)
@@ -1321,6 +1322,7 @@ def registrar():
 
     if request.method == 'POST':
         nome_rede = request.form.get('nome_rede', '').strip()[:200]
+        username  = request.form.get('username', '').strip().lower()[:80]
         email     = request.form.get('email', '').strip().lower()[:150]
         senha     = request.form.get('senha', '')
         confirma  = request.form.get('confirma_senha', '')
@@ -1329,18 +1331,22 @@ def registrar():
         erros = []
         if len(nome_rede) < 3:
             erros.append('Nome da farmácia deve ter pelo menos 3 caracteres.')
+        if not username or len(username) < 3:
+            erros.append('Usuário deve ter pelo menos 3 caracteres.')
+        if not username.replace('_','').replace('-','').replace('.','').isalnum():
+            erros.append('Usuário pode conter apenas letras, números, _, - e ponto.')
         if '@' not in email or '.' not in email:
             erros.append('Email inválido.')
         if len(senha) < 8:
             erros.append('Senha deve ter pelo menos 8 caracteres.')
         if senha != confirma:
             erros.append('As senhas não coincidem.')
-        if Usuario.query.filter_by(username=email).first():
-            erros.append('Este email já está cadastrado. Faça login.')
+        if Usuario.query.filter(db.func.lower(Usuario.username) == username).first():
+            erros.append('Este usuário já está em uso. Escolha outro.')
 
         if erros:
             return render_template('registrar.html', erros=erros,
-                                   nome_rede=nome_rede, email=email, telefone=telefone)
+                                   nome_rede=nome_rede, username=username, email=email, telefone=telefone)
 
         # Cria a rede em trial
         rede = Rede(
@@ -1358,7 +1364,8 @@ def registrar():
 
         # Cria o usuário dono_rede
         usuario = Usuario(
-            username      = email,
+            username      = username,
+            email         = email,
             password       = generate_password_hash(senha),
             perfil        = 'dono_rede',
             nome_exibir   = nome_rede,
@@ -1368,7 +1375,7 @@ def registrar():
         db.session.add(usuario)
         db.session.commit()
 
-        audit('auto_cadastro', f'rede={nome_rede} email={email}')
+        audit('auto_cadastro', f'rede={nome_rede} username={username} email={email}')
 
         # Loga automaticamente
         session.permanent = True
@@ -1385,7 +1392,7 @@ def registrar():
             flash('Conta criada! Não conseguimos enviar o email — confirme depois nas configurações.', 'warning')
         return redirect(url_for('confirmar_email'))
 
-    return render_template('registrar.html', erros=[], nome_rede='', email='', telefone='')
+    return render_template('registrar.html', erros=[], nome_rede='', username='', email='', telefone='')
 
 
 # ── ROTA: PÁGINA DE ASSINATURA (escolha de plano + checkout) ─────────────
@@ -1577,14 +1584,14 @@ def _enviar_codigo_confirmacao(usuario):
       </div>
     </div>
     """
-    return _enviar_email(usuario.username, '🔐 Código de confirmação — MedControl', html)
+    return _enviar_email(usuario.email or usuario.username, '🔐 Código de confirmação — MedControl', html)
 
 
 def _enviar_notificacao_validade(usuario, medicamentos_proximos):
     """Envia email com lista de medicamentos vencendo em 30 dias."""
     if not medicamentos_proximos:
         return
-    destinatario = usuario.username  # username = email
+    destinatario = usuario.email or usuario.username  # email real do usuário
     nome = usuario.nome_exibir or usuario.username
 
     linhas = ""
@@ -1928,6 +1935,7 @@ with app.app_context():
                 "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_confirmado BOOLEAN DEFAULT FALSE",
                 "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_codigo VARCHAR(10)",
                 "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_codigo_exp TIMESTAMP",
+                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email VARCHAR(150)",
             ]:
                 conn.execute(db.text(col_sql))
             conn.commit()

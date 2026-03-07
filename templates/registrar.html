@@ -206,7 +206,18 @@
       </div>
 
       <div class="field">
-        <label>Email (será seu login)</label>
+        <label>Usuário (será seu login)</label>
+        <div class="field-wrap">
+          <i class="bi bi-at"></i>
+          <input type="text" name="username" value="{{ username }}"
+            placeholder="Ex: farmacia_central" required maxlength="80"
+            autocapitalize="none" spellcheck="false"
+            pattern="[a-zA-Z0-9_\-\.]+" title="Apenas letras, números, _, - e ponto">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Email (para recuperação e notificações)</label>
         <div class="field-wrap">
           <i class="bi bi-envelope"></i>
           <input type="email" name="email" value="{{ email }}"
