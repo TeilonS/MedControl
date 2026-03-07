@@ -71,8 +71,6 @@
   </ul>
 
   <form method="POST" action="{{ url_for('admin_excluir_rede', id=rede.id) }}" id="deleteForm">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
     <label>Para confirmar, digite exatamente o nome da rede:</label>
     <div class="hint">{{ rede.nome }}</div>
     <input type="text" name="confirmacao" id="confirmInput" class="fc"
@@ -90,12 +88,12 @@
 
 <script>
   // Habilita o botão só quando o nome bater exatamente
-  const nomeEsperado = {{ rede.nome | tojson }};
+  const nomeEsperado = {{ rede.nome | trim | tojson }};
   const input        = document.getElementById('confirmInput');
   const btn          = document.getElementById('btnExcluir');
 
   input.addEventListener('input', () => {
-    btn.disabled = input.value.trim() !== nomeEsperado;
+    btn.disabled = input.value.trim() !== nomeEsperado.trim();
   });
 </script>
 </body>

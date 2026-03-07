@@ -916,9 +916,9 @@ def admin_excluir_rede(id):
 
     # POST — verifica se o usuário digitou o nome correto
     confirmacao = request.form.get('confirmacao', '').strip()
-    if confirmacao != rede.nome:
-        flash('Nome da rede não confere. Exclusão cancelada.', 'danger')
-        return redirect(url_for('admin_rede_detalhe', id=id))
+    if confirmacao != rede.nome.strip():
+        flash(f'Nome não confere. Digite exatamente: {rede.nome.strip()}', 'danger')
+        return redirect(url_for('admin_excluir_rede', id=id))
 
     nome = rede.nome
     Medicamento.query.filter_by(rede_id=id).delete()
