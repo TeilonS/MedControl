@@ -1,0 +1,47 @@
+Business Source License 1.1
+
+Licensor:             MedControl
+Licensed Work:        MedControl — Sistema SaaS de Controle de Validade de Medicamentos
+                      © 2026 MedControl. Todos os direitos reservados.
+Additional Use Grant: Você pode usar o Licensed Work para fins de avaliação,
+                      desenvolvimento local e contribuições não comerciais.
+Change Date:          2029-01-01
+Change License:       Apache License, Version 2.0
+
+-----------------------------------------------------------------------------
+
+TERMOS E CONDIÇÕES
+
+1. CONCESSÃO DE LICENÇA
+   Sujeito aos termos e condições desta licença, o Licensor concede a você
+   uma licença limitada, não exclusiva, não transferível e não sublicenciável
+   para usar, copiar e modificar o Licensed Work somente para fins de:
+   (a) avaliação interna e desenvolvimento local;
+   (b) contribuições submetidas de volta ao repositório oficial.
+
+2. RESTRIÇÕES DE USO COMERCIAL
+   Você não pode, sem autorização prévia e por escrito do Licensor:
+   (a) usar o Licensed Work para oferecer, operar ou viabilizar qualquer
+       produto ou serviço comercial, incluindo SaaS concorrente;
+   (b) sublicenciar, vender, alugar ou redistribuir o Licensed Work;
+   (c) remover ou alterar avisos de direitos autorais ou atribuição.
+
+3. MUDANÇA DE LICENÇA
+   Na Change Date (2029-01-01) ou antes, o Licensor pode disponibilizar o
+   Licensed Work sob a Apache License 2.0, que é uma licença de código
+   aberto mais permissiva.
+
+4. ISENÇÃO DE GARANTIAS
+   O Licensed Work é fornecido "como está", sem garantias de qualquer tipo,
+   expressas ou implícitas.
+
+5. CONTATO PARA LICENCIAMENTO COMERCIAL
+   Para uso comercial, parcerias ou licenciamento:
+   E-mail: contato@medcontrol.app.br
+   WhatsApp: +55 77 98817-5300
+   Site: https://medcontrol.app.br
+
+-----------------------------------------------------------------------------
+
+Para mais informações sobre a Business Source License:
+https://mariadb.com/bsl11/

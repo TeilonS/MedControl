@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat&logo=flask)](https://flask.palletsprojects.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?style=flat&logo=supabase)](https://supabase.com)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![License](https://img.shields.io/badge/license-BSL%201.1-blue)](LICENSE)
 
 ---
 
@@ -331,7 +331,16 @@ Você pode usar [cron-job.org](https://cron-job.org) (gratuito) apontando para e
 
 ## 📄 Licença
 
-Distribuído sob a licença MIT. Veja [`LICENSE`](LICENSE) para mais detalhes.
+Este projeto é distribuído sob a **Business Source License 1.1 (BSL 1.1)**.
+
+- ✅ Você **pode** visualizar, estudar e contribuir com o código
+- ✅ Você **pode** rodar localmente para fins de avaliação e desenvolvimento
+- ❌ Você **não pode** usar este código para oferecer um serviço comercial concorrente sem autorização expressa
+- ❌ Você **não pode** redistribuir ou sublicenciar o código para uso comercial
+
+O código se tornará **open-source (Apache 2.0)** em **01/01/2029**.
+
+Para licenciamento comercial ou parcerias, entre em contato: contato@medcontrol.app.br
 
 ---
 
