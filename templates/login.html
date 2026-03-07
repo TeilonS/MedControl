@@ -64,7 +64,11 @@
     h1 {
       font-family: 'Syne', sans-serif;
       font-weight: 800; font-size: 1.8rem;
-      color: #f8fafc; margin-bottom: 0.2rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.2rem;
     }
     .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 2rem; }
     label { color: var(--muted); font-size: 0.82rem; font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
