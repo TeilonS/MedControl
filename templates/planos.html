@@ -440,7 +440,19 @@
       <div class="mobile-nav-cta-icon"><i class="bi bi-plus-lg"></i></div>
       <span style="color:var(--primary-l);margin-top:.1rem">Novo</span>
     </a>
-    <a href="{{ url_for('planos') }}" class="mobile-nav-item active"><i class="bi bi-star"></i><span>Planos</span></a>
+    {% if session.perfil == 'superadmin' %}
+    <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item">
+      <i class="bi bi-building"></i><span>Clientes</span>
+    </a>
+    {% elif usuario and usuario.is_dono %}
+    <a href="{{ url_for('gerenciar_filiais') }}" class="mobile-nav-item">
+      <i class="bi bi-shop"></i><span>Filiais</span>
+    </a>
+    {% else %}
+    <a href="{{ url_for('planos') }}" class="mobile-nav-item active">
+      <i class="bi bi-star"></i><span>Planos</span>
+    </a>
+    {% endif %}
     <a href="{{ url_for('logout') }}" class="mobile-nav-item">
       <i class="bi bi-box-arrow-right"></i><span>Sair</span>
     </a>

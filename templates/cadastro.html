@@ -222,6 +222,13 @@
       .main { margin-left: 0 !important; padding-bottom: 6rem !important; }
       .mobile-nav { display: block; }
     }
+
+    @media (max-width: 992px) {
+      .main { padding: .75rem .75rem 6rem !important; }
+      .form-card { border-radius: 12px !important; }
+      .row { margin: 0 !important; }
+      .col-md-6, .col-md-4, .col-md-3, .col-md-2, .col-12 { padding-left: .4rem !important; padding-right: .4rem !important; }
+    }
   </style>
 </head>
 <body>
@@ -696,7 +703,19 @@ document.getElementById('preco_unitario').addEventListener('input', function() {
       <div class="mobile-nav-cta-icon"><i class="bi bi-plus-lg"></i></div>
       <span style="color:var(--primary-l);margin-top:.1rem">Novo</span>
     </a>
-    <a href="{{ url_for('gerenciar_filiais') }}" class="mobile-nav-item"><i class="bi bi-shop"></i><span>Filiais</span></a>
+    {% if session.perfil == 'superadmin' %}
+    <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item">
+      <i class="bi bi-building"></i><span>Clientes</span>
+    </a>
+    {% elif usuario and usuario.is_dono %}
+    <a href="{{ url_for('gerenciar_filiais') }}" class="mobile-nav-item">
+      <i class="bi bi-shop"></i><span>Filiais</span>
+    </a>
+    {% else %}
+    <a href="{{ url_for('planos') }}" class="mobile-nav-item">
+      <i class="bi bi-star"></i><span>Planos</span>
+    </a>
+    {% endif %}
     <a href="{{ url_for('logout') }}" class="mobile-nav-item">
       <i class="bi bi-box-arrow-right"></i><span>Sair</span>
     </a>

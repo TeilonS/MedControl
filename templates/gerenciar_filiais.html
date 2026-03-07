@@ -134,7 +134,19 @@
   <nav class="sb-nav">
     <div class="nt">Principal</div>
     <a href="{{ url_for('dashboard') }}" class="ni"><i class="bi bi-speedometer2"></i> Dashboard</a>
-    <a href="{{ url_for('gerenciar_filiais') }}" class="ni active"><i class="bi bi-shop"></i> Minhas Filiais</a>
+        {% if session.perfil == 'superadmin' %}
+    <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item">
+      <i class="bi bi-building"></i><span>Clientes</span>
+    </a>
+    {% elif usuario and usuario.is_dono %}
+    <a href="{{ url_for('gerenciar_filiais') }}" class="mobile-nav-item">
+      <i class="bi bi-shop"></i><span>Filiais</span>
+    </a>
+    {% else %}
+    <a href="{{ url_for('planos') }}" class="mobile-nav-item">
+      <i class="bi bi-star"></i><span>Planos</span>
+    </a>
+    {% endif %}
     <a href="{{ url_for('planos') }}" class="ni"><i class="bi bi-star"></i> Planos & Preços</a>
   </nav>
   <div class="sb-foot">
