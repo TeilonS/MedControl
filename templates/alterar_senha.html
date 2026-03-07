@@ -81,9 +81,12 @@
     /* ── MOBILE BOTTOM NAV ── */
     .mobile-nav {
       display: none;
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
       background: var(--sb-bg); border-top: 1px solid var(--border);
       padding: 0;
+      will-change: transform;
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
     }
 
     /* Faixa superior da nav: avatar + nome + toggle */
@@ -264,6 +267,55 @@
       </button>
     </form>
   </div>
+
+  <!-- PLANO ATUAL -->
+  <div class="card-sec">
+    <h3><i class="bi bi-star-fill" style="color:#f59e0b"></i> Plano & Assinatura</h3>
+
+    <div class="info-row">
+      <span class="info-label">Plano atual</span>
+      <span class="info-val">
+        {% if usuario.rede %}
+          {% set p = usuario.rede.plano or 'basico' %}
+          {% if p == 'basico' %}<span style="color:#60a5fa;font-weight:700">Básico</span>
+          {% elif p == 'profissional' %}<span style="color:#a78bfa;font-weight:700">Profissional</span>
+          {% elif p == 'rede' %}<span style="color:#34d399;font-weight:700">Rede</span>
+          {% else %}<span style="color:var(--muted)">—</span>
+          {% endif %}
+        {% else %}<span style="color:var(--muted)">—</span>{% endif %}
+      </span>
+    </div>
+
+    {% if usuario.rede and usuario.rede.plano_expira %}
+    <div class="info-row">
+      <span class="info-label">Válido até</span>
+      <span class="info-val" id="plano-expira">
+        {{ usuario.rede.plano_expira.strftime('%d/%m/%Y') }}
+      </span>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:1.2rem;display:flex;flex-wrap:wrap;gap:.7rem">
+      <a href="{{ url_for('planos') }}"
+         style="display:inline-flex;align-items:center;gap:.5rem;
+                background:linear-gradient(135deg,var(--primary),var(--primary-l));
+                color:white;border:none;border-radius:10px;padding:.65rem 1.2rem;
+                font-family:'Syne',sans-serif;font-weight:700;font-size:.88rem;
+                text-decoration:none;box-shadow:0 4px 14px rgba(20,184,166,0.25)">
+        <i class="bi bi-arrow-up-circle-fill"></i> Ver planos & renovar
+      </a>
+      <a href="https://wa.me/5577999999999?text=Olá,%20preciso%20de%20suporte%20com%20meu%20plano%20MedControl"
+         target="_blank"
+         style="display:inline-flex;align-items:center;gap:.5rem;
+                background:rgba(34,197,94,0.12);color:#86efac;
+                border:1px solid rgba(34,197,94,0.25);border-radius:10px;
+                padding:.65rem 1.2rem;font-family:'Syne',sans-serif;
+                font-weight:700;font-size:.88rem;text-decoration:none">
+        <i class="bi bi-whatsapp"></i> Suporte via WhatsApp
+      </a>
+    </div>
+  </div>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
