@@ -902,6 +902,7 @@ def admin_toggle_rede(id):
 @app.route('/admin/redes/<int:id>/excluir', methods=['GET', 'POST'])
 @login_required
 @superadmin_required
+@csrf.exempt
 def admin_excluir_rede(id):
     """
     GET  → mostra tela de confirmação com nome da rede
@@ -1796,6 +1797,7 @@ def termos_uso():
 
 @app.route('/preferencias/nome', methods=['POST'])
 @login_required
+@csrf.exempt
 def atualizar_nome_exibir():
     u = get_usuario_atual()
     nome = request.json.get('nome', '').strip()[:150]
