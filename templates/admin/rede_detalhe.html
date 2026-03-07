@@ -61,6 +61,63 @@
     .ta.danger{border-left:3px solid #ef4444}
     .dono-chip{display:flex;align-items:center;gap:.8rem;background:rgba(20,184,166,0.07);border:1px solid rgba(20,184,166,0.15);border-radius:12px;padding:.8rem 1rem}
     .dono-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-l));display:flex;align-items:center;justify-content:center;font-size:1rem}
+
+    /* ── MOBILE ── */
+    .mobile-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+      background: var(--sb-bg); border-top: 1px solid var(--border);
+      will-change: transform; transform: translateZ(0);
+    }
+    .mobile-nav-top {
+      display: flex; align-items: center; gap: .7rem;
+      padding: .55rem 1rem .45rem; border-bottom: 1px solid var(--border);
+    }
+    .mobile-nav-avatar {
+      width: 28px; height: 28px; min-width: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700; color: white;
+    }
+    .mobile-nav-user { font-size: .78rem; font-weight: 600; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .mobile-nav-role { font-size: .65rem; color: var(--muted); }
+    .mobile-theme-btn {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: .3rem .55rem; font-size: .8rem;
+      cursor: pointer; color: var(--text); display: flex; align-items: center; gap: .3rem;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .mobile-nav-items {
+      display: flex; align-items: center;
+      padding: .3rem .5rem calc(.3rem + env(safe-area-inset-bottom));
+    }
+    .mobile-nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: .15rem;
+      color: var(--muted); text-decoration: none; font-size: .6rem; font-weight: 600;
+      padding: .3rem 0; flex: 1; background: none; border: none; cursor: pointer; transition: color .2s;
+    }
+    .mobile-nav-item i { font-size: 1.25rem; }
+    .mobile-nav-item.active { color: var(--primary-l); }
+    .mobile-nav-item:hover { color: var(--primary-l); }
+    .mobile-nav-cta {
+      display: flex; flex-direction: column; align-items: center; gap: .15rem;
+      text-decoration: none; font-size: .6rem; font-weight: 700; flex: 1; color: white;
+    }
+    .mobile-nav-cta-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; color: white; box-shadow: 0 4px 14px rgba(20,184,166,0.4);
+      margin-top: -10px;
+    }
+    @media (max-width: 992px) {
+      body { display: block !important; }
+      .sidebar { display: none !important; }
+      .main { margin-left: 0 !important; padding: 1rem 1rem 6rem !important; }
+      .mobile-nav { display: block; }
+      .table td, .table th { padding: .5rem .4rem; font-size: .78rem; }
+      .col-hide-mobile { display: none; }
+      .form-card { max-width: 100% !important; border-radius: 12px !important; padding: 1.2rem !important; }
+    }
   </style>
 </head>
 <body>
@@ -250,6 +307,7 @@
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const newTheme = isDark ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', newTheme);
+      const mBtn = document.getElementById('mobileThemeBtn'); if(mBtn) mBtn.textContent = newTheme==='dark'?'🌙 Escuro':'☀️ Claro';
       const lbl = document.getElementById('theme-label');
       if (lbl) lbl.textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
       fetch('/preferencias/tema', {
@@ -259,5 +317,42 @@
       });
     }
   </script>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-top">
+    <div class="mobile-nav-avatar">{{ (session.nome_exibir or session.username or 'A')[0].upper() }}</div>
+    <div style="flex:1;min-width:0">
+      <div class="mobile-nav-user">{{ session.nome_exibir or session.username }}</div>
+      <div class="mobile-nav-role">Super Admin</div>
+    </div>
+    <button class="mobile-theme-btn" onclick="toggleTheme()" id="mobileThemeBtn">☀️ Claro</button>
+  </div>
+  <div class="mobile-nav-items">
+    <a href="{{ url_for('dashboard') }}" class="mobile-nav-item">
+      <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+    </a>
+    <a href="{{ url_for('alterar_senha') }}" class="mobile-nav-item">
+      <i class="bi bi-person-circle"></i><span>Conta</span>
+    </a>
+    <a href="{{ url_for('admin_nova_rede') }}" class="mobile-nav-cta">
+      <div class="mobile-nav-cta-icon"><i class="bi bi-plus-lg"></i></div>
+      <span style="color:var(--primary-l);margin-top:.1rem">Nova</span>
+    </a>
+    <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item  active">
+      <i class="bi bi-building"></i><span>Clientes</span>
+    </a>
+    <a href="{{ url_for('logout') }}" class="mobile-nav-item">
+      <i class="bi bi-box-arrow-right"></i><span>Sair</span>
+    </a>
+  </div>
+</nav>
+<script>
+  (function(){
+    const t = document.documentElement.getAttribute('data-theme') || 'light';
+    const btn = document.getElementById('mobileThemeBtn');
+    if (btn) btn.textContent = t === 'dark' ? '🌙 Escuro' : '☀️ Claro';
+  })();
+</script>
 </body>
 </html>
