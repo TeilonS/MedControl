@@ -216,6 +216,7 @@
             </td>
             <td>
               <form method="POST" action="{{ url_for('admin_excluir_filial', id=f.id) }}" style="display:inline" onsubmit="return confirm('Remover filial {{ f.filial_nome }}?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn-del"><i class="bi bi-trash3"></i> Remover</button>
               </form>
             </td>

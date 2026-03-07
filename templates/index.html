@@ -406,7 +406,7 @@
   <div class="row g-3 mb-3">
     <div class="col-lg-8">
       <!-- Search & Filter -->
-      <form method="GET" action="{{ url_for('dashboard') }}">
+      <form id="search-form" method="GET" action="{{ url_for('dashboard') }}">
         <div class="search-bar">
           <div class="search-input-wrap">
             <i class="bi bi-search"></i>
@@ -665,7 +665,7 @@
   <script>
   // ── BUSCA AJAX — estado explícito, sem depender de FormData para pills ──
   (function() {
-    const form    = document.querySelector('form[action*="dashboard"]');
+    const form    = document.getElementById('search-form');
     const tbody   = document.getElementById('meds-tbody');
     const counter = document.getElementById('meds-count');
     const empty   = document.getElementById('empty-state');
