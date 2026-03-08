@@ -102,12 +102,12 @@
   {% if usuario.is_superadmin %}
   <a href="/admin" class="nav-link">⚙️ Clientes</a>
   {% elif usuario.is_dono %}
-  <a href="/gerenciar-filiais" class="nav-link">🏪 Filiais</a>
+  <a href="/filiais" class="nav-link">🏪 Filiais</a>
   {% else %}
   <a href="/planos" class="nav-link">💳 Planos</a>
   {% endif %}
   <a href="/api/docs" class="nav-link active">📡 API Docs</a>
-  <a href="/minha-conta" class="nav-link">👤 Conta</a>
+  <a href="/alterar-senha" class="nav-link">👤 Conta</a>
   <div style="flex:1"></div>
   <button onclick="toggleTheme()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:.4rem .8rem;font-size:.82rem;color:var(--text);cursor:pointer;" id="themeBtn">☀️ Claro</button>
   <a href="/logout" class="nav-link mt-2" style="color:#ef4444">🚪 Sair</a>
@@ -379,12 +379,12 @@ resp = requests.post(
   </div>
   <div class="mobile-nav-items">
     <a href="/" class="mobile-nav-item"><span>🏠</span><span>Dashboard</span></a>
-    <a href="/minha-conta" class="mobile-nav-item"><span>👤</span><span>Conta</span></a>
+    <a href="/alterar-senha" class="mobile-nav-item"><span>👤</span><span>Conta</span></a>
     <a href="/cadastro" class="mobile-cta">＋</a>
     {% if usuario.is_superadmin %}
     <a href="/admin" class="mobile-nav-item"><span>⚙️</span><span>Clientes</span></a>
     {% elif usuario.is_dono %}
-    <a href="/gerenciar-filiais" class="mobile-nav-item"><span>🏪</span><span>Filiais</span></a>
+    <a href="/filiais" class="mobile-nav-item"><span>🏪</span><span>Filiais</span></a>
     {% else %}
     <a href="/planos" class="mobile-nav-item"><span>💳</span><span>Planos</span></a>
     {% endif %}
