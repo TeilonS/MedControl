@@ -14,7 +14,7 @@
 
     /* ── SIDEBAR ── */
     .sidebar {
-      width: var(--sidebar-w); min-height: 100vh;
+      width: var(--sidebar-w, 260px); min-height: 100vh;
       background: var(--card-bg);
       border-right: 1px solid var(--sb-border);
       display: flex; flex-direction: column;
@@ -70,7 +70,7 @@
     .integration-item .tag { margin-left: auto; font-size: .62rem; background: var(--surface2); color: var(--muted); padding: 1px 6px; border-radius: 10px; }
 
     /* ── MAIN CONTENT ── */
-    .main { margin-left: var(--sidebar-w); flex: 1; padding: 2rem; }
+    .main { margin-left: var(--sidebar-w, 260px); flex: 1; padding: 2rem; }
     .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding: .5rem 0; }
     .page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.6rem; }
     .topbar-actions { display: flex; gap: .75rem; align-items: center; }

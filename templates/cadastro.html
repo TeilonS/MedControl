@@ -14,10 +14,9 @@
   <style>
     * { box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; }
-    @media (max-width: 992px) { body { display: block !important; } }
 
     /* SIDEBAR (reutilizada) */
-    .sidebar { width: var(--sidebar-w); min-height: 100vh; background: var(--sb-bg); border-right: 1px solid var(--sb-border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+    .sidebar { width: var(--sidebar-w, 260px); min-height: 100vh; background: var(--sb-bg); border-right: 1px solid var(--sb-border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
     .sidebar-logo { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid var(--sb-border); }
     .logo-icon { width: 42px; height: 42px; background: linear-gradient(135deg, var(--primary), var(--primary-l)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; margin-bottom: .7rem; }
     .sidebar-logo h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; }
@@ -120,115 +119,26 @@
       align-items: center; justify-content: center;
       cursor: pointer; font-size: 1.1rem; color: var(--text); flex-shrink: 0;
     }
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55); z-index: 99; backdrop-filter: blur(2px);
     }
+    .sidebar-overlay.active { display: block; }
+    @media (max-width: 992px) {
+      .sidebar { transform: translateX(-100%);
+      }
     }
+    @media (max-width: 992px) {
+      .main { margin-left: 0 !important; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); transition: transform .28s cubic-bezier(.4,0,.2,1); z-index: 200; }
       .sidebar.open { transform: translateX(0); }
       .main { margin-left: 0 !important; padding: 1rem 1rem 1.5rem; }
       .btn-hamburger { display: flex; }
       .page-title { font-size: 1.2rem !important; }
       input, select, textarea { font-size: 16px !important; }
     } .main { margin-left: 0; padding: 1rem; } }
-
-    /* ── MOBILE BOTTOM NAV ── */
-    .mobile-nav {
-      display: none;
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-      background: var(--sb-bg); border-top: 1px solid var(--border);
-      padding: .5rem 0 calc(.5rem + env(safe-area-inset-bottom));
-    }
-    .mobile-nav-inner { display: flex; justify-content: space-around; align-items: center; }
-    .mobile-nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: .2rem;
-      color: var(--muted); text-decoration: none; font-size: .65rem; font-weight: 600;
-      padding: .3rem .5rem; border-radius: 10px; transition: color .2s; min-width: 56px;
-      background: none; border: none; cursor: pointer;
-    }
-    .mobile-nav-item i { font-size: 1.3rem; }
-    .mobile-nav-item.active, .mobile-nav-item:hover { color: var(--primary-l); }
-    .mobile-nav-item.cta {
-      background: linear-gradient(135deg, var(--primary), var(--primary-l));
-      color: white; border-radius: 14px; padding: .4rem .8rem;
-    }
-    .mobile-nav-item.cta:hover { color: white; opacity: .9; }
-    @media (max-width: 992px) {
-      .sidebar { display: none !important; }
-      .main { margin-left: 0 !important; padding: 1rem 1rem 5rem !important; }
-      .mobile-nav { display: block; }
-    }
-
-    /* ── MOBILE BOTTOM NAV ── */
-    .mobile-nav {
-      display: none;
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
-      background: var(--sb-bg); border-top: 1px solid var(--border);
-      padding: 0;
-      will-change: transform;
-      transform: translateZ(0);
-      -webkit-transform: translateZ(0);
-    }
-
-    /* Faixa superior da nav: avatar + nome + toggle */
-    .mobile-nav-top {
-      display: flex; align-items: center; gap: .7rem;
-      padding: .55rem 1rem .45rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .mobile-nav-avatar {
-      width: 28px; height: 28px; min-width: 28px; border-radius: 50%;
-      background: linear-gradient(135deg, var(--primary), var(--primary-l));
-      display: flex; align-items: center; justify-content: center;
-      font-size: .75rem; font-weight: 700; color: white; flex-shrink: 0;
-    }
-    .mobile-nav-user { font-size: .78rem; font-weight: 600; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .mobile-nav-role { font-size: .65rem; color: var(--muted); }
-    .mobile-theme-btn {
-      background: var(--surface2); border: 1px solid var(--border);
-      border-radius: 8px; padding: .3rem .55rem; font-size: .8rem;
-      cursor: pointer; color: var(--text); display: flex; align-items: center; gap: .3rem;
-      white-space: nowrap; flex-shrink: 0;
-    }
-
-    /* Linha inferior: ítens de navegação */
-    .mobile-nav-items {
-      display: flex; align-items: center;
-      padding: .3rem .5rem calc(.3rem + env(safe-area-inset-bottom));
-    }
-    .mobile-nav-item {
-      display: flex; flex-direction: column; align-items: center; gap: .15rem;
-      color: var(--muted); text-decoration: none; font-size: .6rem; font-weight: 600;
-      padding: .3rem 0; flex: 1;
-      background: none; border: none; cursor: pointer; transition: color .2s;
-    }
-    .mobile-nav-item i { font-size: 1.25rem; }
-    .mobile-nav-item.active { color: var(--primary-l); }
-    .mobile-nav-item:hover { color: var(--primary-l); }
-
-    /* Botão CTA central "Novo" */
-    .mobile-nav-cta {
-      display: flex; flex-direction: column; align-items: center; gap: .15rem;
-      text-decoration: none; font-size: .6rem; font-weight: 700; flex: 1;
-      color: white;
-    }
-    .mobile-nav-cta-icon {
-      width: 44px; height: 44px;
-      background: linear-gradient(135deg, var(--primary), var(--primary-l));
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      font-size: 1.3rem; color: white;
-      box-shadow: 0 4px 14px rgba(20,184,166,0.4);
-      margin-top: -10px;
-    }
-    @media (max-width: 992px) {
-      .sidebar { display: none !important; }
-      .main { margin-left: 0 !important; padding-bottom: 6rem !important; }
-      .mobile-nav { display: block; }
-    }
-
-    @media (max-width: 992px) {
-      .main { padding: .75rem .75rem 6rem !important; }
-      .form-card { border-radius: 12px !important; }
-      .row { margin: 0 !important; }
-      .col-md-6, .col-md-4, .col-md-3, .col-md-2, .col-12 { padding-left: .4rem !important; padding-right: .4rem !important; }
-    }
   </style>
 </head>
 <body>
@@ -660,7 +570,6 @@ document.getElementById('preco_unitario').addEventListener('input', function() {
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const newTheme = isDark ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', newTheme);
-    const mBtn = document.getElementById('mobileThemeBtn'); if(mBtn) mBtn.textContent = newTheme==='dark'?'🌙 Escuro':'☀️ Claro';
       const lbl = document.getElementById('theme-label');
       if (lbl) lbl.textContent = newTheme === 'dark' ? '🌙 Modo escuro' : '☀️ Modo claro';
       fetch('/preferencias/tema', {
@@ -672,61 +581,6 @@ document.getElementById('preco_unitario').addEventListener('input', function() {
   
   function toggleSidebar(){var sb=document.querySelector('.sidebar'),ov=document.getElementById('sidebarOverlay'),ic=document.getElementById('hamburgerIcon');var o=sb.classList.toggle('open');ov.classList.toggle('active',o);if(ic)ic.className=o?'bi bi-x-lg':'bi bi-list';document.body.style.overflow=o?'hidden':'';}
   function closeSidebar(){var sb=document.querySelector('.sidebar'),ov=document.getElementById('sidebarOverlay'),ic=document.getElementById('hamburgerIcon');sb.classList.remove('open');ov.classList.remove('active');if(ic)ic.className='bi bi-list';document.body.style.overflow='';}
-</script>
-
-<!-- ── MOBILE BOTTOM NAV ── -->
-<nav class="mobile-nav">
-  <!-- Faixa: usuário + toggle tema -->
-  <div class="mobile-nav-top">
-    <div class="mobile-nav-avatar">{{ (session.nome_exibir or session.username or '?')[0].upper() }}</div>
-    <div style="flex:1;min-width:0">
-      <div class="mobile-nav-user">{{ session.nome_exibir or session.username }}</div>
-      <div class="mobile-nav-role">
-        {%- if session.perfil == 'superadmin' %}Super Admin
-        {%- elif session.perfil == 'dono_rede' %}Dono da Rede
-        {%- elif session.perfil == 'filial' %}{{ session.filial_nome or 'Filial' }}
-        {%- else %}{{ session.perfil }}{%- endif %}
-      </div>
-    </div>
-    <button class="mobile-theme-btn" onclick="toggleTheme()" id="mobileThemeBtn">☀️ Claro</button>
-  </div>
-  <!-- Ítens de navegação -->
-  <div class="mobile-nav-items">
-    <a href="{{ url_for('dashboard') }}" class="mobile-nav-item">
-      <i class="bi bi-speedometer2"></i><span>Dashboard</span>
-    </a>
-    <a href="{{ url_for('alterar_senha') }}" class="mobile-nav-item">
-      <i class="bi bi-person-circle"></i><span>Conta</span>
-    </a>
-    <!-- CTA central -->
-    <a href="{{ url_for('cadastro') }}" class="mobile-nav-cta">
-      <div class="mobile-nav-cta-icon"><i class="bi bi-plus-lg"></i></div>
-      <span style="color:var(--primary-l);margin-top:.1rem">Novo</span>
-    </a>
-    {% if session.perfil == 'superadmin' %}
-    <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item">
-      <i class="bi bi-building"></i><span>Clientes</span>
-    </a>
-    {% elif usuario and usuario.is_dono %}
-    <a href="{{ url_for('gerenciar_filiais') }}" class="mobile-nav-item">
-      <i class="bi bi-shop"></i><span>Filiais</span>
-    </a>
-    {% else %}
-    <a href="{{ url_for('planos') }}" class="mobile-nav-item">
-      <i class="bi bi-star"></i><span>Planos</span>
-    </a>
-    {% endif %}
-    <a href="{{ url_for('logout') }}" class="mobile-nav-item">
-      <i class="bi bi-box-arrow-right"></i><span>Sair</span>
-    </a>
-  </div>
-</nav>
-<script>
-  (function(){
-    const t = document.documentElement.getAttribute('data-theme') || 'light';
-    const btn = document.getElementById('mobileThemeBtn');
-    if (btn) btn.textContent = t === 'dark' ? '🌙 Escuro' : '☀️ Claro';
-  })();
 </script>
 </body>
 </html>
