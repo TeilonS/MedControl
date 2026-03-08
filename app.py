@@ -1947,6 +1947,23 @@ def api_buscar_barcode(codigo):
 
 
 
+@app.route('/api/v1/filiais', methods=['GET'])
+@csrf.exempt
+@api_key_required
+def api_listar_filiais():
+    rede = request.rede_autenticada
+    filiais = Usuario.query.filter_by(rede_id=rede.id, perfil='filial').order_by(Usuario.id).all()
+    data = [
+        {
+            'id':   f.id,
+            'nome': f.filial_nome or f.nome_exibir or f.username,
+            'username': f.username,
+        }
+        for f in filiais
+    ]
+    return jsonify({'success': True, 'total': len(data), 'data': data})
+
+
 # =============================================================================
 # PDF
 # =============================================================================

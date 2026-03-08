@@ -319,6 +319,30 @@ resp = requests.post(
     </div>
   </div>
 
+  <!-- FILIAIS -->
+  <div class="endpoint-card">
+    <div><span class="badge-method badge-get">GET</span><span class="endpoint-path">/filiais</span></div>
+    <div class="endpoint-desc">Lista todas as filiais da rede com seus IDs. Use para mapear o <code>filial_id</code> antes de cadastrar medicamentos.</div>
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-fil-curl')">curl</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-fil-resp')">Resposta</button>
+    </div>
+    <div class="tab-content active" id="tab-fil-curl">
+<pre><span class="keyword">curl</span> -H <span class="string">"X-API-Key: SUA_CHAVE"</span>      https://www.medcontrol.app.br/api/v1/filiais</pre>
+    </div>
+    <div class="tab-content" id="tab-fil-resp">
+<pre>{
+  <span class="string">"success"</span>: <span class="keyword">true</span>,
+  <span class="string">"total"</span>: <span class="number">3</span>,
+  <span class="string">"data"</span>: [
+    { <span class="string">"id"</span>: <span class="number">4</span>, <span class="string">"nome"</span>: <span class="string">"Filial Centro"</span>,    <span class="string">"username"</span>: <span class="string">"filial_centro"</span> },
+    { <span class="string">"id"</span>: <span class="number">5</span>, <span class="string">"nome"</span>: <span class="string">"Filial Norte"</span>,     <span class="string">"username"</span>: <span class="string">"filial_norte"</span> },
+    { <span class="string">"id"</span>: <span class="number">7</span>, <span class="string">"nome"</span>: <span class="string">"Filial Shopping"</span>, <span class="string">"username"</span>: <span class="string">"filial_shop"</span> }
+  ]
+}</pre>
+    </div>
+  </div>
+
   <!-- BARCODE -->
   <div class="endpoint-card">
     <div><span class="badge-method badge-get">GET</span><span class="endpoint-path">/medicamentos/barcode/{codigo}</span></div>
