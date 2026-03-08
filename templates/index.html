@@ -354,9 +354,11 @@
     <a href="{{ url_for('cadastro') }}" class="nav-item">
       <i class="bi bi-plus-circle"></i> Novo Medicamento
     </a>
+    {% if usuario and usuario.assinatura_ok %}
     <a href="{{ url_for('gerar_pdf') }}" class="nav-item">
       <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
     </a>
+    {% endif %}
 
     <div class="nav-section-title mt-3">API & Integrações</div>
     {% if session.perfil == 'dono_rede' %}
@@ -391,21 +393,21 @@
     </button>
 
     <div style="margin-top: .8rem;">
-      <div class="integration-item">
-        <div class="dot"></div>
+      <a href="/api/docs" class="integration-item" style="text-decoration:none;">
+        <div class="dot" style="background:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.6);"></div>
         <span>Consys ERP</span>
-        <span class="tag">Em breve</span>
-      </div>
-      <div class="integration-item">
-        <div class="dot"></div>
+        <span class="tag" style="background:rgba(20,184,166,0.15);color:var(--primary-l);">Via API</span>
+      </a>
+      <a href="/api/docs" class="integration-item" style="text-decoration:none;">
+        <div class="dot" style="background:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.6);"></div>
         <span>SNGPC / ANVISA</span>
-        <span class="tag">Em breve</span>
-      </div>
-      <div class="integration-item">
-        <div class="dot"></div>
+        <span class="tag" style="background:rgba(20,184,166,0.15);color:var(--primary-l);">Via API</span>
+      </a>
+      <a href="/api/docs" class="integration-item" style="text-decoration:none;">
+        <div class="dot" style="background:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.6);"></div>
         <span>Tasy / MV</span>
-        <span class="tag">Em breve</span>
-      </div>
+        <span class="tag" style="background:rgba(20,184,166,0.15);color:var(--primary-l);">Via API</span>
+      </a>
     </div>
   </nav>
 
