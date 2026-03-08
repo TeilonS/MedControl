@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>API Docs — MedControl</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}"/>
+  <style>
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+    .sidebar { width: 260px; min-height: 100vh; background: var(--sb-bg); border-right: 1px solid var(--border);
+               position: fixed; top: 0; left: 0; padding: 1.5rem 1rem; display: flex; flex-direction: column; z-index: 100; }
+    .brand { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700;
+             background: linear-gradient(135deg, #0d9488, #7c3aed); -webkit-background-clip: text;
+             -webkit-text-fill-color: transparent; text-decoration: none; margin-bottom: 2rem; display: block; }
+    .nav-link { color: var(--text-muted); border-radius: 8px; padding: .45rem .8rem;
+                font-size: .88rem; display: flex; align-items: center; gap: .5rem; margin-bottom: .15rem; }
+    .nav-link:hover, .nav-link.active { background: var(--hover-bg); color: var(--text); }
+    .nav-section { font-size: .7rem; font-weight: 600; color: var(--text-muted);
+                   text-transform: uppercase; letter-spacing: .08em; padding: .5rem .8rem .2rem; margin-top: .5rem; }
+    .main { margin-left: 260px; padding: 2.5rem; max-width: 960px; }
+    h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 700; }
+    h2 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: .75rem; }
+    h3 { font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: .5rem; }
+    .badge-method { font-family: 'JetBrains Mono', monospace; font-size: .72rem; font-weight: 500;
+                    padding: .25rem .55rem; border-radius: 6px; display: inline-block; margin-right: .4rem; }
+    .badge-get    { background: #dcfce7; color: #166534; }
+    .badge-post   { background: #dbeafe; color: #1e40af; }
+    .badge-put    { background: #fef9c3; color: #854d0e; }
+    .badge-delete { background: #fee2e2; color: #991b1b; }
+    .endpoint-card { background: var(--card-bg); border: 1px solid var(--border);
+                     border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+    .endpoint-path { font-family: 'JetBrains Mono', monospace; font-size: .9rem; color: var(--text); }
+    .endpoint-desc { font-size: .88rem; color: var(--text-muted); margin-top: .3rem; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 10px; padding: 1.1rem 1.3rem;
+          font-family: 'JetBrains Mono', monospace; font-size: .8rem; line-height: 1.6;
+          overflow-x: auto; margin: .75rem 0 0; }
+    .keyword { color: #7dd3fc; }
+    .string  { color: #86efac; }
+    .comment { color: #64748b; }
+    .number  { color: #fda4af; }
+    .key-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+               padding: 1rem 1.25rem; display: flex; align-items: center; gap: .75rem; }
+    .key-value { font-family: 'JetBrains Mono', monospace; font-size: .82rem; color: #0d9488;
+                 flex: 1; word-break: break-all; }
+    .copy-btn { background: var(--hover-bg); border: 1px solid var(--border); border-radius: 7px;
+                padding: .35rem .75rem; font-size: .78rem; cursor: pointer; white-space: nowrap;
+                color: var(--text); transition: all .15s; }
+    .copy-btn:hover { background: #0d9488; color: #fff; border-color: #0d9488; }
+    .tab-btns { display: flex; gap: .5rem; margin-bottom: .5rem; }
+    .tab-btn { background: var(--hover-bg); border: 1px solid var(--border); border-radius: 7px;
+               padding: .3rem .8rem; font-size: .78rem; cursor: pointer; color: var(--text-muted); }
+    .tab-btn.active { background: #0d9488; color: #fff; border-color: #0d9488; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .status-table th { font-size: .78rem; color: var(--text-muted); font-weight: 500; }
+    .status-table td { font-size: .84rem; font-family: 'JetBrains Mono', monospace; }
+    .field-table th { font-size: .78rem; color: var(--text-muted); }
+    .field-table td { font-size: .83rem; vertical-align: top; }
+    .req-badge { background: #fee2e2; color: #991b1b; font-size: .65rem; padding: .1rem .35rem;
+                 border-radius: 4px; font-weight: 600; }
+    .opt-badge { background: var(--hover-bg); color: var(--text-muted); font-size: .65rem;
+                 padding: .1rem .35rem; border-radius: 4px; }
+    .alert-info-custom { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px;
+                         padding: .9rem 1.1rem; font-size: .87rem; color: #1e40af; }
+    [data-theme="dark"] .alert-info-custom { background: #1e2d4a; border-color: #1e40af; color: #93c5fd; }
+    [data-theme="dark"] pre { background: #020617; }
+    @media (max-width: 992px) {
+      body { display: block !important; }
+      .sidebar { display: none !important; }
+      .main { margin-left: 0 !important; padding: 1.25rem; padding-bottom: 6rem; }
+    }
+    /* Mobile nav */
+    .mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999;
+                  background: var(--sb-bg); border-top: 1px solid var(--border); will-change: transform; transform: translateZ(0); }
+    .mobile-nav-top { display: flex; align-items: center; justify-content: space-between;
+                      padding: .5rem 1rem; border-bottom: 1px solid var(--border); }
+    .mobile-nav-top .user-info { display: flex; align-items: center; gap: .6rem; }
+    .mobile-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg,#0d9488,#7c3aed);
+                     display: flex; align-items: center; justify-content: center; color: #fff; font-size: .75rem; font-weight: 700; }
+    .mobile-nav-items { display: flex; justify-content: space-around; padding: .3rem 0 .5rem; }
+    .mobile-nav-item { display: flex; flex-direction: column; align-items: center; gap: .15rem;
+                       color: var(--text-muted); text-decoration: none; font-size: .65rem; padding: .3rem .5rem; min-width: 52px; }
+    .mobile-nav-item span:first-child { font-size: 1.1rem; }
+    .mobile-nav-item.active { color: #0d9488; }
+    .mobile-cta { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,#0d9488,#7c3aed);
+                  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.3rem;
+                  text-decoration: none; margin-top: -18px; box-shadow: 0 4px 12px rgba(13,148,136,.4); }
+    @media (max-width: 992px) { .mobile-nav { display: block; } }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a href="/" class="brand">💊 MedControl</a>
+  <div class="nav-section">Menu</div>
+  <a href="/" class="nav-link">🏠 Dashboard</a>
+  <a href="/cadastro" class="nav-link">➕ Novo Medicamento</a>
+  {% if usuario.is_superadmin %}
+  <a href="/admin" class="nav-link">⚙️ Clientes</a>
+  {% elif usuario.is_dono %}
+  <a href="/gerenciar-filiais" class="nav-link">🏪 Filiais</a>
+  {% else %}
+  <a href="/planos" class="nav-link">💳 Planos</a>
+  {% endif %}
+  <a href="/api/docs" class="nav-link active">📡 API Docs</a>
+  <a href="/minha-conta" class="nav-link">👤 Conta</a>
+  <div style="flex:1"></div>
+  <button onclick="toggleTheme()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:.4rem .8rem;font-size:.82rem;color:var(--text);cursor:pointer;" id="themeBtn">☀️ Claro</button>
+  <a href="/logout" class="nav-link mt-2" style="color:#ef4444">🚪 Sair</a>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="d-flex align-items-center gap-3 mb-1">
+    <h1 class="mb-0">📡 API REST</h1>
+    <span class="badge bg-success" style="font-size:.7rem">v1</span>
+  </div>
+  <p class="text-muted mb-4" style="font-size:.9rem">Integre o MedControl com seu ERP, Consys, Tasy ou qualquer sistema externo.</p>
+
+  <!-- API KEY -->
+  <h2>🔑 Sua API Key</h2>
+  <p style="font-size:.88rem;color:var(--text-muted)">Envie esta chave no header de todas as requisições. Não compartilhe com terceiros.</p>
+  {% if token %}
+  <div class="key-box mb-2">
+    <span class="key-value" id="apiKeyVal">{{ token }}</span>
+    <button class="copy-btn" onclick="copyKey()">📋 Copiar</button>
+  </div>
+  <div class="alert-info-custom mb-4">
+    <strong>Header:</strong> <code>X-API-Key: {{ token }}</code>
+  </div>
+  {% else %}
+  <div class="alert-info-custom mb-4">⚠️ Nenhuma rede associada. API Key disponível apenas para donos de rede.</div>
+  {% endif %}
+
+  <!-- BASE URL -->
+  <h2>🌐 Base URL</h2>
+  <div class="key-box mb-4">
+    <span class="key-value">https://www.medcontrol.app.br/api/v1</span>
+    <button class="copy-btn" onclick="copyText('https://www.medcontrol.app.br/api/v1')">📋 Copiar</button>
+  </div>
+
+  <!-- AUTENTICAÇÃO -->
+  <h2>🔐 Autenticação</h2>
+  <div class="endpoint-card mb-4">
+    <p style="font-size:.88rem">Todas as rotas exigem o header <code>X-API-Key</code> com sua chave. Não é necessário login ou sessão.</p>
+    <pre><span class="comment"># Exemplo de header obrigatório</span>
+X-API-Key: <span class="string">sua_api_key_aqui</span></pre>
+  </div>
+
+  <!-- ENDPOINTS -->
+  <h2>📋 Endpoints</h2>
+
+  <!-- GET /medicamentos -->
+  <div class="endpoint-card">
+    <div><span class="badge-method badge-get">GET</span><span class="endpoint-path">/medicamentos</span></div>
+    <div class="endpoint-desc">Lista todos os medicamentos da rede. Filtre por status ou filial via query string.</div>
+    <h3>Parâmetros opcionais</h3>
+    <table class="table table-sm field-table">
+      <thead><tr><th>Parâmetro</th><th>Tipo</th><th>Descrição</th></tr></thead>
+      <tbody>
+        <tr><td><code>status</code></td><td>string</td><td>Filtra por status: <code>vencido</code>, <code>alerta_30</code>, <code>alerta_60</code>, <code>ok</code></td></tr>
+        <tr><td><code>filial_id</code></td><td>integer</td><td>Filtra por filial específica</td></tr>
+      </tbody>
+    </table>
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-get-curl')">curl</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-get-py')">Python</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-get-resp')">Resposta</button>
+    </div>
+    <div class="tab-content active" id="tab-get-curl">
+<pre><span class="keyword">curl</span> -H <span class="string">"X-API-Key: SUA_CHAVE"</span> \
+     https://www.medcontrol.app.br/api/v1/medicamentos
+
+<span class="comment"># Filtrar apenas vencidos:</span>
+<span class="keyword">curl</span> -H <span class="string">"X-API-Key: SUA_CHAVE"</span> \
+     "https://www.medcontrol.app.br/api/v1/medicamentos?status=vencido"</pre>
+    </div>
+    <div class="tab-content" id="tab-get-py">
+<pre><span class="keyword">import</span> requests
+
+resp = requests.get(
+    <span class="string">"https://www.medcontrol.app.br/api/v1/medicamentos"</span>,
+    headers={<span class="string">"X-API-Key"</span>: <span class="string">"SUA_CHAVE"</span>},
+    params={<span class="string">"status"</span>: <span class="string">"vencido"</span>}  <span class="comment"># opcional</span>
+)
+<span class="keyword">print</span>(resp.json())</pre>
+    </div>
+    <div class="tab-content" id="tab-get-resp">
+<pre>{
+  <span class="string">"success"</span>: <span class="keyword">true</span>,
+  <span class="string">"total"</span>: <span class="number">1</span>,
+  <span class="string">"data"</span>: [
+    {
+      <span class="string">"id"</span>: <span class="number">13</span>,
+      <span class="string">"nome"</span>: <span class="string">"Dipirona Sódica 500mg"</span>,
+      <span class="string">"codigo_barras"</span>: <span class="string">"7891234567890"</span>,
+      <span class="string">"lote"</span>: <span class="string">"LT-2024-001"</span>,
+      <span class="string">"data_validade"</span>: <span class="string">"2026-06-30"</span>,
+      <span class="string">"quantidade"</span>: <span class="number">100</span>,
+      <span class="string">"preco_unitario"</span>: <span class="number">2.50</span>,
+      <span class="string">"valor_total"</span>: <span class="number">250.00</span>,
+      <span class="string">"status"</span>: <span class="string">"ok"</span>,
+      <span class="string">"rede_id"</span>: <span class="number">6</span>,
+      <span class="string">"filial_id"</span>: <span class="keyword">null</span>
+    }
+  ]
+}</pre>
+    </div>
+  </div>
+
+  <!-- POST /medicamentos -->
+  <div class="endpoint-card">
+    <div><span class="badge-method badge-post">POST</span><span class="endpoint-path">/medicamentos</span></div>
+    <div class="endpoint-desc">Cadastra um novo medicamento. Ideal para integração com ERP/Consys na entrada de estoque.</div>
+    <h3>Campos do body (JSON)</h3>
+    <table class="table table-sm field-table">
+      <thead><tr><th>Campo</th><th>Tipo</th><th></th><th>Descrição</th></tr></thead>
+      <tbody>
+        <tr><td><code>nome</code></td><td>string</td><td><span class="req-badge">obrig.</span></td><td>Nome do medicamento</td></tr>
+        <tr><td><code>lote</code></td><td>string</td><td><span class="req-badge">obrig.</span></td><td>Número do lote</td></tr>
+        <tr><td><code>data_validade</code></td><td>string</td><td><span class="req-badge">obrig.</span></td><td>Formato <code>YYYY-MM-DD</code></td></tr>
+        <tr><td><code>quantidade</code></td><td>integer</td><td><span class="req-badge">obrig.</span></td><td>Quantidade em estoque</td></tr>
+        <tr><td><code>codigo_barras</code></td><td>string</td><td><span class="opt-badge">opcional</span></td><td>EAN-13 ou código interno</td></tr>
+        <tr><td><code>fabricante</code></td><td>string</td><td><span class="opt-badge">opcional</span></td><td>Nome do fabricante</td></tr>
+        <tr><td><code>preco_unitario</code></td><td>float</td><td><span class="opt-badge">opcional</span></td><td>Preço unitário em R$</td></tr>
+        <tr><td><code>filial_id</code></td><td>integer</td><td><span class="opt-badge">opcional</span></td><td>ID da filial (se omitido, vincula à rede)</td></tr>
+        <tr><td><code>origem</code></td><td>string</td><td><span class="opt-badge">opcional</span></td><td>Ex: <code>consys</code>, <code>tasy</code>, <code>sngpc</code></td></tr>
+        <tr><td><code>codigo_externo</code></td><td>string</td><td><span class="opt-badge">opcional</span></td><td>ID do item no sistema de origem</td></tr>
+      </tbody>
+    </table>
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-post-curl')">curl</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-post-py')">Python</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-post-resp')">Resposta</button>
+    </div>
+    <div class="tab-content active" id="tab-post-curl">
+<pre><span class="keyword">curl</span> -X POST \
+     -H <span class="string">"X-API-Key: SUA_CHAVE"</span> \
+     -H <span class="string">"Content-Type: application/json"</span> \
+     -d <span class="string">'{"nome":"Amoxicilina 500mg","lote":"LT-001","data_validade":"2027-03-15","quantidade":50,"preco_unitario":8.90,"origem":"consys"}'</span> \
+     https://www.medcontrol.app.br/api/v1/medicamentos</pre>
+    </div>
+    <div class="tab-content" id="tab-post-py">
+<pre><span class="keyword">import</span> requests
+
+resp = requests.post(
+    <span class="string">"https://www.medcontrol.app.br/api/v1/medicamentos"</span>,
+    headers={
+        <span class="string">"X-API-Key"</span>: <span class="string">"SUA_CHAVE"</span>,
+        <span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>
+    },
+    json={
+        <span class="string">"nome"</span>: <span class="string">"Amoxicilina 500mg"</span>,
+        <span class="string">"lote"</span>: <span class="string">"LT-001"</span>,
+        <span class="string">"data_validade"</span>: <span class="string">"2027-03-15"</span>,
+        <span class="string">"quantidade"</span>: <span class="number">50</span>,
+        <span class="string">"preco_unitario"</span>: <span class="number">8.90</span>,
+        <span class="string">"origem"</span>: <span class="string">"consys"</span>
+    }
+)
+<span class="keyword">print</span>(resp.json())</pre>
+    </div>
+    <div class="tab-content" id="tab-post-resp">
+<pre><span class="comment"># Sucesso (201)</span>
+{
+  <span class="string">"success"</span>: <span class="keyword">true</span>,
+  <span class="string">"id"</span>: <span class="number">42</span>,
+  <span class="string">"message"</span>: <span class="string">"Medicamento cadastrado com sucesso."</span>
+}
+
+<span class="comment"># Erro (400)</span>
+{
+  <span class="string">"success"</span>: <span class="keyword">false</span>,
+  <span class="string">"error"</span>: <span class="string">"Campos obrigatorios: lote, data_validade"</span>
+}</pre>
+    </div>
+  </div>
+
+  <!-- PUT -->
+  <div class="endpoint-card">
+    <div><span class="badge-method badge-put">PUT</span><span class="endpoint-path">/medicamentos/{id}</span></div>
+    <div class="endpoint-desc">Atualiza dados de um medicamento existente. Envie apenas os campos que deseja alterar.</div>
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-put-curl')">curl</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-put-py')">Python</button>
+    </div>
+    <div class="tab-content active" id="tab-put-curl">
+<pre><span class="keyword">curl</span> -X PUT \
+     -H <span class="string">"X-API-Key: SUA_CHAVE"</span> \
+     -H <span class="string">"Content-Type: application/json"</span> \
+     -d <span class="string">'{"quantidade": 80}'</span> \
+     https://www.medcontrol.app.br/api/v1/medicamentos/<span class="number">42</span></pre>
+    </div>
+    <div class="tab-content" id="tab-put-py">
+<pre>resp = requests.put(
+    <span class="string">"https://www.medcontrol.app.br/api/v1/medicamentos/42"</span>,
+    headers={<span class="string">"X-API-Key"</span>: <span class="string">"SUA_CHAVE"</span>},
+    json={<span class="string">"quantidade"</span>: <span class="number">80</span>}
+)
+<span class="keyword">print</span>(resp.json())</pre>
+    </div>
+  </div>
+
+  <!-- DELETE -->
+  <div class="endpoint-card">
+    <div><span class="badge-method badge-delete">DELETE</span><span class="endpoint-path">/medicamentos/{id}</span></div>
+    <div class="endpoint-desc">Remove um medicamento da base de dados.</div>
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-del-curl')">curl</button>
+    </div>
+    <div class="tab-content active" id="tab-del-curl">
+<pre><span class="keyword">curl</span> -X DELETE \
+     -H <span class="string">"X-API-Key: SUA_CHAVE"</span> \
+     https://www.medcontrol.app.br/api/v1/medicamentos/<span class="number">42</span></pre>
+    </div>
+  </div>
+
+  <!-- BARCODE -->
+  <div class="endpoint-card">
+    <div><span class="badge-method badge-get">GET</span><span class="endpoint-path">/medicamentos/barcode/{codigo}</span></div>
+    <div class="endpoint-desc">Busca um medicamento pelo código de barras (EAN-13 ou código interno).</div>
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-bc-curl')">curl</button>
+    </div>
+    <div class="tab-content active" id="tab-bc-curl">
+<pre><span class="keyword">curl</span> -H <span class="string">"X-API-Key: SUA_CHAVE"</span> \
+     https://www.medcontrol.app.br/api/v1/medicamentos/barcode/<span class="number">7891234567890</span></pre>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <h2>🏷️ Valores de Status</h2>
+  <table class="table table-sm status-table mb-4">
+    <thead><tr><th>Valor</th><th>Significado</th></tr></thead>
+    <tbody>
+      <tr><td><code style="background:#fee2e2;color:#991b1b;padding:.1rem .4rem;border-radius:4px">vencido</code></td><td>Data de validade já passou</td></tr>
+      <tr><td><code style="background:#ffedd5;color:#9a3412;padding:.1rem .4rem;border-radius:4px">alerta_30</code></td><td>Vence em até 30 dias</td></tr>
+      <tr><td><code style="background:#fef9c3;color:#854d0e;padding:.1rem .4rem;border-radius:4px">alerta_60</code></td><td>Vence entre 31 e 60 dias</td></tr>
+      <tr><td><code style="background:#dcfce7;color:#166534;padding:.1rem .4rem;border-radius:4px">ok</code></td><td>Vence em mais de 60 dias</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ERROS -->
+  <h2>⚠️ Códigos de Erro</h2>
+  <table class="table table-sm status-table mb-4">
+    <thead><tr><th>HTTP</th><th>Situação</th></tr></thead>
+    <tbody>
+      <tr><td><code>401</code></td><td>API Key não informada</td></tr>
+      <tr><td><code>403</code></td><td>API Key inválida ou assinatura inativa</td></tr>
+      <tr><td><code>400</code></td><td>Campos obrigatórios faltando ou formato inválido</td></tr>
+      <tr><td><code>404</code></td><td>Medicamento não encontrado</td></tr>
+    </tbody>
+  </table>
+
+  <!-- SUPORTE -->
+  <h2>💬 Suporte Técnico</h2>
+  <div class="alert-info-custom">
+    Dúvidas sobre a integração? Fale com a equipe MedControl:<br>
+    <strong>WhatsApp:</strong> <a href="https://wa.me/5577988175300" target="_blank">+55 77 98817-5300</a> &nbsp;|&nbsp;
+    <strong>E-mail:</strong> <a href="mailto:teilon66@gmail.com">teilon66@gmail.com</a>
+  </div>
+</div>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-top">
+    <div class="user-info">
+      <div class="mobile-avatar">{{ (usuario.nome_exibir or usuario.username)[0]|upper }}</div>
+      <div>
+        <div style="font-size:.8rem;font-weight:600;line-height:1.1">{{ usuario.nome_exibir or usuario.username }}</div>
+        <div style="font-size:.68rem;color:var(--text-muted)">{{ usuario.perfil }}</div>
+      </div>
+    </div>
+    <button onclick="toggleTheme()" id="mobileThemeBtn" style="background:none;border:1px solid var(--border);border-radius:7px;padding:.25rem .6rem;font-size:.75rem;color:var(--text);cursor:pointer">☀️ Claro</button>
+  </div>
+  <div class="mobile-nav-items">
+    <a href="/" class="mobile-nav-item"><span>🏠</span><span>Dashboard</span></a>
+    <a href="/minha-conta" class="mobile-nav-item"><span>👤</span><span>Conta</span></a>
+    <a href="/cadastro" class="mobile-cta">＋</a>
+    {% if usuario.is_superadmin %}
+    <a href="/admin" class="mobile-nav-item"><span>⚙️</span><span>Clientes</span></a>
+    {% elif usuario.is_dono %}
+    <a href="/gerenciar-filiais" class="mobile-nav-item"><span>🏪</span><span>Filiais</span></a>
+    {% else %}
+    <a href="/planos" class="mobile-nav-item"><span>💳</span><span>Planos</span></a>
+    {% endif %}
+    <a href="/logout" class="mobile-nav-item" style="color:#ef4444"><span>🚪</span><span>Sair</span></a>
+  </div>
+</nav>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', newTheme);
+  localStorage.setItem('theme', newTheme);
+  const label = newTheme === 'dark' ? '🌙 Escuro' : '☀️ Claro';
+  const b = document.getElementById('themeBtn');
+  const mb = document.getElementById('mobileThemeBtn');
+  if (b) b.textContent = label;
+  if (mb) mb.textContent = label;
+}
+(function() {
+  const t = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  const label = t === 'dark' ? '🌙 Escuro' : '☀️ Claro';
+  const b = document.getElementById('themeBtn');
+  const mb = document.getElementById('mobileThemeBtn');
+  if (b) b.textContent = label;
+  if (mb) mb.textContent = label;
+})();
+
+function copyKey() {
+  const val = document.getElementById('apiKeyVal').textContent;
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.querySelector('[onclick="copyKey()"]');
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => btn.textContent = '📋 Copiar', 2000);
+  });
+}
+function copyText(t) {
+  navigator.clipboard.writeText(t);
+}
+function switchTab(btn, targetId) {
+  const card = btn.closest('.endpoint-card');
+  card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(targetId).classList.add('active');
+}
+</script>
+</body>
+</html>
