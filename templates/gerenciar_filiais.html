@@ -134,20 +134,14 @@
   <nav class="sb-nav">
     <div class="nt">Principal</div>
     <a href="{{ url_for('dashboard') }}" class="ni"><i class="bi bi-speedometer2"></i> Dashboard</a>
-        {% if session.perfil == 'superadmin' %}
-    <a href="{{ url_for('admin_dashboard') }}" class="mobile-nav-item">
-      <i class="bi bi-building"></i><span>Clientes</span>
-    </a>
+    {% if session.perfil == 'superadmin' %}
+    <a href="{{ url_for('admin_dashboard') }}" class="ni"><i class="bi bi-building"></i> Clientes</a>
     {% elif usuario and usuario.is_dono %}
-    <a href="{{ url_for('gerenciar_filiais') }}" class="mobile-nav-item">
-      <i class="bi bi-shop"></i><span>Filiais</span>
-    </a>
-    {% else %}
-    <a href="{{ url_for('planos') }}" class="mobile-nav-item">
-      <i class="bi bi-star"></i><span>Planos</span>
-    </a>
+    <a href="{{ url_for('gerenciar_filiais') }}" class="ni active"><i class="bi bi-shop"></i> Filiais</a>
     {% endif %}
-    <a href="{{ url_for('planos') }}" class="ni"><i class="bi bi-star"></i> Planos & Preços</a>
+    {% if session.perfil in ['superadmin', 'dono_rede'] %}
+    <a href="{{ url_for('planos') }}" class="ni"><i class="bi bi-star"></i> Planos &amp; Preços</a>
+    {% endif %}
   </nav>
   <div class="sb-foot">
   <div class="theme-toggle-wrap" style="margin-bottom:.4rem">
