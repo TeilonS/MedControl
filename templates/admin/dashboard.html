@@ -113,7 +113,7 @@
     }
     @media (max-width: 992px) {
       .sidebar { display: none !important; }
-      .main { margin-left: 0 !important; padding: 1rem 1rem 6rem !important; }
+      .main { margin-left: 0 !important; padding: 1rem 1rem 9rem !important; }
       .mobile-nav { display: block; }
       .table td, .table th { padding: .6rem .5rem; font-size: .8rem; }
       .col-hide-mobile { display: none; }
@@ -169,7 +169,7 @@
         <thead><tr class="th"><th>Rede / Empresa</th><th class="col-hide-mobile">Plano</th><th class="col-hide-mobile">Filiais</th><th>Expira em</th><th>Status</th><th class="col-hide-mobile">Renovar</th><th>Ações</th></tr></thead>
         <tbody>
           {% for r in redes %}
-          <tr>
+          <tr style="cursor:pointer" onclick="window.location='{{ url_for('admin_rede_detalhe', id=r.id) }}'">
             <td>
               <div style="font-weight:600">{{ r.nome }}</div>
               <div style="font-size:.75rem;color:var(--muted)">{{ r.email_contato or '—' }}</div>
@@ -196,7 +196,7 @@
                 <button type="submit" class="btn-r"><i class="bi bi-arrow-clockwise"></i> Renovar</button>
               </form>
             </td>
-            <td style="display:flex;gap:.4rem;align-items:center">
+            <td style="display:flex;gap:.4rem;align-items:center" onclick="event.stopPropagation()">
               <a href="{{ url_for('admin_rede_detalhe', id=r.id) }}" class="btn-detail"><i class="bi bi-eye"></i></a>
               <form method="POST" action="{{ url_for('admin_toggle_rede', id=r.id) }}" style="display:inline" onsubmit="return confirm('{{ 'Bloquear' if r.ativa else 'Ativar' }} rede {{ r.nome }}?')">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
