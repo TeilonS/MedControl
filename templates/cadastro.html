@@ -382,6 +382,7 @@ function fecharScanner() {
 
 function initScanner() {
   if (scannerRunning) return;
+  scannerRunning = true; // trava imediato para evitar dupla inicialização
 
   // limpa instância anterior
   if (codeReader) {
@@ -394,7 +395,8 @@ function initScanner() {
   const video = document.createElement('video');
   video.id = 'zxing-video';
   video.style.cssText = 'width:100%;border-radius:10px;display:block;';
-  video.setAttribute('playsinline', true);
+  video.setAttribute('playsinline', '');
+  video.setAttribute('muted', '');
   document.getElementById('reader').appendChild(video);
 
   const hints = new Map();
@@ -411,15 +413,30 @@ function initScanner() {
 
   codeReader = new ZXing.BrowserMultiFormatReader(hints);
 
-  codeReader.decodeFromVideoDevice(null, 'zxing-video', (result, err) => {
-    if (result) {
-      processBarcode(result.getText());
+  // Seleciona câmera traseira (environment) — crítico para leitura em mobile
+  codeReader.listVideoInputDevices().then(devices => {
+    // Prefere câmera com "back" ou "environment" no label; fallback para a última (geralmente traseira)
+    let deviceId = null;
+    const back = devices.find(d =>
+      /back|rear|environment|traseira|trás/i.test(d.label)
+    );
+    if (back) {
+      deviceId = back.deviceId;
+    } else if (devices.length > 1) {
+      deviceId = devices[devices.length - 1].deviceId; // última câmera = traseira na maioria dos dispositivos
     }
+
+    return codeReader.decodeFromVideoDevice(deviceId, 'zxing-video', (result, err) => {
+      if (result) {
+        processBarcode(result.getText());
+      }
+      // ignora erros de frame (NotFoundException é normal entre frames)
+    });
   }).then(() => {
-    scannerRunning = true;
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
   }).catch((err) => {
+    scannerRunning = false;
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
     console.error('Scanner error:', err);
