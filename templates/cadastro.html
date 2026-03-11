@@ -371,8 +371,8 @@ function abrirScanner() {
   document.getElementById('scanner-overlay').classList.add('active');
   document.getElementById('scanResult').style.display = 'none';
   document.getElementById('scanStatus').innerHTML = '<i class="bi bi-camera me-1"></i> Iniciando câmera...';
-  // pequeno delay para garantir que o DOM está visível antes de iniciar
-  setTimeout(initScanner, 100);
+  // delay maior para garantir que o overlay está visível e o #reader tem dimensões reais
+  setTimeout(initScanner, 400);
 }
 
 function fecharScanner() {
@@ -382,9 +382,18 @@ function fecharScanner() {
 
 function initScanner() {
   if (scannerRunning) return;
-  if (!html5QrCode) {
-    html5QrCode = new Html5Qrcode("reader");
+
+  // destroi instância anterior se existir
+  if (html5QrCode) {
+    try { html5QrCode.clear(); } catch(e) {}
+    html5QrCode = null;
   }
+
+  // limpa o conteúdo do reader para evitar elementos duplicados
+  const readerEl = document.getElementById('reader');
+  readerEl.innerHTML = '';
+
+  html5QrCode = new Html5Qrcode("reader");
 
   html5QrCode.start(
     { facingMode: "environment" },
