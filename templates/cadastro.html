@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <!-- html5-qrcode para leitura de código de barras via câmera -->
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- ZXing para leitura de código de barras via câmera -->
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; }
@@ -363,9 +363,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// ── SCANNER DE CÓDIGO DE BARRAS (html5-qrcode) ────────────────────────────
-let html5QrCode = null;
+// ── SCANNER DE CÓDIGO DE BARRAS (ZXing) ────────────────────────────
+let codeReader = null;
 let scannerRunning = false;
+let currentStream = null;
 
 function abrirScanner() {
   document.getElementById('scanner-overlay').classList.add('active');
@@ -383,66 +384,53 @@ function initScanner() {
   if (scannerRunning) return;
 
   // limpa instância anterior
-  if (html5QrCode) {
-    try { html5QrCode.clear(); } catch(e) {}
-    html5QrCode = null;
+  if (codeReader) {
+    try { codeReader.reset(); } catch(e) {}
+    codeReader = null;
   }
   document.getElementById('reader').innerHTML = '';
 
-  html5QrCode = new Html5Qrcode("reader", { verbose: false });
+  // cria elemento de vídeo
+  const video = document.createElement('video');
+  video.id = 'zxing-video';
+  video.style.cssText = 'width:100%;border-radius:10px;display:block;';
+  video.setAttribute('playsinline', true);
+  document.getElementById('reader').appendChild(video);
 
-  const config = {
-    fps: 15,
-    qrbox: { width: 300, height: 150 },
-    aspectRatio: 1.0,
-    formatsToSupport: [
-      Html5QrcodeSupportedFormats.EAN_13,
-      Html5QrcodeSupportedFormats.EAN_8,
-      Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.CODE_39,
-      Html5QrcodeSupportedFormats.UPC_A,
-      Html5QrcodeSupportedFormats.UPC_E,
-    ]
-  };
+  const hints = new Map();
+  const formats = [
+    ZXing.BarcodeFormat.EAN_13,
+    ZXing.BarcodeFormat.EAN_8,
+    ZXing.BarcodeFormat.CODE_128,
+    ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.UPC_A,
+    ZXing.BarcodeFormat.UPC_E,
+  ];
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
-  const onSuccess = (decodedText) => processBarcode(decodedText);
-  const onError = () => {};
+  codeReader = new ZXing.BrowserMultiFormatReader(hints);
 
-  const onStarted = () => {
+  codeReader.decodeFromVideoDevice(null, 'zxing-video', (result, err) => {
+    if (result) {
+      processBarcode(result.getText());
+    }
+  }).then(() => {
     scannerRunning = true;
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
-  };
-
-  const onFailed = (err) => {
+  }).catch((err) => {
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
     console.error('Scanner error:', err);
-  };
-
-  // Tenta câmera traseira primeiro, com fallback para qualquer câmera (Firefox compatível)
-  html5QrCode.start({ facingMode: { exact: "environment" } }, config, onSuccess, onError)
-    .then(onStarted)
-    .catch(() => {
-      // fallback: tenta sem restrição de câmera (funciona no Firefox)
-      html5QrCode.start({ facingMode: "environment" }, config, onSuccess, onError)
-        .then(onStarted)
-        .catch(() => {
-          // último fallback: sem preferência de câmera
-          html5QrCode.start({ facingMode: "user" }, config, onSuccess, onError)
-            .then(onStarted)
-            .catch(onFailed);
-        });
-    });
+  });
 }
 
 function stopScanner() {
-  if (html5QrCode && scannerRunning) {
-    html5QrCode.stop().then(() => {
-      try { html5QrCode.clear(); } catch(e) {}
-      html5QrCode = null;
-      scannerRunning = false;
-    }).catch(() => { scannerRunning = false; });
+  if (codeReader) {
+    try { codeReader.reset(); } catch(e) {}
+    codeReader = null;
+    scannerRunning = false;
   }
 }
 
