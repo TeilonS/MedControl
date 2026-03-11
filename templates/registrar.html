@@ -149,6 +149,64 @@
       .trial-badge { margin-top: 1.5rem; }
       .right-panel { padding: 1.5rem 1.2rem 2.5rem; }
     }
+
+    /* MODAL TERMOS */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; width: 100%; max-width: 600px;
+      max-height: 80vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 60px rgba(0,0,0,.5);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .modal-header h3 { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800; color: var(--text); }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; line-height: 1; padding: 0; }
+    .modal-close:hover { color: var(--text); }
+    .modal-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .modal-tab {
+      flex: 1; padding: .7rem 1rem; font-size: .82rem; font-weight: 600;
+      color: var(--muted); background: none; border: none; cursor: pointer;
+      border-bottom: 2px solid transparent; transition: all .2s;
+    }
+    .modal-tab.active { color: var(--primary-l); border-bottom-color: var(--primary-l); }
+    .modal-body { overflow-y: auto; padding: 1.2rem 1.4rem; flex: 1; }
+    .modal-body h4 { font-family: 'Syne', sans-serif; font-size: .95rem; font-weight: 700; color: var(--text); margin: 1rem 0 .4rem; }
+    .modal-body h4:first-child { margin-top: 0; }
+    .modal-body p { font-size: .83rem; color: #94a3b8; line-height: 1.7; margin-bottom: .5rem; }
+    .modal-body ul { font-size: .83rem; color: #94a3b8; line-height: 1.7; padding-left: 1.2rem; margin-bottom: .5rem; }
+    .modal-footer {
+      padding: 1rem 1.4rem; border-top: 1px solid var(--border);
+      display: flex; justify-content: flex-end; flex-shrink: 0;
+    }
+    .modal-btn-ok {
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      border: none; color: white; font-family: 'Syne', sans-serif;
+      font-weight: 700; font-size: .85rem; padding: .6rem 1.4rem;
+      border-radius: 10px; cursor: pointer;
+    }
+    /* CHECKBOX TERMOS */
+    .terms-check {
+      display: flex; align-items: flex-start; gap: .6rem;
+      margin-top: 1rem; margin-bottom: .6rem;
+    }
+    .terms-check input[type=checkbox] {
+      width: 16px; height: 16px; min-width: 16px; margin-top: 2px;
+      accent-color: var(--primary-l); cursor: pointer;
+    }
+    .terms-check label {
+      font-size: .78rem; color: var(--muted); line-height: 1.5;
+      text-transform: none; letter-spacing: 0; font-weight: 400; cursor: pointer;
+    }
+    .terms-check label a { color: var(--primary-l); text-decoration: none; font-weight: 600; }
+    .terms-check label a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -254,11 +312,14 @@
         <i class="bi bi-rocket-takeoff"></i> Criar conta e começar grátis
       </button>
 
-      <p class="terms-note">
-        Ao criar sua conta você concorda com os
-        <a href="{{ url_for('termos_uso') }}" target="_blank">Termos de Uso</a> e
-        <a href="{{ url_for('politica_privacidade') }}" target="_blank">Política de Privacidade</a>.
-      </p>
+      <div class="terms-check">
+        <input type="checkbox" id="aceito_termos" name="aceito_termos" required>
+        <label for="aceito_termos">
+          Li e concordo com os
+          <a href="#" onclick="abrirModal('termos'); return false;">Termos de Uso</a> e a
+          <a href="#" onclick="abrirModal('politica'); return false;">Política de Privacidade</a>.
+        </label>
+      </div>
     </form>
 
     <div class="divider"><hr><span>já tem conta?</span><hr></div>
@@ -266,5 +327,391 @@
   </div>
 </div>
 
+
+<!-- MODAL TERMOS E POLÍTICA -->
+<div class="modal-overlay" id="modal-termos">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-titulo">Termos de Uso</h3>
+      <button class="modal-close" onclick="fecharModal()">×</button>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" id="tab-termos" onclick="trocarAba('termos')">Termos de Uso</button>
+      <button class="modal-tab" id="tab-politica" onclick="trocarAba('politica')">Política de Privacidade</button>
+    </div>
+    <div class="modal-body">
+      <div id="conteudo-termos"><div>
+    <span><i></i>Documento Jurídico</span>
+    <div>📋 Termos de Uso</div>
+    <div>Última atualização: {{ data_atualizacao }} &nbsp;|&nbsp; Versão 1.0</div>
+  </div>
+
+  <div>
+    <div>
+      Ao acessar ou utilizar o <strong>MedControl</strong>, você concorda integralmente com estes Termos de Uso. Leia com atenção antes de utilizar o sistema. Caso não concorde com alguma cláusula, não utilize o serviço.
+    </div>
+  </div>
+
+  <div>
+    <div><i></i> 1. O Serviço</div>
+    <p>O <strong>MedControl</strong> é um sistema SaaS (Software como Serviço) de controle de validade de medicamentos, disponibilizado via internet para farmácias, redes farmacêuticas e estabelecimentos de saúde.</p>
+    <p>O acesso ao sistema é fornecido mediante assinatura paga, com planos e valores definidos na página de Planos. O serviço inclui:</p>
+    <ul>
+      <li>Gerenciamento de estoque de medicamentos com controle de validade</li>
+      <li>Dashboard analítico com alertas de vencimento</li>
+      <li>Geração de relatórios em PDF</li>
+      <li>API REST para integrações externas</li>
+      <li>Suporte a múltiplas filiais por rede</li>
+      <li>Tema claro/escuro e interface responsiva</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 2. Cadastro e Responsabilidade do Usuário</div>
+    <p>Para utilizar o MedControl, é necessário ter uma conta ativa criada pelo administrador do sistema. Ao utilizar o serviço, você declara que:</p>
+    <ul>
+      <li>As informações fornecidas no cadastro são verdadeiras e atualizadas</li>
+      <li>Você é responsável pela confidencialidade da sua senha de acesso</li>
+      <li>Você é responsável por todas as ações realizadas com sua conta</li>
+      <li>Você notificará imediatamente o administrador em caso de acesso não autorizado</li>
+      <li>Não compartilhará suas credenciais de acesso com terceiros não autorizados</li>
+    </ul>
+    <div>
+      O MedControl não se responsabiliza por danos decorrentes do uso indevido, compartilhamento ou perda de credenciais de acesso por parte do usuário.
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 3. Assinatura e Pagamento</div>
+    <p>O acesso ao sistema é condicionado a uma assinatura ativa. Os planos disponíveis e seus valores estão descritos na página de Planos do sistema.</p>
+    <ul>
+      <li>O pagamento deve ser realizado conforme o plano contratado (mensal, trimestral ou anual)</li>
+      <li>O não pagamento resulta no bloqueio automático do acesso ao sistema</li>
+      <li>O desbloqueio ocorre após a confirmação do pagamento pelo administrador</li>
+      <li>Não há reembolso proporcional por período não utilizado, salvo acordo expresso</li>
+    </ul>
+    <div>
+      <div>
+        <strong>Plano Mensal</strong>
+        <p>Renovação mensal. Ideal para testar o sistema.</p>
+      </div>
+      <div>
+        <strong>Plano Trimestral</strong>
+        <p>3 meses com desconto. Boa relação custo-benefício.</p>
+      </div>
+      <div>
+        <strong>Plano Anual</strong>
+        <p>12 meses com maior desconto. Melhor para redes estabelecidas.</p>
+      </div>
+    </div>
+    <p>Consulte os valores atualizados diretamente com o suporte via WhatsApp.</p>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 4. Uso Permitido</div>
+    <p>O MedControl pode ser utilizado para:</p>
+    <ul>
+      <li>Controle de validade e estoque de medicamentos da própria empresa</li>
+      <li>Geração de relatórios internos de gestão</li>
+      <li>Integração com sistemas internos via API REST</li>
+      <li>Gerenciamento de múltiplas filiais da mesma rede</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 5. Uso Proibido</div>
+    <p>É expressamente proibido:</p>
+    <ul>
+      <li>Tentar acessar áreas do sistema sem autorização (invasão, engenharia reversa)</li>
+      <li>Compartilhar credenciais de acesso com pessoas não autorizadas</li>
+      <li>Cadastrar dados falsos, fraudulentos ou de terceiros sem autorização</li>
+      <li>Usar o sistema para fins ilegais ou que violem legislação vigente</li>
+      <li>Realizar ataques ao sistema (força bruta, injeção, DoS, etc.)</li>
+      <li>Revender, sublicenciar ou transferir o acesso ao sistema sem autorização</li>
+      <li>Copiar, reproduzir ou criar produtos derivados do MedControl</li>
+    </ul>
+    <div>
+      O descumprimento destas proibições resultará no encerramento imediato da conta, sem direito a reembolso, e poderá implicar responsabilização civil e criminal.
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 6. Dados e Backup</div>
+    <ul>
+      <li>Os dados cadastrados no sistema pertencem ao contratante</li>
+      <li>O MedControl realiza backups automáticos diários via Supabase</li>
+      <li>Em caso de encerramento da conta, os dados ficam disponíveis por <strong>30 dias</strong> para exportação</li>
+      <li>Após esse prazo, os dados poderão ser excluídos permanentemente</li>
+      <li>Recomendamos exportar relatórios PDF periodicamente como cópia de segurança local</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 7. Disponibilidade do Serviço</div>
+    <p>O MedControl se esforça para manter o sistema disponível 24 horas por dia, 7 dias por semana. No entanto:</p>
+    <ul>
+      <li>Não garantimos disponibilidade ininterrupta (SLA de 99% de uptime)</li>
+      <li>Manutenções programadas serão comunicadas com antecedência</li>
+      <li>Falhas de infraestrutura de terceiros (Railway, Supabase) estão fora do nosso controle direto</li>
+      <li>Não nos responsabilizamos por perdas decorrentes de indisponibilidade temporária</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 8. Limitação de Responsabilidade</div>
+    <p>O MedControl é uma ferramenta de <strong>apoio à gestão</strong> de validade de medicamentos. Portanto:</p>
+    <ul>
+      <li>Não substituímos controles físicos obrigatórios por legislação sanitária</li>
+      <li>A responsabilidade pelo cumprimento de normas da ANVISA é exclusivamente do estabelecimento</li>
+      <li>Não nos responsabilizamos por decisões tomadas com base nos dados do sistema</li>
+      <li>Nossa responsabilidade é limitada ao valor pago pelo último período de assinatura</li>
+    </ul>
+    <div>
+      O sistema é uma ferramenta de apoio. A responsabilidade pela conformidade regulatória e sanitária é sempre do estabelecimento contratante.
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 9. Propriedade Intelectual</div>
+    <p>O MedControl, incluindo seu código-fonte, interface, marca, logotipo e documentação, é protegido por direitos de propriedade intelectual. É proibido:</p>
+    <ul>
+      <li>Copiar, reproduzir ou redistribuir qualquer parte do sistema</li>
+      <li>Usar a marca "MedControl" sem autorização expressa</li>
+      <li>Realizar engenharia reversa ou descompilar o software</li>
+    </ul>
+    <p>Os dados cadastrados pelo contratante (medicamentos, filiais, etc.) pertencem ao contratante. O MedControl não reivindica propriedade sobre eles.</p>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 10. Rescisão</div>
+    <p>O contrato pode ser encerrado:</p>
+    <ul>
+      <li><strong>Pelo contratante:</strong> a qualquer momento, solicitando o cancelamento via WhatsApp</li>
+      <li><strong>Pelo MedControl:</strong> em caso de descumprimento destes Termos, sem aviso prévio</li>
+      <li><strong>Por inadimplência:</strong> após o vencimento sem renovação do pagamento</li>
+    </ul>
+    <p>Em caso de rescisão, os dados ficam disponíveis para exportação por 30 dias conforme cláusula 6.</p>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 11. Foro e Legislação Aplicável</div>
+    <p>Estes Termos são regidos pelas leis brasileiras. Fica eleito o foro da comarca de <strong>Vitória da Conquista — BA</strong> para dirimir quaisquer controvérsias decorrentes deste instrumento, com renúncia a qualquer outro, por mais privilegiado que seja.</p>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 12. Alterações nos Termos</div>
+    <p>Estes Termos podem ser atualizados a qualquer momento. Alterações relevantes serão comunicadas dentro do sistema com antecedência mínima de <strong>15 dias</strong>. O uso continuado do sistema após a vigência das alterações implica aceitação dos novos termos.</p>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 13. Contato</div>
+    <div>
+      <p><strong>MedControl — Suporte e Atendimento</strong></p>
+      <p><i></i> <a href="https://wa.me/5577988175300" target="_blank">(77) 9 8817-5300</a></p>
+      <p><i></i> Atendimento: Segunda a Sexta, 8h às 18h</p>
+      <p>Para dúvidas sobre privacidade e dados pessoais, consulte também nossa <a href="{{ url_for('politica_privacidade') }}">Política de Privacidade</a>.</p>
+    </div>
+    <div>
+      <a href="{{ url_for('politica_privacidade') }}">
+        <i></i> Ver Política de Privacidade
+      </a>
+    </div>
+  </div></div>
+      <div id="conteudo-politica" style="display:none"><div>
+    <span><i></i>Conforme LGPD — Lei nº 13.709/2018</span>
+    <div>🔒 Política de Privacidade</div>
+    <div>Última atualização: {{ data_atualizacao }} &nbsp;|&nbsp; Versão 1.0</div>
+  </div>
+
+  <div>
+    <div>
+      Esta Política descreve como o <strong>MedControl</strong> coleta, usa, armazena e protege os dados dos seus usuários, em conformidade com a <strong>Lei Geral de Proteção de Dados — LGPD (Lei nº 13.709/2018)</strong>.
+    </div>
+  </div>
+
+  <div>
+    <div><i></i> 1. Quem Somos</div>
+    <p>O <strong>MedControl</strong> é um sistema SaaS de controle de validade de medicamentos desenvolvido para farmácias, redes farmacêuticas e estabelecimentos de saúde. O responsável pelo tratamento dos dados é o titular da conta que contratou o serviço.</p>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 2. Quais Dados Coletamos</div>
+    <p><strong>Dados de usuário:</strong></p>
+    <ul>
+      <li>Nome de usuário (login) e nome de exibição</li>
+      <li>Senha — armazenada em hash criptográfico (nunca em texto puro)</li>
+      <li>Perfil de acesso (superadmin, dono_rede ou filial)</li>
+      <li>Preferência de tema (claro/escuro)</li>
+    </ul>
+    <p><strong>Dados da empresa/rede:</strong></p>
+    <ul>
+      <li>Nome da rede, CNPJ, e-mail e telefone (opcionais)</li>
+      <li>Plano e data de expiração da assinatura</li>
+    </ul>
+    <p><strong>Dados de estoque:</strong></p>
+    <ul>
+      <li>Nome, fabricante, princípio ativo, código de barras, lote, validade, quantidade e preço dos medicamentos</li>
+    </ul>
+    <p><strong>Logs de auditoria:</strong></p>
+    <ul>
+      <li>Endereço IP, data/hora e tipo de ação realizada (login, cadastro, exclusão, etc.)</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 3. Para Que Usamos os Dados</div>
+    <ul>
+      <li>Autenticar e identificar usuários no sistema</li>
+      <li>Controlar acesso conforme perfil de cada usuário</li>
+      <li>Gerenciar estoque de medicamentos e gerar relatórios</li>
+      <li>Controlar assinaturas e períodos de acesso</li>
+      <li>Registrar auditoria de ações para segurança e rastreabilidade</li>
+      <li>Enviar notificações de feedback ao administrador</li>
+    </ul>
+    <div>
+      <strong>Não vendemos, compartilhamos nem cedemos seus dados a terceiros</strong> para fins comerciais, publicitários ou de qualquer outra natureza.
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 4. Como Protegemos os Dados</div>
+    <ul>
+      <li><strong>Senhas criptografadas</strong> com algoritmo scrypt — nunca armazenadas em texto puro</li>
+      <li><strong>HTTPS obrigatório</strong> em todas as comunicações</li>
+      <li><strong>Proteção CSRF</strong> em todos os formulários</li>
+      <li><strong>Limite de tentativas de login</strong> contra ataques de força bruta</li>
+      <li><strong>Sessões com expiração automática</strong> após 30 minutos de inatividade</li>
+      <li><strong>Cookies seguros</strong> com flags HttpOnly, Secure e SameSite</li>
+      <li><strong>Headers de segurança HTTP</strong> (X-Frame-Options, CSP, HSTS)</li>
+      <li><strong>Isolamento por rede</strong> — cada filial acessa somente seus próprios dados</li>
+      <li><strong>Logs de auditoria</strong> de todas as ações críticas</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 5. Por Quanto Tempo Armazenamos</div>
+    <ul>
+      <li>Os dados ficam disponíveis enquanto a assinatura estiver ativa</li>
+      <li>Após o vencimento, os dados são mantidos por <strong>30 dias</strong> para eventual reativação</li>
+      <li>Logs de auditoria podem ser mantidos por até <strong>12 meses</strong> para fins de segurança</li>
+      <li>Após esse prazo, os dados são excluídos permanentemente mediante solicitação</li>
+    </ul>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 6. Seus Direitos como Titular (LGPD, Art. 18)</div>
+    <ul>
+      <li><strong>Confirmação</strong> — saber se tratamos seus dados pessoais</li>
+      <li><strong>Acesso</strong> — obter cópia dos dados armazenados</li>
+      <li><strong>Correção</strong> — corrigir dados incorretos ou desatualizados</li>
+      <li><strong>Eliminação</strong> — solicitar a exclusão dos seus dados</li>
+      <li><strong>Portabilidade</strong> — receber seus dados em formato estruturado</li>
+      <li><strong>Revogação</strong> — retirar o consentimento a qualquer momento</li>
+    </ul>
+    <div>
+      Para exercer qualquer um desses direitos, entre em contato pelo canal indicado na seção 9 abaixo. Responderemos em até <strong>15 dias úteis</strong>.
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 7. Onde os Dados São Armazenados</div>
+    <ul>
+      <li><strong>Servidor de aplicação:</strong> Railway (infraestrutura em nuvem com SSL)</li>
+      <li><strong>Banco de dados:</strong> Supabase (PostgreSQL gerenciado, com backup automático diário)</li>
+    </ul>
+    <p>Ambos os provedores adotam práticas de segurança compatíveis com padrões internacionais.</p>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 8. Cookies</div>
+    <p>Utilizamos apenas <strong>cookies de sessão</strong> estritamente necessários para o funcionamento do sistema. Não utilizamos cookies de rastreamento, publicidade ou análise de comportamento. O cookie é excluído automaticamente ao fazer logout ou após 30 minutos de inatividade.</p>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 9. Contato — Encarregado de Dados (DPO)</div>
+    <div>
+      <p><strong>MedControl — Sistema de Controle de Validade</strong></p>
+      <p><i></i> <a href="https://wa.me/5577988175300" target="_blank">(77) 9 8817-5300</a></p>
+      <p><i></i> Atendimento: Segunda a Sexta, 8h às 18h</p>
+      <p>Prazo de resposta: até 15 dias úteis, conforme LGPD.</p>
+    </div>
+  </div>
+
+  <hr>
+
+  <div>
+    <div><i></i> 10. Alterações nesta Política</div>
+    <p>Esta Política pode ser atualizada periodicamente. Mudanças relevantes serão comunicadas dentro do próprio sistema. A data de última atualização estará sempre indicada no topo desta página.</p>
+    <div>
+      <a href="{{ url_for('termos_uso') }}">
+        <i></i> Ver Termos de Uso
+      </a>
+    </div>
+  </div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn-ok" onclick="fecharModal()">Li e entendi ✓</button>
+    </div>
+  </div>
+</div>
+<script>
+function abrirModal(aba) {
+  document.getElementById('modal-termos').classList.add('active');
+  trocarAba(aba || 'termos');
+}
+function fecharModal() {
+  document.getElementById('modal-termos').classList.remove('active');
+}
+function trocarAba(aba) {
+  document.getElementById('conteudo-termos').style.display = aba === 'termos' ? '' : 'none';
+  document.getElementById('conteudo-politica').style.display = aba === 'politica' ? '' : 'none';
+  document.getElementById('tab-termos').classList.toggle('active', aba === 'termos');
+  document.getElementById('tab-politica').classList.toggle('active', aba === 'politica');
+  document.getElementById('modal-titulo').textContent = aba === 'termos' ? 'Termos de Uso' : 'Política de Privacidade';
+}
+document.getElementById('modal-termos').addEventListener('click', function(e) {
+  if (e.target === this) fecharModal();
+});
+</script>
 </body>
 </html>
