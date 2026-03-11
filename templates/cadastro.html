@@ -346,6 +346,13 @@
         <i class="bi bi-camera me-1"></i> Aponte a câmera para o código de barras
       </div>
       <div class="scan-result" id="scanResult"></div>
+
+      <!-- PAINEL DEBUG (remover após resolver) -->
+      <div id="debug-panel" style="margin-top:.7rem;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:.6rem;font-family:monospace;font-size:.72rem;color:#94a3b8;max-height:160px;overflow-y:auto;">
+        <div style="color:#38bdf8;margin-bottom:.3rem;font-weight:700;">&#9654; DEBUG LOG</div>
+        <div id="debug-log"></div>
+      </div>
+
       <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">
           <i class="bi bi-keyboard me-1"></i>Ou insira manualmente
@@ -367,11 +374,26 @@
 let codeReader = null;
 let scannerRunning = false;
 let currentStream = null;
+let dbgFrames = 0;
+let dbgErrors = {};
+
+function dbg(msg, color) {
+  const log = document.getElementById('debug-log');
+  if (!log) return;
+  const line = document.createElement('div');
+  line.style.cssText = 'border-bottom:1px solid #1e293b;padding:.15rem 0;color:' + (color||'#94a3b8');
+  line.textContent = new Date().toLocaleTimeString('pt-BR',{hour12:false}) + ' ' + msg;
+  log.prepend(line);
+  if (log.children.length > 30) log.removeChild(log.lastChild);
+}
 
 function abrirScanner() {
   document.getElementById('scanner-overlay').classList.add('active');
   document.getElementById('scanResult').style.display = 'none';
   document.getElementById('scanStatus').innerHTML = '<i class="bi bi-camera me-1"></i> Iniciando câmera...';
+  document.getElementById('debug-log').innerHTML = '';
+  dbgFrames = 0; dbgErrors = {};
+  dbg('abrirScanner() chamado');
   setTimeout(initScanner, 500);
 }
 
@@ -381,8 +403,9 @@ function fecharScanner() {
 }
 
 function initScanner() {
-  if (scannerRunning) return;
+  if (scannerRunning) { dbg('ja rodando — ignorado'); return; }
   scannerRunning = true;
+  dbg('initScanner() start');
 
   if (codeReader) {
     try { codeReader.reset(); } catch(e) {}
@@ -411,46 +434,71 @@ function initScanner() {
     ZXing.BarcodeFormat.UPC_E,
   ]);
   hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+  dbg('ZXing hints configurados');
+
+  if (typeof ZXing === 'undefined') {
+    dbg('ERRO: ZXing nao carregou!', '#f87171');
+    scannerRunning = false;
+    return;
+  }
+  dbg('ZXing OK — versao carregada');
 
   codeReader = new ZXing.BrowserMultiFormatReader(hints);
+  dbg('BrowserMultiFormatReader criado');
 
-  // Tenta câmera traseira com facingMode exact; fallback sem exact (desktop/câmera única)
   const tryGetCamera = () =>
     navigator.mediaDevices.getUserMedia({
       video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-    }).catch(() =>
-      navigator.mediaDevices.getUserMedia({
+    }).catch(e => {
+      dbg('facingMode exact falhou: ' + e.name, '#fbbf24');
+      return navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-      })
-    ).catch(() =>
-      navigator.mediaDevices.getUserMedia({ video: true }) // último fallback
-    );
+      });
+    }).catch(e => {
+      dbg('facingMode environment falhou: ' + e.name, '#fbbf24');
+      return navigator.mediaDevices.getUserMedia({ video: true });
+    });
 
   tryGetCamera().then(stream => {
+    const track = stream.getVideoTracks()[0];
+    const settings = track ? track.getSettings() : {};
+    dbg('stream OK — ' + (settings.facingMode||'?') + ' ' + (settings.width||'?') + 'x' + (settings.height||'?'), '#4ade80');
     currentStream = stream;
     video.srcObject = stream;
 
-    // Aguarda vídeo ter dimensões antes de iniciar decodificação
     video.addEventListener('loadedmetadata', () => {
+      dbg('loadedmetadata — ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
       video.play().then(() => {
+        dbg('video.play() OK — iniciando decode', '#4ade80');
         document.getElementById('scanStatus').innerHTML =
           '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
 
-        // Inicia loop de decodificação somente após vídeo estar pronto
         codeReader.decodeFromVideoElement(video, (result, err) => {
           if (result) {
+            dbg('LIDO: ' + result.getText(), '#4ade80');
             processBarcode(result.getText());
+          } else if (err) {
+            const name = err.name || err.constructor.name || String(err);
+            if (name !== 'NotFoundException') {
+              dbgErrors[name] = (dbgErrors[name]||0) + 1;
+              if (dbgErrors[name] <= 3) dbg('err: ' + name, '#f87171');
+            } else {
+              dbgFrames++;
+              if (dbgFrames % 30 === 0) dbg('frames sem leitura: ' + dbgFrames);
+            }
           }
-          // NotFoundException é normal entre frames — ignorar silenciosamente
         });
+      }).catch(e => {
+        dbg('video.play() ERRO: ' + e.name, '#f87171');
+        scannerRunning = false;
       });
     }, { once: true });
 
   }).catch(err => {
     scannerRunning = false;
+    dbg('getUserMedia FALHOU: ' + err.name + ' — ' + err.message, '#f87171');
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
-    console.error('Scanner error:', err);
   });
 }
 
