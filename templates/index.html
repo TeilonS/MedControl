@@ -14,11 +14,11 @@
 
     /* ── SIDEBAR ── */
     .sidebar {
-      width: var(--sidebar-w, 260px); min-height: 100vh;
+      width: var(--sidebar-w, 260px); height: 100vh;
       background: var(--card-bg);
       border-right: 1px solid var(--sb-border);
       display: flex; flex-direction: column;
-      position: fixed; top: 0; left: 0; z-index: 100;
+      position: fixed; top: 0; left: 0; z-index: 100; overflow: hidden;
     }
     .sidebar-logo {
       padding: 1.5rem 1.5rem 1rem;
@@ -33,7 +33,7 @@
     }
     .sidebar-logo h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--text); }
     .sidebar-logo span { font-size: .75rem; color: var(--muted); }
-    .sidebar-nav { padding: 1rem; flex: 1; overflow-y: auto; }
+    .sidebar-nav { padding: 1rem; flex: 1; overflow-y: auto; min-height: 0; }
     .nav-section-title { font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #475569; padding: .6rem .5rem .3rem; }
     .nav-item { display: flex; align-items: center; gap: .7rem; padding: .6rem .8rem; border-radius: 10px; color: var(--muted); font-size: .88rem; font-weight: 500; cursor: pointer; text-decoration: none; transition: all .2s; margin-bottom: .15rem; }
     .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text); }
