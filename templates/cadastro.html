@@ -96,7 +96,7 @@
     #scanner-close { background:none; border:none; color:var(--muted); font-size:1.5rem; cursor:pointer; line-height:1; padding:0; }
     #scanner-close:hover { color:var(--text); }
     #scanner-body { padding: 1rem; }
-    #reader { width:100%; border-radius:10px; overflow:hidden; min-height:220px; background:#000; }
+    #reader { width:100%; border-radius:10px; overflow:hidden; min-height:260px; background:#000; }
     #reader video { border-radius:10px !important; width:100% !important; }
     #reader img { display:none !important; }
     .scan-status { text-align:center; color:var(--muted); font-size:.85rem; margin-top:.8rem; }
@@ -147,6 +147,8 @@
       input, select, textarea { font-size: 16px !important; }
     } .main { margin-left: 0; padding: 1rem; } }
   </style>
+  <!-- html5-qrcode: cross-browser barcode scanner -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
 
@@ -344,7 +346,6 @@
         <i class="bi bi-camera me-1"></i> Aponte a câmera para o código de barras
       </div>
       <div class="scan-result" id="scanResult"></div>
-      <div id="debug-panel" style="margin-top:.7rem;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:.6rem;font-family:monospace;font-size:.72rem;color:#94a3b8;max-height:160px;overflow-y:auto;"><div style="color:#38bdf8;font-weight:700;margin-bottom:.3rem;">&#9654; DEBUG LOG</div><div id="debug-log"></div></div>
       <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">
           <i class="bi bi-keyboard me-1"></i>Ou insira manualmente
@@ -364,27 +365,12 @@
 <script>
 // ── SCANNER DE CÓDIGO DE BARRAS (ZXing) ────────────────────────────
 let scannerRunning = false;
-let currentStream = null;
-let rafId = null;
-let dbgFrames = 0;
-
-function dbg(msg, color) {
-  const log = document.getElementById('debug-log');
-  if (!log) return;
-  const line = document.createElement('div');
-  line.style.cssText = 'border-bottom:1px solid #1e293b;padding:.15rem 0;color:' + (color||'#94a3b8');
-  line.textContent = new Date().toLocaleTimeString('pt-BR',{hour12:false}) + ' ' + msg;
-  log.prepend(line);
-  if (log.children.length > 40) log.removeChild(log.lastChild);
-}
+let html5Scanner = null;
 
 function abrirScanner() {
   document.getElementById('scanner-overlay').classList.add('active');
   document.getElementById('scanResult').style.display = 'none';
   document.getElementById('scanStatus').innerHTML = '<i class="bi bi-camera me-1"></i> Iniciando câmera...';
-  const dbgEl = document.getElementById('debug-log'); if (dbgEl) dbgEl.innerHTML = '';
-  dbgFrames = 0;
-  dbg('abrirScanner()');
   setTimeout(initScanner, 300);
 }
 
@@ -394,134 +380,62 @@ function fecharScanner() {
 }
 
 function stopScanner() {
+  if (html5Scanner) {
+    html5Scanner.stop().catch(() => {});
+    html5Scanner.clear();
+    html5Scanner = null;
+  }
   scannerRunning = false;
-  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-  if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
 }
 
-async function initScanner() {
-  if (scannerRunning) { dbg('já rodando'); return; }
+function initScanner() {
+  if (scannerRunning) return;
   scannerRunning = true;
-  dbg('initScanner()');
 
-  if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
+  if (typeof Html5Qrcode === 'undefined') {
+    document.getElementById('scanStatus').innerHTML =
+      '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Biblioteca não carregou. Recarregue a página.';
+    scannerRunning = false;
+    return;
+  }
+
   document.getElementById('reader').innerHTML = '';
 
-  // Câmera traseira
-  let stream = null;
-  for (const c of [
-    { video: { facingMode: { exact: 'environment' } } },
-    { video: { facingMode: 'environment' } },
-    { video: true }
-  ]) {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia(c);
-      const s = stream.getVideoTracks()[0].getSettings();
-      dbg('câmera: ' + (s.facingMode||'?') + ' ' + (s.width||'?') + 'x' + (s.height||'?'), '#4ade80');
-      break;
-    } catch(e) { dbg('falhou: ' + e.name, '#fbbf24'); }
-  }
-  if (!stream) {
-    scannerRunning = false;
+  html5Scanner = new Html5Qrcode('reader', { verbose: false });
+
+  const config = {
+    fps: 10,
+    qrbox: { width: 280, height: 140 },
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+    ],
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+  };
+
+  html5Scanner.start(
+    { facingMode: 'environment' },
+    config,
+    (decodedText) => {
+      processBarcode(decodedText);
+      stopScanner();
+      document.getElementById('scanner-overlay').classList.remove('active');
+    },
+    () => {} // erros de frame são normais, ignorar
+  ).then(() => {
     document.getElementById('scanStatus').innerHTML =
-      '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível.';
-    dbg('ERRO: sem câmera', '#f87171'); return;
-  }
-
-  currentStream = stream;
-  const video = document.createElement('video');
-  video.setAttribute('playsinline', '');
-  video.setAttribute('muted', '');
-  video.style.cssText = 'width:100%;border-radius:10px;display:block;';
-  document.getElementById('reader').appendChild(video);
-  video.srcObject = stream;
-
-  await new Promise(r => video.addEventListener('loadedmetadata', r, { once: true }));
-  await video.play();
-  await new Promise(r => setTimeout(r, 400));
-  dbg('vídeo: ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
-
-  document.getElementById('scanStatus').innerHTML =
-    '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
-
-  // Tenta BarcodeDetector nativo
-  if ('BarcodeDetector' in window) {
-    dbg('modo: BarcodeDetector nativo', '#38bdf8');
-    const det = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e'] });
-    async function frameNative() {
-      if (!scannerRunning) return;
-      try {
-        const codes = await det.detect(video);
-        if (codes.length > 0) { dbg('LIDO: ' + codes[0].rawValue, '#4ade80'); processBarcode(codes[0].rawValue); return; }
-      } catch(e) { dbg('native err: ' + e.name, '#f87171'); }
-      dbgFrames++; if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
-      rafId = requestAnimationFrame(frameNative);
-    }
-    rafId = requestAnimationFrame(frameNative);
-    return;
-  }
-
-  // Tenta zbar-wasm via import dinâmico (ES module, Firefox compatível)
-  dbg('BarcodeDetector: não disponível — tentando zbar-wasm...', '#fbbf24');
-  let scanImageData = null;
-  try {
-    const mod = await import('https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.9.15/dist/main.js');
-    scanImageData = mod.scanImageData;
-    dbg('zbar-wasm: carregado', '#4ade80');
-  } catch(e) {
-    dbg('zbar-wasm falhou: ' + e.message.slice(0,50), '#f87171');
-  }
-
-  if (scanImageData) {
-    dbg('modo: zbar-wasm', '#38bdf8');
-    const canvas = document.createElement('canvas');
-    canvas.style.display = 'none';
-    document.getElementById('reader').appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-
-    // Aquece o WASM com frame em branco — evita RuntimeError na primeira chamada
-    dbg('aquecendo WASM...', '#94a3b8');
-    let wasmReady = false;
-    for (let i = 0; i < 5; i++) {
-      try {
-        const w8 = document.createElement('canvas'); w8.width = 8; w8.height = 8;
-        await scanImageData(w8.getContext('2d').getImageData(0, 0, 8, 8));
-        wasmReady = true;
-        dbg('WASM pronto', '#4ade80');
-        break;
-      } catch(e) {
-        dbg('warm-up ' + i + ': ' + e.name, '#fbbf24');
-        await new Promise(r => setTimeout(r, 300));
-      }
-    }
-    if (!wasmReady) { dbg('WASM não inicializou', '#f87171'); scannerRunning = false; return; }
-
-    async function frameZbar() {
-      if (!scannerRunning) return;
-      const w = video.videoWidth, h = video.videoHeight;
-      if (w > 0 && h > 0) {
-        canvas.width = w; canvas.height = h;
-        ctx.drawImage(video, 0, 0, w, h);
-        try {
-          const results = await scanImageData(ctx.getImageData(0, 0, w, h));
-          if (results.length > 0) {
-            const code = results[0].decode();
-            dbg('LIDO: ' + code, '#4ade80');
-            processBarcode(code); return;
-          }
-        } catch(e) {
-          if (e.name !== 'RuntimeError') dbg('zbar err: ' + e.name, '#f87171');
-        }
-      }
-      dbgFrames++; if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
-      rafId = requestAnimationFrame(frameZbar);
-    }
-    rafId = requestAnimationFrame(frameZbar);
-    return;
-  }
-
-  dbg('ERRO: nenhum decodificador disponível', '#f87171');
-  scannerRunning = false;
+      '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
+  }).catch((err) => {
+    scannerRunning = false;
+    html5Scanner = null;
+    document.getElementById('scanStatus').innerHTML =
+      '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
+    console.error('Scanner error:', err);
+  });
 }
 
 function autofillField(name, value) {
