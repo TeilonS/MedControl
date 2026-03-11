@@ -78,25 +78,31 @@
     }
     .input-group .form-control.mid { border-radius: 0; border-left: none; }
 
-    /* BARCODE SCANNER MODAL */
-    #scannerModal .modal-content {
-      background: var(--sb-bg); border: 1px solid var(--border); border-radius: 20px;
+    /* BARCODE SCANNER OVERLAY */
+    #scanner-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.92);
+      flex-direction: column; align-items: center; justify-content: center; padding: 1rem;
     }
-    #scannerModal .modal-header { border-bottom: 1px solid var(--sb-border); }
-    #scannerModal .modal-title { font-family: 'Syne', sans-serif; font-weight: 700; }
-    #scanner-viewport { width: 100%; border-radius: 12px; overflow: hidden; position: relative; min-height: 260px; background: #000; }
-    #scanner-viewport video { width: 100% !important; border-radius: 12px; }
-    #reader { width: 100%; border-radius: 12px; overflow: hidden; }
-    #reader video { border-radius: 12px !important; }
-    #reader img { display: none !important; }
-    .scan-line {
-      position: absolute; width: 100%; height: 2px;
-      background: linear-gradient(90deg, transparent, var(--primary-l), transparent);
-      animation: scanMove 2s linear infinite; z-index: 10; top: 0;
+    #scanner-overlay.active { display: flex; }
+    #scanner-box {
+      background: var(--sb-bg); border-radius: 16px;
+      width: 100%; max-width: 420px; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
     }
-    @keyframes scanMove { 0% { top: 10%; } 100% { top: 90%; } }
-    .scan-status { text-align: center; color: var(--muted); font-size: .85rem; margin-top: .8rem; }
-    .scan-result { background: rgba(20,184,166,0.1); border: 1px solid rgba(20,184,166,0.3); border-radius: 10px; padding: .7rem 1rem; color: var(--primary-l); font-family: monospace; font-size: .9rem; margin-top: .7rem; display: none; }
+    #scanner-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .9rem 1.1rem; border-bottom: 1px solid var(--sb-border);
+    }
+    #scanner-header span { font-family:'Syne',sans-serif; font-weight:700; font-size:1rem; color:var(--text); }
+    #scanner-close { background:none; border:none; color:var(--muted); font-size:1.5rem; cursor:pointer; line-height:1; padding:0; }
+    #scanner-close:hover { color:var(--text); }
+    #scanner-body { padding: 1rem; }
+    #reader { width:100%; border-radius:10px; overflow:hidden; min-height:220px; background:#000; }
+    #reader video { border-radius:10px !important; width:100% !important; }
+    #reader img { display:none !important; }
+    .scan-status { text-align:center; color:var(--muted); font-size:.85rem; margin-top:.8rem; }
+    .scan-result { background:rgba(20,184,166,.1); border:1px solid rgba(20,184,136,.3); border-radius:10px; padding:.7rem 1rem; color:var(--primary-l); font-family:monospace; font-size:.9rem; margin-top:.7rem; display:none; }
 
     /* SUBMIT BUTTONS */
     .btn-submit {
@@ -200,7 +206,7 @@
             <input type="text" id="codigo_barras" name="codigo_barras" class="form-control mid"
                    placeholder="Escaneie ou digite..."
                    value="{{ med.codigo_barras or '' if med else '' }}">
-            <button type="button" class="btn-scan" data-bs-toggle="modal" data-bs-target="#scannerModal"
+            <button type="button" class="btn-scan" onclick="abrirScanner()"
                     title="Abrir scanner de câmera">
               <i class="bi bi-camera-video-fill"></i>
             </button>
@@ -327,35 +333,28 @@
 </main>
 
 <!-- ── MODAL SCANNER DE CÓDIGO DE BARRAS ─────────────────────────────── -->
-<div class="modal fade" id="scannerModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-white"><i class="bi bi-upc-scan me-2" style="color:var(--primary-l)"></i>Scanner de Código de Barras</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<!-- SCANNER OVERLAY (sem Bootstrap modal) -->
+<div id="scanner-overlay">
+  <div id="scanner-box">
+    <div id="scanner-header">
+      <span><i class="bi bi-upc-scan me-2" style="color:var(--primary-l)"></i>Scanner de Código de Barras</span>
+      <button id="scanner-close" onclick="fecharScanner()">×</button>
+    </div>
+    <div id="scanner-body">
+      <div id="reader"></div>
+      <div class="scan-status" id="scanStatus">
+        <i class="bi bi-camera me-1"></i> Aponte a câmera para o código de barras
       </div>
-      <div class="modal-body">
-        <div id="scanner-viewport">
-          <div id="reader"></div>
-          <div class="scan-line" id="scanLine"></div>
-        </div>
-        <div class="scan-status" id="scanStatus">
-          <i class="bi bi-camera me-1"></i> Aponte a câmera para o código de barras do medicamento
-        </div>
-        <div class="scan-result" id="scanResult"></div>
-
-        <!-- Fallback: digitar manualmente -->
-        <div style="margin-top:1rem; padding-top:1rem; border-top:1px solid var(--border);">
-          <label style="color:var(--muted); font-size:.75rem; text-transform:uppercase; letter-spacing:.05em;">
-            <i class="bi bi-keyboard me-1"></i>Ou insira manualmente
-          </label>
-          <div class="input-group">
-            <input type="text" id="manualBarcode" class="form-control"
-                   placeholder="Digite o código de barras...">
-            <button class="btn-scan" type="button" onclick="confirmarBarcode()">
-              <i class="bi bi-check-lg"></i>
-            </button>
-          </div>
+      <div class="scan-result" id="scanResult"></div>
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <label style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">
+          <i class="bi bi-keyboard me-1"></i>Ou insira manualmente
+        </label>
+        <div class="input-group">
+          <input type="text" id="manualBarcode" class="form-control" placeholder="Digite o código de barras...">
+          <button class="btn-scan" type="button" onclick="confirmarBarcode()">
+            <i class="bi bi-check-lg"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -368,53 +367,51 @@
 let html5QrCode = null;
 let scannerRunning = false;
 
-const modalEl = document.getElementById('scannerModal');
-
-modalEl.addEventListener('shown.bs.modal', () => {
+function abrirScanner() {
+  document.getElementById('scanner-overlay').classList.add('active');
   document.getElementById('scanResult').style.display = 'none';
   document.getElementById('scanStatus').innerHTML = '<i class="bi bi-camera me-1"></i> Iniciando câmera...';
-  initScanner();
-});
+  // pequeno delay para garantir que o DOM está visível antes de iniciar
+  setTimeout(initScanner, 100);
+}
 
-modalEl.addEventListener('hidden.bs.modal', () => {
+function fecharScanner() {
   stopScanner();
-});
+  document.getElementById('scanner-overlay').classList.remove('active');
+}
 
 function initScanner() {
   if (scannerRunning) return;
-
-  html5QrCode = new Html5Qrcode("reader");
-
-  const config = {
-    fps: 10,
-    qrbox: { width: 280, height: 120 },
-    aspectRatio: 1.7,
-    formatsToSupport: [
-      Html5QrcodeSupportedFormats.EAN_13,
-      Html5QrcodeSupportedFormats.EAN_8,
-      Html5QrcodeSupportedFormats.CODE_128,
-      Html5QrcodeSupportedFormats.CODE_39,
-      Html5QrcodeSupportedFormats.UPC_A,
-      Html5QrcodeSupportedFormats.UPC_E,
-    ]
-  };
+  if (!html5QrCode) {
+    html5QrCode = new Html5Qrcode("reader");
+  }
 
   html5QrCode.start(
     { facingMode: "environment" },
-    config,
+    {
+      fps: 10,
+      qrbox: { width: 260, height: 100 },
+      aspectRatio: 1.5,
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+      ]
+    },
     (decodedText) => {
       processBarcode(decodedText);
     },
-    () => {} // ignora erros de frame
+    () => {} // ignora erros de frame individuais
   ).then(() => {
     scannerRunning = true;
-    document.getElementById('scanLine').style.display = 'block';
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
   }).catch((err) => {
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
-    document.getElementById('scanLine').style.display = 'none';
     console.error('Scanner error:', err);
   });
 }
@@ -422,11 +419,8 @@ function initScanner() {
 function stopScanner() {
   if (html5QrCode && scannerRunning) {
     html5QrCode.stop().then(() => {
-      html5QrCode.clear();
       scannerRunning = false;
-    }).catch(() => {
-      scannerRunning = false;
-    });
+    }).catch(() => { scannerRunning = false; });
   }
 }
 
@@ -527,8 +521,7 @@ function processBarcode(code) {
     });
 
   setTimeout(() => {
-    const m = bootstrap.Modal.getInstance(modalEl);
-    if (m) m.hide();
+    fecharScanner();
   }, 1800);
 }
 
