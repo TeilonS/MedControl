@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <!-- ZXing para leitura de código de barras via câmera -->
-  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+  <!-- ZXing para leitura de código de barras via câmera (0.19.2 — build estável) -->
+  <script src="https://unpkg.com/@zxing/library@0.19.2/umd/index.min.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; }
@@ -382,21 +382,20 @@ function fecharScanner() {
 
 function initScanner() {
   if (scannerRunning) return;
-  scannerRunning = true; // trava imediato para evitar dupla inicialização
+  scannerRunning = true;
 
-  // limpa instância anterior
   if (codeReader) {
     try { codeReader.reset(); } catch(e) {}
     codeReader = null;
   }
   document.getElementById('reader').innerHTML = '';
 
-  // cria elemento de vídeo
   const video = document.createElement('video');
   video.id = 'zxing-video';
   video.style.cssText = 'width:100%;border-radius:10px;display:block;';
   video.setAttribute('playsinline', '');
   video.setAttribute('muted', '');
+  video.setAttribute('autoplay', '');
   document.getElementById('reader').appendChild(video);
 
   const hints = new Map();
@@ -413,29 +412,27 @@ function initScanner() {
 
   codeReader = new ZXing.BrowserMultiFormatReader(hints);
 
-  // Seleciona câmera traseira (environment) — crítico para leitura em mobile
-  codeReader.listVideoInputDevices().then(devices => {
-    // Prefere câmera com "back" ou "environment" no label; fallback para a última (geralmente traseira)
-    let deviceId = null;
-    const back = devices.find(d =>
-      /back|rear|environment|traseira|trás/i.test(d.label)
-    );
-    if (back) {
-      deviceId = back.deviceId;
-    } else if (devices.length > 1) {
-      deviceId = devices[devices.length - 1].deviceId; // última câmera = traseira na maioria dos dispositivos
-    }
+  // Abre câmera traseira diretamente via getUserMedia com facingMode: environment
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+  }).catch(() => {
+    // facingMode exact falhou (desktop ou câmera única) — tenta sem restrição
+    return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+  }).then(stream => {
+    currentStream = stream;
+    video.srcObject = stream;
+    video.play();
 
-    return codeReader.decodeFromVideoDevice(deviceId, 'zxing-video', (result, err) => {
+    document.getElementById('scanStatus').innerHTML =
+      '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
+
+    // Inicia decodificação contínua sobre o elemento de vídeo
+    codeReader.decodeFromVideoElement(video, (result, err) => {
       if (result) {
         processBarcode(result.getText());
       }
-      // ignora erros de frame (NotFoundException é normal entre frames)
     });
-  }).then(() => {
-    document.getElementById('scanStatus').innerHTML =
-      '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
-  }).catch((err) => {
+  }).catch(err => {
     scannerRunning = false;
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
@@ -447,8 +444,12 @@ function stopScanner() {
   if (codeReader) {
     try { codeReader.reset(); } catch(e) {}
     codeReader = null;
-    scannerRunning = false;
   }
+  if (currentStream) {
+    currentStream.getTracks().forEach(t => t.stop());
+    currentStream = null;
+  }
+  scannerRunning = false;
 }
 
 function autofillField(name, value) {
