@@ -9,8 +9,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <!-- zbar-wasm: WebAssembly, funciona em Firefox Android -->
-  <script src="https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.9.15/dist/main.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; }
@@ -365,7 +363,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ── SCANNER DE CÓDIGO DE BARRAS (ZXing) ────────────────────────────
-let codeReader = null;
 let scannerRunning = false;
 let currentStream = null;
 let rafId = null;
@@ -410,29 +407,25 @@ async function initScanner() {
   if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
   document.getElementById('reader').innerHTML = '';
 
-  // Tenta câmera traseira
-  let stream;
-  const tries = [
+  // Câmera traseira
+  let stream = null;
+  for (const c of [
     { video: { facingMode: { exact: 'environment' } } },
     { video: { facingMode: 'environment' } },
     { video: true }
-  ];
-  for (const c of tries) {
+  ]) {
     try {
       stream = await navigator.mediaDevices.getUserMedia(c);
       const s = stream.getVideoTracks()[0].getSettings();
       dbg('câmera: ' + (s.facingMode||'?') + ' ' + (s.width||'?') + 'x' + (s.height||'?'), '#4ade80');
       break;
-    } catch(e) {
-      dbg('falhou: ' + e.name, '#fbbf24');
-    }
+    } catch(e) { dbg('falhou: ' + e.name, '#fbbf24'); }
   }
   if (!stream) {
     scannerRunning = false;
-    dbg('sem câmera', '#f87171');
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível.';
-    return;
+    dbg('ERRO: sem câmera', '#f87171'); return;
   }
 
   currentStream = stream;
@@ -445,77 +438,71 @@ async function initScanner() {
 
   await new Promise(r => video.addEventListener('loadedmetadata', r, { once: true }));
   await video.play();
-  dbg('vídeo ativo: ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
+  await new Promise(r => setTimeout(r, 400));
+  dbg('vídeo: ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
 
   document.getElementById('scanStatus').innerHTML =
     '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
 
-  // Aguarda vídeo estabilizar
-  await new Promise(r => setTimeout(r, 400));
-
-  // Canvas para captura de frames
-  const canvas = document.createElement('canvas');
-  canvas.style.display = 'none';
-  document.getElementById('reader').appendChild(canvas);
-  const ctx = canvas.getContext('2d');
-
-  // Verifica qual decodificador usar
-  const hasNative = 'BarcodeDetector' in window;
-  dbg('BarcodeDetector: ' + hasNative, hasNative ? '#4ade80' : '#fbbf24');
-
-  const hasZbar = typeof zbarWasm !== 'undefined';
-  dbg('zbar-wasm: ' + hasZbar, hasZbar ? '#4ade80' : '#fbbf24');
-
-  if (hasNative) {
+  // Tenta BarcodeDetector nativo
+  if ('BarcodeDetector' in window) {
     dbg('modo: BarcodeDetector nativo', '#38bdf8');
-    const detector = new BarcodeDetector({
-      formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e']
-    });
-    async function detectNative() {
+    const det = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e'] });
+    async function frameNative() {
       if (!scannerRunning) return;
       try {
-        const codes = await detector.detect(video);
-        if (codes.length > 0) {
-          dbg('LIDO: ' + codes[0].rawValue, '#4ade80');
-          processBarcode(codes[0].rawValue);
-          return;
-        }
+        const codes = await det.detect(video);
+        if (codes.length > 0) { dbg('LIDO: ' + codes[0].rawValue, '#4ade80'); processBarcode(codes[0].rawValue); return; }
       } catch(e) { dbg('native err: ' + e.name, '#f87171'); }
-      dbgFrames++;
-      if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
-      rafId = requestAnimationFrame(detectNative);
+      dbgFrames++; if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
+      rafId = requestAnimationFrame(frameNative);
     }
-    rafId = requestAnimationFrame(detectNative);
+    rafId = requestAnimationFrame(frameNative);
+    return;
+  }
 
-  } else if (hasZbar) {
+  // Tenta zbar-wasm via import dinâmico (ES module, Firefox compatível)
+  dbg('BarcodeDetector: não disponível — tentando zbar-wasm...', '#fbbf24');
+  let scanImageData = null;
+  try {
+    const mod = await import('https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.9.15/dist/main.js');
+    scanImageData = mod.scanImageData;
+    dbg('zbar-wasm: carregado', '#4ade80');
+  } catch(e) {
+    dbg('zbar-wasm falhou: ' + e.message.slice(0,50), '#f87171');
+  }
+
+  if (scanImageData) {
     dbg('modo: zbar-wasm', '#38bdf8');
-    async function detectZbar() {
+    const canvas = document.createElement('canvas');
+    canvas.style.display = 'none';
+    document.getElementById('reader').appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    async function frameZbar() {
       if (!scannerRunning) return;
       const w = video.videoWidth, h = video.videoHeight;
       if (w > 0 && h > 0) {
         canvas.width = w; canvas.height = h;
         ctx.drawImage(video, 0, 0, w, h);
         try {
-          const img = ctx.getImageData(0, 0, w, h);
-          const results = await zbarWasm.scanImageData(img);
+          const results = await scanImageData(ctx.getImageData(0, 0, w, h));
           if (results.length > 0) {
             const code = results[0].decode();
             dbg('LIDO: ' + code, '#4ade80');
-            processBarcode(code);
-            return;
+            processBarcode(code); return;
           }
         } catch(e) { dbg('zbar err: ' + e.name, '#f87171'); }
       }
-      dbgFrames++;
-      if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
-      rafId = requestAnimationFrame(detectZbar);
+      dbgFrames++; if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
+      rafId = requestAnimationFrame(frameZbar);
     }
-    rafId = requestAnimationFrame(detectZbar);
-
-  } else {
-    dbg('ERRO: nenhum decodificador disponível', '#f87171');
-    scannerRunning = false;
+    rafId = requestAnimationFrame(frameZbar);
+    return;
   }
+
+  dbg('ERRO: nenhum decodificador disponível', '#f87171');
+  scannerRunning = false;
 }
 
 function autofillField(name, value) {
