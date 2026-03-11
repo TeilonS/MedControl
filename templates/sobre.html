@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="{{ session.get('tema', 'light') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Sobre o Sistema</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
+  <style>
+    .sobre-wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    .sobre-hero {
+      background: linear-gradient(135deg, #0d9488, #7c3aed);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .sobre-hero::after {
+      content: '💊';
+      position: absolute;
+      right: 1.5rem; top: 50%;
+      transform: translateY(-50%);
+      font-size: 5rem;
+      opacity: .15;
+    }
+    .sobre-hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.2;
+      margin-bottom: .75rem;
+    }
+    .sobre-hero h1 span {
+      background: rgba(255,255,255,.2);
+      border-radius: 6px;
+      padding: 0 6px;
+    }
+    .sobre-hero p {
+      font-size: .92rem;
+      color: rgba(255,255,255,.85);
+      line-height: 1.6;
+      max-width: 480px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.2rem 1rem;
+      text-align: center;
+    }
+    .stat-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #0d9488, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: .3rem;
+      line-height: 1.4;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .ben-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      margin-bottom: 2rem;
+    }
+    .ben-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+    }
+    .ben-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, rgba(13,148,136,.15), rgba(124,58,237,.1));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .ben-text strong {
+      display: block;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: .2rem;
+    }
+    .ben-text span {
+      font-size: .78rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .anvisa-card {
+      background: rgba(239,68,68,.07);
+      border: 1px solid rgba(239,68,68,.25);
+      border-radius: 14px;
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      margin-bottom: 1rem;
+    }
+    .anvisa-val {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: #ef4444;
+      white-space: nowrap;
+      line-height: 1;
+    }
+    .anvisa-label { font-size: .7rem; color: #ef4444; opacity: .7; }
+    .anvisa-text { font-size: .83rem; color: var(--muted); line-height: 1.6; }
+    .anvisa-text strong { color: var(--text); }
+
+    .gratis-card {
+      background: linear-gradient(135deg, #0d9488, #7c3aed);
+      border-radius: 14px;
+      padding: 1.4rem 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .gratis-text { color: #fff; }
+    .gratis-text strong {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 900;
+      display: block;
+      margin-bottom: .2rem;
+    }
+    .gratis-text span { font-size: .85rem; opacity: .85; }
+    .gratis-badge {
+      background: rgba(255,255,255,.2);
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      padding: .6rem .9rem;
+      border-radius: 10px;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .contato-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 1.2rem 1.4rem;
+    }
+    .contato-card p {
+      font-size: .88rem;
+      color: var(--text);
+      line-height: 2;
+    }
+    .contato-card a {
+      color: var(--primary-l);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .contato-url {
+      font-family: 'Syne', sans-serif;
+      font-size: .95rem;
+      font-weight: 800;
+      color: #0d9488 !important;
+      display: block;
+      margin-top: .5rem;
+    }
+
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+      .ben-grid { grid-template-columns: 1fr; }
+      .sobre-hero h1 { font-size: 1.4rem; }
+      .gratis-card { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+{% if session.get('perfil') %}
+<!-- Sidebar igual ao index.html — incluída via Jinja se disponível -->
+{% include 'partials/sidebar.html' ignore missing %}
+<main class="main" style="padding:1.5rem">
+{% else %}
+<main style="padding:1.5rem">
+{% endif %}
+
+  <div class="sobre-wrap">
+
+    {% if session.get('perfil') %}
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:1.4rem;font-weight:800;font-family:'Syne',sans-serif;color:var(--text)">Sobre o MedControl</div>
+      <div style="font-size:.83rem;color:var(--muted)">Conheça o sistema que sua farmácia está usando</div>
+    </div>
+    {% endif %}
+
+    <div class="sobre-hero">
+      <h1>Chega de perder dinheiro com medicamentos <span>vencidos</span></h1>
+      <p>Alertas automáticos, cadastro por código de barras e relatório PDF para fiscalização — tudo no celular, sem instalar nada.</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val">R$75k</div>
+        <div class="stat-label">multa máxima ANVISA</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">30 dias</div>
+        <div class="stat-label">antecedência nos alertas</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val">100%</div>
+        <div class="stat-label">online, funciona no celular</div>
+      </div>
+    </div>
+
+    <div class="section-title">O que o MedControl faz pela sua farmácia</div>
+    <div class="ben-grid">
+      <div class="ben-card">
+        <div class="ben-icon">🔔</div>
+        <div class="ben-text">
+          <strong>Alertas automáticos</strong>
+          <span>Avisa 30 e 60 dias antes do vencimento por e-mail</span>
+        </div>
+      </div>
+      <div class="ben-card">
+        <div class="ben-icon">📱</div>
+        <div class="ben-text">
+          <strong>Cadastro por código de barras</strong>
+          <span>Use o leitor USB ou câmera do celular</span>
+        </div>
+      </div>
+      <div class="ben-card">
+        <div class="ben-icon">📄</div>
+        <div class="ben-text">
+          <strong>Relatório em PDF</strong>
+          <span>Pronto para apresentar na fiscalização da ANVISA</span>
+        </div>
+      </div>
+      <div class="ben-card">
+        <div class="ben-icon">🏢</div>
+        <div class="ben-text">
+          <strong>Gestão de redes</strong>
+          <span>Controle todas as filiais em um único painel</span>
+        </div>
+      </div>
+      <div class="ben-card">
+        <div class="ben-icon">☁️</div>
+        <div class="ben-text">
+          <strong>100% na nuvem</strong>
+          <span>Acesse de qualquer dispositivo, sem instalar nada</span>
+        </div>
+      </div>
+      <div class="ben-card">
+        <div class="ben-icon">🔌</div>
+        <div class="ben-text">
+          <strong>Integração via API REST</strong>
+          <span>Conecte ao Consys ERP, SNGPC/ANVISA e outros sistemas</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="anvisa-card">
+      <div>
+        <div class="anvisa-val">R$75.000</div>
+        <div class="anvisa-label">multa máxima</div>
+      </div>
+      <div class="anvisa-text">
+        Uma única autuação da ANVISA por produto vencido pode custar mais do que <strong>anos de assinatura</strong> do MedControl.
+      </div>
+    </div>
+
+    <div class="gratis-card">
+      <div class="gratis-text">
+        <strong>30 dias grátis</strong>
+        <span>Teste sem compromisso. Indique para outras farmácias.</span>
+      </div>
+      <div class="gratis-badge">Sem cartão<br>de crédito</div>
+    </div>
+
+    <div class="section-title">Contato & Suporte</div>
+    <div class="contato-card">
+      <p>📱 <strong>(77) 98817-5300</strong></p>
+      <p>✉️ <a href="mailto:teilon66@gmail.com">teilon66@gmail.com</a></p>
+      <a class="contato-url" href="https://www.medcontrol.app.br" target="_blank">www.medcontrol.app.br</a>
+    </div>
+
+  </div>
+
+</main>
+</body>
+</html>

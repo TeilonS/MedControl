@@ -942,6 +942,7 @@ def admin_excluir_rede(id):
 
     nome = rede.nome
     Medicamento.query.filter_by(rede_id=id).delete()
+    IntegracaoConsys.query.filter_by(rede_id=id).delete()
     Usuario.query.filter_by(rede_id=id).delete()
     db.session.delete(rede)
     db.session.commit()
@@ -1796,6 +1797,11 @@ def confirmar_email():
 # =============================================================================
 # PÁGINAS LEGAIS — LGPD
 # =============================================================================
+
+@app.route('/sobre')
+def sobre():
+    return render_template('sobre.html')
+
 
 @app.route('/politica-de-privacidade')
 @login_required
