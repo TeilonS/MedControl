@@ -346,6 +346,13 @@
         <i class="bi bi-camera me-1"></i> Aponte a câmera para o código de barras
       </div>
       <div class="scan-result" id="scanResult"></div>
+
+      <!-- PAINEL DEBUG -->
+      <div id="debug-panel" style="margin-top:.7rem;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:.6rem;font-family:monospace;font-size:.72rem;color:#94a3b8;max-height:160px;overflow-y:auto;">
+        <div style="color:#38bdf8;margin-bottom:.3rem;font-weight:700;">&#9654; DEBUG LOG</div>
+        <div id="debug-log"></div>
+      </div>
+
       <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">
           <i class="bi bi-keyboard me-1"></i>Ou insira manualmente
@@ -432,16 +439,23 @@ function initScanner() {
   document.getElementById('reader').appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
-  const tryGetCamera = () =>
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-    }).catch(e => {
-      dbg('exact falhou: ' + e.name, '#fbbf24');
-      return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    }).catch(e => {
-      dbg('environment falhou: ' + e.name, '#fbbf24');
-      return navigator.mediaDevices.getUserMedia({ video: true });
-    });
+  const tryGetCamera = async () => {
+    const constraints = [
+      { video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } } },
+      { video: { facingMode: 'environment' } },
+      { video: true }
+    ];
+    for (const c of constraints) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(c);
+        dbg('cam OK: ' + JSON.stringify(c.video).slice(0,50), '#4ade80');
+        return stream;
+      } catch(e) {
+        dbg('tentativa falhou: ' + e.name, '#fbbf24');
+      }
+    }
+    throw new Error('Nenhuma câmera disponível');
+  };
 
   tryGetCamera().then(stream => {
     const track = stream.getVideoTracks()[0];
