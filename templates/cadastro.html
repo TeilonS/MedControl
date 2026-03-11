@@ -388,6 +388,10 @@ function initScanner() {
     try { codeReader.reset(); } catch(e) {}
     codeReader = null;
   }
+  if (currentStream) {
+    currentStream.getTracks().forEach(t => t.stop());
+    currentStream = null;
+  }
   document.getElementById('reader').innerHTML = '';
 
   const video = document.createElement('video');
@@ -395,43 +399,53 @@ function initScanner() {
   video.style.cssText = 'width:100%;border-radius:10px;display:block;';
   video.setAttribute('playsinline', '');
   video.setAttribute('muted', '');
-  video.setAttribute('autoplay', '');
   document.getElementById('reader').appendChild(video);
 
   const hints = new Map();
-  const formats = [
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
     ZXing.BarcodeFormat.EAN_13,
     ZXing.BarcodeFormat.EAN_8,
     ZXing.BarcodeFormat.CODE_128,
     ZXing.BarcodeFormat.CODE_39,
     ZXing.BarcodeFormat.UPC_A,
     ZXing.BarcodeFormat.UPC_E,
-  ];
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+  ]);
   hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
   codeReader = new ZXing.BrowserMultiFormatReader(hints);
 
-  // Abre câmera traseira diretamente via getUserMedia com facingMode: environment
-  navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-  }).catch(() => {
-    // facingMode exact falhou (desktop ou câmera única) — tenta sem restrição
-    return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-  }).then(stream => {
+  // Tenta câmera traseira com facingMode exact; fallback sem exact (desktop/câmera única)
+  const tryGetCamera = () =>
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    }).catch(() =>
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+      })
+    ).catch(() =>
+      navigator.mediaDevices.getUserMedia({ video: true }) // último fallback
+    );
+
+  tryGetCamera().then(stream => {
     currentStream = stream;
     video.srcObject = stream;
-    video.play();
 
-    document.getElementById('scanStatus').innerHTML =
-      '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
+    // Aguarda vídeo ter dimensões antes de iniciar decodificação
+    video.addEventListener('loadedmetadata', () => {
+      video.play().then(() => {
+        document.getElementById('scanStatus').innerHTML =
+          '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
 
-    // Inicia decodificação contínua sobre o elemento de vídeo
-    codeReader.decodeFromVideoElement(video, (result, err) => {
-      if (result) {
-        processBarcode(result.getText());
-      }
-    });
+        // Inicia loop de decodificação somente após vídeo estar pronto
+        codeReader.decodeFromVideoElement(video, (result, err) => {
+          if (result) {
+            processBarcode(result.getText());
+          }
+          // NotFoundException é normal entre frames — ignorar silenciosamente
+        });
+      });
+    }, { once: true });
+
   }).catch(err => {
     scannerRunning = false;
     document.getElementById('scanStatus').innerHTML =
