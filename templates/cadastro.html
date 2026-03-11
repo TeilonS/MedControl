@@ -479,6 +479,23 @@ async function initScanner() {
     document.getElementById('reader').appendChild(canvas);
     const ctx = canvas.getContext('2d');
 
+    // Aquece o WASM com frame em branco — evita RuntimeError na primeira chamada
+    dbg('aquecendo WASM...', '#94a3b8');
+    let wasmReady = false;
+    for (let i = 0; i < 5; i++) {
+      try {
+        const w8 = document.createElement('canvas'); w8.width = 8; w8.height = 8;
+        await scanImageData(w8.getContext('2d').getImageData(0, 0, 8, 8));
+        wasmReady = true;
+        dbg('WASM pronto', '#4ade80');
+        break;
+      } catch(e) {
+        dbg('warm-up ' + i + ': ' + e.name, '#fbbf24');
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
+    if (!wasmReady) { dbg('WASM não inicializou', '#f87171'); scannerRunning = false; return; }
+
     async function frameZbar() {
       if (!scannerRunning) return;
       const w = video.videoWidth, h = video.videoHeight;
@@ -492,7 +509,9 @@ async function initScanner() {
             dbg('LIDO: ' + code, '#4ade80');
             processBarcode(code); return;
           }
-        } catch(e) { dbg('zbar err: ' + e.name, '#f87171'); }
+        } catch(e) {
+          if (e.name !== 'RuntimeError') dbg('zbar err: ' + e.name, '#f87171');
+        }
       }
       dbgFrames++; if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
       rafId = requestAnimationFrame(frameZbar);
