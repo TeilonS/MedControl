@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <!-- ZXing para leitura de código de barras via câmera (0.19.2 — build estável) -->
-  <script src="https://unpkg.com/@zxing/library@0.19.2/umd/index.min.js"></script>
+  <!-- zbar-wasm: WebAssembly, funciona em Firefox Android -->
+  <script src="https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.9.15/dist/main.js"></script>
   <style>
     * { box-sizing: border-box; }
     body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; }
@@ -365,6 +365,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ── SCANNER DE CÓDIGO DE BARRAS (ZXing) ────────────────────────────
+let codeReader = null;
 let scannerRunning = false;
 let currentStream = null;
 let rafId = null;
@@ -404,20 +405,10 @@ function stopScanner() {
 async function initScanner() {
   if (scannerRunning) { dbg('já rodando'); return; }
   scannerRunning = true;
-  dbg('initScanner() start');
+  dbg('initScanner()');
 
   if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
   document.getElementById('reader').innerHTML = '';
-
-  // Verifica suporte a BarcodeDetector (nativo — Chrome/Firefox Android moderno)
-  const hasNative = 'BarcodeDetector' in window;
-  dbg('BarcodeDetector nativo: ' + hasNative, hasNative ? '#4ade80' : '#fbbf24');
-
-  const video = document.createElement('video');
-  video.setAttribute('playsinline', '');
-  video.setAttribute('muted', '');
-  video.style.cssText = 'width:100%;border-radius:10px;display:block;';
-  document.getElementById('reader').appendChild(video);
 
   // Tenta câmera traseira
   let stream;
@@ -426,115 +417,104 @@ async function initScanner() {
     { video: { facingMode: 'environment' } },
     { video: true }
   ];
-  for (const constraint of tries) {
+  for (const c of tries) {
     try {
-      stream = await navigator.mediaDevices.getUserMedia(constraint);
+      stream = await navigator.mediaDevices.getUserMedia(c);
       const s = stream.getVideoTracks()[0].getSettings();
       dbg('câmera: ' + (s.facingMode||'?') + ' ' + (s.width||'?') + 'x' + (s.height||'?'), '#4ade80');
       break;
     } catch(e) {
-      dbg('falhou: ' + JSON.stringify(constraint.video).slice(0,30) + ' — ' + e.name, '#fbbf24');
+      dbg('falhou: ' + e.name, '#fbbf24');
     }
   }
-
   if (!stream) {
     scannerRunning = false;
-    dbg('ERRO: sem câmera disponível', '#f87171');
+    dbg('sem câmera', '#f87171');
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível.';
     return;
   }
 
   currentStream = stream;
+  const video = document.createElement('video');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('muted', '');
+  video.style.cssText = 'width:100%;border-radius:10px;display:block;';
+  document.getElementById('reader').appendChild(video);
   video.srcObject = stream;
 
-  await new Promise(resolve => {
-    video.addEventListener('loadedmetadata', resolve, { once: true });
-  });
-  dbg('loadedmetadata: ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
-
+  await new Promise(r => video.addEventListener('loadedmetadata', r, { once: true }));
   await video.play();
-  dbg('play() OK', '#4ade80');
+  dbg('vídeo ativo: ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
 
   document.getElementById('scanStatus').innerHTML =
     '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
 
-  if (hasNative) {
-    // Caminho 1: BarcodeDetector nativo (mais confiável)
-    dbg('usando BarcodeDetector nativo', '#38bdf8');
-    const detector = new BarcodeDetector({
-      formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e']
-    });
+  // Aguarda vídeo estabilizar
+  await new Promise(r => setTimeout(r, 400));
 
-    async function detectFrame() {
+  // Canvas para captura de frames
+  const canvas = document.createElement('canvas');
+  canvas.style.display = 'none';
+  document.getElementById('reader').appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  // Verifica qual decodificador usar
+  const hasNative = 'BarcodeDetector' in window;
+  dbg('BarcodeDetector: ' + hasNative, hasNative ? '#4ade80' : '#fbbf24');
+
+  const hasZbar = typeof zbarWasm !== 'undefined';
+  dbg('zbar-wasm: ' + hasZbar, hasZbar ? '#4ade80' : '#fbbf24');
+
+  if (hasNative) {
+    dbg('modo: BarcodeDetector nativo', '#38bdf8');
+    const detector = new BarcodeDetector({
+      formats: ['ean_13','ean_8','code_128','code_39','upc_a','upc_e']
+    });
+    async function detectNative() {
       if (!scannerRunning) return;
       try {
-        const barcodes = await detector.detect(video);
-        if (barcodes.length > 0) {
-          dbg('LIDO: ' + barcodes[0].rawValue, '#4ade80');
-          processBarcode(barcodes[0].rawValue);
+        const codes = await detector.detect(video);
+        if (codes.length > 0) {
+          dbg('LIDO: ' + codes[0].rawValue, '#4ade80');
+          processBarcode(codes[0].rawValue);
           return;
         }
-      } catch(e) {
-        dbg('detect err: ' + e.name, '#f87171');
+      } catch(e) { dbg('native err: ' + e.name, '#f87171'); }
+      dbgFrames++;
+      if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
+      rafId = requestAnimationFrame(detectNative);
+    }
+    rafId = requestAnimationFrame(detectNative);
+
+  } else if (hasZbar) {
+    dbg('modo: zbar-wasm', '#38bdf8');
+    async function detectZbar() {
+      if (!scannerRunning) return;
+      const w = video.videoWidth, h = video.videoHeight;
+      if (w > 0 && h > 0) {
+        canvas.width = w; canvas.height = h;
+        ctx.drawImage(video, 0, 0, w, h);
+        try {
+          const img = ctx.getImageData(0, 0, w, h);
+          const results = await zbarWasm.scanImageData(img);
+          if (results.length > 0) {
+            const code = results[0].decode();
+            dbg('LIDO: ' + code, '#4ade80');
+            processBarcode(code);
+            return;
+          }
+        } catch(e) { dbg('zbar err: ' + e.name, '#f87171'); }
       }
       dbgFrames++;
       if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
-      rafId = requestAnimationFrame(detectFrame);
+      rafId = requestAnimationFrame(detectZbar);
     }
-    rafId = requestAnimationFrame(detectFrame);
+    rafId = requestAnimationFrame(detectZbar);
 
   } else {
-    // Caminho 2: ZXing via canvas (fallback)
-    dbg('usando ZXing fallback', '#fbbf24');
-    if (typeof ZXing === 'undefined') {
-      dbg('ERRO: ZXing não carregou!', '#f87171');
-      scannerRunning = false; return;
-    }
-    const hints = new Map();
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-      ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
-      ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
-      ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
-    ]);
-    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-    const reader = new ZXing.BrowserMultiFormatReader(hints);
-
-    // Aguarda vídeo ter dimensões estáveis
-    await new Promise(r => setTimeout(r, 500));
-
-    const canvas = document.createElement('canvas');
-    canvas.style.display = 'none';
-    document.getElementById('reader').appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-
-    function zxingFrame() {
-      if (!scannerRunning) return;
-      const w = video.videoWidth, h = video.videoHeight;
-      if (w > 0 && h > 0 && video.readyState >= 2) {
-        if (canvas.width !== w) canvas.width = w;
-        if (canvas.height !== h) canvas.height = h;
-        try {
-          ctx.drawImage(video, 0, 0, w, h);
-          const result = reader.decode(canvas);
-          if (result) {
-            dbg('LIDO: ' + result.getText(), '#4ade80');
-            processBarcode(result.getText());
-            return;
-          }
-        } catch(e) {
-          const n = String(e.name || e);
-          if (!n.includes('NotFoundException') && !n.includes('R')) {
-            dbg('zxing err: ' + n.slice(0,40), '#f87171');
-          } else {
-            dbgFrames++;
-            if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
-          }
-        }
-      }
-      rafId = requestAnimationFrame(zxingFrame);
-    }
-    rafId = requestAnimationFrame(zxingFrame);
+    dbg('ERRO: nenhum decodificador disponível', '#f87171');
+    scannerRunning = false;
   }
 }
 
