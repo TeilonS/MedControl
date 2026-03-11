@@ -371,8 +371,7 @@ function abrirScanner() {
   document.getElementById('scanner-overlay').classList.add('active');
   document.getElementById('scanResult').style.display = 'none';
   document.getElementById('scanStatus').innerHTML = '<i class="bi bi-camera me-1"></i> Iniciando câmera...';
-  // delay maior para garantir que o overlay está visível e o #reader tem dimensões reais
-  setTimeout(initScanner, 400);
+  setTimeout(initScanner, 500);
 }
 
 function fecharScanner() {
@@ -383,51 +382,64 @@ function fecharScanner() {
 function initScanner() {
   if (scannerRunning) return;
 
-  // destroi instância anterior se existir
+  // limpa instância anterior
   if (html5QrCode) {
     try { html5QrCode.clear(); } catch(e) {}
     html5QrCode = null;
   }
+  document.getElementById('reader').innerHTML = '';
 
-  // limpa o conteúdo do reader para evitar elementos duplicados
-  const readerEl = document.getElementById('reader');
-  readerEl.innerHTML = '';
+  html5QrCode = new Html5Qrcode("reader", { verbose: false });
 
-  html5QrCode = new Html5Qrcode("reader");
+  const config = {
+    fps: 10,
+    qrbox: { width: 250, height: 100 },
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.EAN_13,
+      Html5QrcodeSupportedFormats.EAN_8,
+      Html5QrcodeSupportedFormats.CODE_128,
+      Html5QrcodeSupportedFormats.CODE_39,
+      Html5QrcodeSupportedFormats.UPC_A,
+      Html5QrcodeSupportedFormats.UPC_E,
+    ]
+  };
 
-  html5QrCode.start(
-    { facingMode: "environment" },
-    {
-      fps: 10,
-      qrbox: { width: 260, height: 100 },
-      aspectRatio: 1.5,
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-      ]
-    },
-    (decodedText) => {
-      processBarcode(decodedText);
-    },
-    () => {} // ignora erros de frame individuais
-  ).then(() => {
+  const onSuccess = (decodedText) => processBarcode(decodedText);
+  const onError = () => {};
+
+  const onStarted = () => {
     scannerRunning = true;
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
-  }).catch((err) => {
+  };
+
+  const onFailed = (err) => {
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
     console.error('Scanner error:', err);
-  });
+  };
+
+  // Tenta câmera traseira primeiro, com fallback para qualquer câmera (Firefox compatível)
+  html5QrCode.start({ facingMode: { exact: "environment" } }, config, onSuccess, onError)
+    .then(onStarted)
+    .catch(() => {
+      // fallback: tenta sem restrição de câmera (funciona no Firefox)
+      html5QrCode.start({ facingMode: "environment" }, config, onSuccess, onError)
+        .then(onStarted)
+        .catch(() => {
+          // último fallback: sem preferência de câmera
+          html5QrCode.start({ facingMode: "user" }, config, onSuccess, onError)
+            .then(onStarted)
+            .catch(onFailed);
+        });
+    });
 }
 
 function stopScanner() {
   if (html5QrCode && scannerRunning) {
     html5QrCode.stop().then(() => {
+      try { html5QrCode.clear(); } catch(e) {}
+      html5QrCode = null;
       scannerRunning = false;
     }).catch(() => { scannerRunning = false; });
   }
