@@ -365,12 +365,10 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 // ── SCANNER DE CÓDIGO DE BARRAS (ZXing) ────────────────────────────
-let codeReader = null;
 let scannerRunning = false;
 let currentStream = null;
 let rafId = null;
 let dbgFrames = 0;
-let dbgErrors = {};
 
 function dbg(msg, color) {
   const log = document.getElementById('debug-log');
@@ -387,9 +385,9 @@ function abrirScanner() {
   document.getElementById('scanResult').style.display = 'none';
   document.getElementById('scanStatus').innerHTML = '<i class="bi bi-camera me-1"></i> Iniciando câmera...';
   const dbgEl = document.getElementById('debug-log'); if (dbgEl) dbgEl.innerHTML = '';
-  dbgFrames = 0; dbgErrors = {};
+  dbgFrames = 0;
   dbg('abrirScanner()');
-  setTimeout(initScanner, 500);
+  setTimeout(initScanner, 300);
 }
 
 function fecharScanner() {
@@ -397,29 +395,23 @@ function fecharScanner() {
   document.getElementById('scanner-overlay').classList.remove('active');
 }
 
-function initScanner() {
+function stopScanner() {
+  scannerRunning = false;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
+}
+
+async function initScanner() {
   if (scannerRunning) { dbg('já rodando'); return; }
   scannerRunning = true;
   dbg('initScanner() start');
 
-  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-  if (codeReader) { try { codeReader.reset(); } catch(e) {} codeReader = null; }
   if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
   document.getElementById('reader').innerHTML = '';
 
-  if (typeof ZXing === 'undefined') {
-    dbg('ERRO: ZXing não carregou!', '#f87171'); scannerRunning = false; return;
-  }
-
-  const hints = new Map();
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-    ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
-    ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
-    ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
-  ]);
-  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-  codeReader = new ZXing.BrowserMultiFormatReader(hints);
-  dbg('ZXing pronto');
+  // Verifica suporte a BarcodeDetector (nativo — Chrome/Firefox Android moderno)
+  const hasNative = 'BarcodeDetector' in window;
+  dbg('BarcodeDetector nativo: ' + hasNative, hasNative ? '#4ade80' : '#fbbf24');
 
   const video = document.createElement('video');
   video.setAttribute('playsinline', '');
@@ -427,90 +419,123 @@ function initScanner() {
   video.style.cssText = 'width:100%;border-radius:10px;display:block;';
   document.getElementById('reader').appendChild(video);
 
-  // Canvas oculto para capturar frames
-  const canvas = document.createElement('canvas');
-  canvas.style.display = 'none';
-  document.getElementById('reader').appendChild(canvas);
-  const ctx = canvas.getContext('2d');
+  // Tenta câmera traseira
+  let stream;
+  const tries = [
+    { video: { facingMode: { exact: 'environment' } } },
+    { video: { facingMode: 'environment' } },
+    { video: true }
+  ];
+  for (const constraint of tries) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraint);
+      const s = stream.getVideoTracks()[0].getSettings();
+      dbg('câmera: ' + (s.facingMode||'?') + ' ' + (s.width||'?') + 'x' + (s.height||'?'), '#4ade80');
+      break;
+    } catch(e) {
+      dbg('falhou: ' + JSON.stringify(constraint.video).slice(0,30) + ' — ' + e.name, '#fbbf24');
+    }
+  }
 
-  const tryGetCamera = () =>
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
-    }).catch(e => {
-      dbg('exact falhou: ' + e.name, '#fbbf24');
-      return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    }).catch(e => {
-      dbg('environment falhou: ' + e.name, '#fbbf24');
-      return navigator.mediaDevices.getUserMedia({ video: true });
+  if (!stream) {
+    scannerRunning = false;
+    dbg('ERRO: sem câmera disponível', '#f87171');
+    document.getElementById('scanStatus').innerHTML =
+      '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível.';
+    return;
+  }
+
+  currentStream = stream;
+  video.srcObject = stream;
+
+  await new Promise(resolve => {
+    video.addEventListener('loadedmetadata', resolve, { once: true });
+  });
+  dbg('loadedmetadata: ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
+
+  await video.play();
+  dbg('play() OK', '#4ade80');
+
+  document.getElementById('scanStatus').innerHTML =
+    '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
+
+  if (hasNative) {
+    // Caminho 1: BarcodeDetector nativo (mais confiável)
+    dbg('usando BarcodeDetector nativo', '#38bdf8');
+    const detector = new BarcodeDetector({
+      formats: ['ean_13', 'ean_8', 'code_128', 'code_39', 'upc_a', 'upc_e']
     });
 
-  tryGetCamera().then(stream => {
-    const track = stream.getVideoTracks()[0];
-    const s = track ? track.getSettings() : {};
-    dbg('câmera: ' + (s.facingMode||'?') + ' ' + (s.width||'?') + 'x' + (s.height||'?'), '#4ade80');
-    currentStream = stream;
-    video.srcObject = stream;
-
-    video.addEventListener('loadedmetadata', () => {
-      dbg('loadedmetadata ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-
-      video.play().then(() => {
-        dbg('play() OK — loop manual iniciado', '#4ade80');
-        document.getElementById('scanStatus').innerHTML =
-          '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
-
-        // Loop manual: captura frame → canvas → decodifica
-        function scanFrame() {
-          if (!scannerRunning) return;
-          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0) {
-            if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-            }
-            try { ctx.drawImage(video, 0, 0, canvas.width, canvas.height); }
-            catch(e) { rafId = requestAnimationFrame(scanFrame); return; }
-            try {
-              const result = codeReader.decode(canvas);
-              if (result) {
-                dbg('LIDO: ' + result.getText(), '#4ade80');
-                processBarcode(result.getText());
-                return;
-              }
-            } catch(e) {
-              // captura o nome mesmo em bundle minificado
-              const name = (e && (e.name || (e.constructor && e.constructor.name))) || String(e);
-              const isNotFound = name === 'NotFoundException' || name === 'R' || String(e).includes('not found') || String(e).includes('No MultiFormat');
-              if (!isNotFound) {
-                dbgErrors[name] = (dbgErrors[name]||0) + 1;
-                if (dbgErrors[name] <= 3) dbg('err: ' + name + ' — ' + String(e).slice(0,40), '#f87171');
-              } else {
-                dbgFrames++;
-                if (dbgFrames % 60 === 0) dbg('frames OK: ' + dbgFrames);
-              }
-            }
-          }
-          rafId = requestAnimationFrame(scanFrame);
+    async function detectFrame() {
+      if (!scannerRunning) return;
+      try {
+        const barcodes = await detector.detect(video);
+        if (barcodes.length > 0) {
+          dbg('LIDO: ' + barcodes[0].rawValue, '#4ade80');
+          processBarcode(barcodes[0].rawValue);
+          return;
         }
-        rafId = requestAnimationFrame(scanFrame);
+      } catch(e) {
+        dbg('detect err: ' + e.name, '#f87171');
+      }
+      dbgFrames++;
+      if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
+      rafId = requestAnimationFrame(detectFrame);
+    }
+    rafId = requestAnimationFrame(detectFrame);
 
-      }).catch(e => { dbg('play() ERRO: ' + e.name, '#f87171'); scannerRunning = false; });
-    }, { once: true });
+  } else {
+    // Caminho 2: ZXing via canvas (fallback)
+    dbg('usando ZXing fallback', '#fbbf24');
+    if (typeof ZXing === 'undefined') {
+      dbg('ERRO: ZXing não carregou!', '#f87171');
+      scannerRunning = false; return;
+    }
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+      ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
+    ]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    const reader = new ZXing.BrowserMultiFormatReader(hints);
 
-  }).catch(err => {
-    scannerRunning = false;
-    dbg('getUserMedia FALHOU: ' + err.name, '#f87171');
-    document.getElementById('scanStatus').innerHTML =
-      '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
-  });
-}
+    // Aguarda vídeo ter dimensões estáveis
+    await new Promise(r => setTimeout(r, 500));
 
-function stopScanner() {
-  scannerRunning = false;
-  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
-  if (codeReader) { try { codeReader.reset(); } catch(e) {} codeReader = null; }
-  if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
+    const canvas = document.createElement('canvas');
+    canvas.style.display = 'none';
+    document.getElementById('reader').appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+
+    function zxingFrame() {
+      if (!scannerRunning) return;
+      const w = video.videoWidth, h = video.videoHeight;
+      if (w > 0 && h > 0 && video.readyState >= 2) {
+        if (canvas.width !== w) canvas.width = w;
+        if (canvas.height !== h) canvas.height = h;
+        try {
+          ctx.drawImage(video, 0, 0, w, h);
+          const result = reader.decode(canvas);
+          if (result) {
+            dbg('LIDO: ' + result.getText(), '#4ade80');
+            processBarcode(result.getText());
+            return;
+          }
+        } catch(e) {
+          const n = String(e.name || e);
+          if (!n.includes('NotFoundException') && !n.includes('R')) {
+            dbg('zxing err: ' + n.slice(0,40), '#f87171');
+          } else {
+            dbgFrames++;
+            if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
+          }
+        }
+      }
+      rafId = requestAnimationFrame(zxingFrame);
+    }
+    rafId = requestAnimationFrame(zxingFrame);
+  }
 }
 
 function autofillField(name, value) {
