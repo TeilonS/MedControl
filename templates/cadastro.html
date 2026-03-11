@@ -346,13 +346,6 @@
         <i class="bi bi-camera me-1"></i> Aponte a câmera para o código de barras
       </div>
       <div class="scan-result" id="scanResult"></div>
-
-      <!-- PAINEL DEBUG (remover após resolver) -->
-      <div id="debug-panel" style="margin-top:.7rem;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:.6rem;font-family:monospace;font-size:.72rem;color:#94a3b8;max-height:160px;overflow-y:auto;">
-        <div style="color:#38bdf8;margin-bottom:.3rem;font-weight:700;">&#9654; DEBUG LOG</div>
-        <div id="debug-log"></div>
-      </div>
-
       <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">
           <i class="bi bi-keyboard me-1"></i>Ou insira manualmente
@@ -374,6 +367,7 @@
 let codeReader = null;
 let scannerRunning = false;
 let currentStream = null;
+let rafId = null;
 let dbgFrames = 0;
 let dbgErrors = {};
 
@@ -384,7 +378,7 @@ function dbg(msg, color) {
   line.style.cssText = 'border-bottom:1px solid #1e293b;padding:.15rem 0;color:' + (color||'#94a3b8');
   line.textContent = new Date().toLocaleTimeString('pt-BR',{hour12:false}) + ' ' + msg;
   log.prepend(line);
-  if (log.children.length > 30) log.removeChild(log.lastChild);
+  if (log.children.length > 40) log.removeChild(log.lastChild);
 }
 
 function abrirScanner() {
@@ -393,7 +387,7 @@ function abrirScanner() {
   document.getElementById('scanStatus').innerHTML = '<i class="bi bi-camera me-1"></i> Iniciando câmera...';
   document.getElementById('debug-log').innerHTML = '';
   dbgFrames = 0; dbgErrors = {};
-  dbg('abrirScanner() chamado');
+  dbg('abrirScanner()');
   setTimeout(initScanner, 500);
 }
 
@@ -403,115 +397,115 @@ function fecharScanner() {
 }
 
 function initScanner() {
-  if (scannerRunning) { dbg('ja rodando — ignorado'); return; }
+  if (scannerRunning) { dbg('já rodando'); return; }
   scannerRunning = true;
   dbg('initScanner() start');
 
-  if (codeReader) {
-    try { codeReader.reset(); } catch(e) {}
-    codeReader = null;
-  }
-  if (currentStream) {
-    currentStream.getTracks().forEach(t => t.stop());
-    currentStream = null;
-  }
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (codeReader) { try { codeReader.reset(); } catch(e) {} codeReader = null; }
+  if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
   document.getElementById('reader').innerHTML = '';
 
-  const video = document.createElement('video');
-  video.id = 'zxing-video';
-  video.style.cssText = 'width:100%;border-radius:10px;display:block;';
-  video.setAttribute('playsinline', '');
-  video.setAttribute('muted', '');
-  document.getElementById('reader').appendChild(video);
+  if (typeof ZXing === 'undefined') {
+    dbg('ERRO: ZXing não carregou!', '#f87171'); scannerRunning = false; return;
+  }
 
   const hints = new Map();
   hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-    ZXing.BarcodeFormat.EAN_13,
-    ZXing.BarcodeFormat.EAN_8,
-    ZXing.BarcodeFormat.CODE_128,
-    ZXing.BarcodeFormat.CODE_39,
-    ZXing.BarcodeFormat.UPC_A,
-    ZXing.BarcodeFormat.UPC_E,
+    ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+    ZXing.BarcodeFormat.CODE_128, ZXing.BarcodeFormat.CODE_39,
+    ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E,
   ]);
   hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-  dbg('ZXing hints configurados');
-
-  if (typeof ZXing === 'undefined') {
-    dbg('ERRO: ZXing nao carregou!', '#f87171');
-    scannerRunning = false;
-    return;
-  }
-  dbg('ZXing OK — versao carregada');
-
   codeReader = new ZXing.BrowserMultiFormatReader(hints);
-  dbg('BrowserMultiFormatReader criado');
+  dbg('ZXing pronto');
+
+  const video = document.createElement('video');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('muted', '');
+  video.style.cssText = 'width:100%;border-radius:10px;display:block;';
+  document.getElementById('reader').appendChild(video);
+
+  // Canvas oculto para capturar frames
+  const canvas = document.createElement('canvas');
+  canvas.style.display = 'none';
+  document.getElementById('reader').appendChild(canvas);
+  const ctx = canvas.getContext('2d');
 
   const tryGetCamera = () =>
     navigator.mediaDevices.getUserMedia({
       video: { facingMode: { exact: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
     }).catch(e => {
-      dbg('facingMode exact falhou: ' + e.name, '#fbbf24');
-      return navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
+      dbg('exact falhou: ' + e.name, '#fbbf24');
+      return navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
     }).catch(e => {
-      dbg('facingMode environment falhou: ' + e.name, '#fbbf24');
+      dbg('environment falhou: ' + e.name, '#fbbf24');
       return navigator.mediaDevices.getUserMedia({ video: true });
     });
 
   tryGetCamera().then(stream => {
     const track = stream.getVideoTracks()[0];
-    const settings = track ? track.getSettings() : {};
-    dbg('stream OK — ' + (settings.facingMode||'?') + ' ' + (settings.width||'?') + 'x' + (settings.height||'?'), '#4ade80');
+    const s = track ? track.getSettings() : {};
+    dbg('câmera: ' + (s.facingMode||'?') + ' ' + (s.width||'?') + 'x' + (s.height||'?'), '#4ade80');
     currentStream = stream;
     video.srcObject = stream;
 
     video.addEventListener('loadedmetadata', () => {
-      dbg('loadedmetadata — ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
+      dbg('loadedmetadata ' + video.videoWidth + 'x' + video.videoHeight, '#4ade80');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
       video.play().then(() => {
-        dbg('video.play() OK — iniciando decode', '#4ade80');
+        dbg('play() OK — loop manual iniciado', '#4ade80');
         document.getElementById('scanStatus').innerHTML =
           '<i class="bi bi-camera-video-fill me-1" style="color:var(--primary-l)"></i> Câmera ativa — aponte para o código de barras';
 
-        codeReader.decodeFromVideoElement(video, (result, err) => {
-          if (result) {
-            dbg('LIDO: ' + result.getText(), '#4ade80');
-            processBarcode(result.getText());
-          } else if (err) {
-            const name = err.name || err.constructor.name || String(err);
-            if (name !== 'NotFoundException') {
-              dbgErrors[name] = (dbgErrors[name]||0) + 1;
-              if (dbgErrors[name] <= 3) dbg('err: ' + name, '#f87171');
-            } else {
-              dbgFrames++;
-              if (dbgFrames % 30 === 0) dbg('frames sem leitura: ' + dbgFrames);
+        // Loop manual: captura frame → canvas → decodifica
+        function scanFrame() {
+          if (!scannerRunning) return;
+          if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const lum = new ZXing.HTMLCanvasElementLuminanceSource(canvas);
+            const binarizer = new ZXing.HybridBinarizer(lum);
+            const bitmap = new ZXing.BinaryBitmap(binarizer);
+            try {
+              const result = codeReader.decodeBitmap(bitmap);
+              if (result) {
+                dbg('LIDO: ' + result.getText(), '#4ade80');
+                processBarcode(result.getText());
+                return; // para o loop após leitura
+              }
+            } catch(e) {
+              const name = e.name || e.constructor.name || String(e);
+              if (name !== 'NotFoundException') {
+                dbgErrors[name] = (dbgErrors[name]||0) + 1;
+                if (dbgErrors[name] <= 2) dbg('err: ' + name, '#f87171');
+              } else {
+                dbgFrames++;
+                if (dbgFrames % 60 === 0) dbg('frames: ' + dbgFrames);
+              }
             }
           }
-        });
-      }).catch(e => {
-        dbg('video.play() ERRO: ' + e.name, '#f87171');
-        scannerRunning = false;
-      });
+          rafId = requestAnimationFrame(scanFrame);
+        }
+        rafId = requestAnimationFrame(scanFrame);
+
+      }).catch(e => { dbg('play() ERRO: ' + e.name, '#f87171'); scannerRunning = false; });
     }, { once: true });
 
   }).catch(err => {
     scannerRunning = false;
-    dbg('getUserMedia FALHOU: ' + err.name + ' — ' + err.message, '#f87171');
+    dbg('getUserMedia FALHOU: ' + err.name, '#f87171');
     document.getElementById('scanStatus').innerHTML =
       '<i class="bi bi-exclamation-triangle text-warning me-1"></i> Câmera não disponível. Use a entrada manual abaixo.';
   });
 }
 
 function stopScanner() {
-  if (codeReader) {
-    try { codeReader.reset(); } catch(e) {}
-    codeReader = null;
-  }
-  if (currentStream) {
-    currentStream.getTracks().forEach(t => t.stop());
-    currentStream = null;
-  }
   scannerRunning = false;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (codeReader) { try { codeReader.reset(); } catch(e) {} codeReader = null; }
+  if (currentStream) { currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
 }
 
 function autofillField(name, value) {
