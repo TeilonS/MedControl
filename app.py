@@ -117,7 +117,7 @@ def set_security_headers(response):
         "img-src 'self' data: blob:; "
         "media-src 'self' blob:; "
         "worker-src 'self' blob:; "
-        "connect-src 'self' blob: https://unpkg.com;"
+        "connect-src 'self' blob: https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;"
     )
     return response
 
