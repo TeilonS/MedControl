@@ -346,6 +346,7 @@
         <i class="bi bi-camera me-1"></i> Aponte a câmera para o código de barras
       </div>
       <div class="scan-result" id="scanResult"></div>
+      <div id="debug-panel" style="margin-top:.7rem;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:.6rem;font-family:monospace;font-size:.72rem;color:#94a3b8;max-height:160px;overflow-y:auto;"><div style="color:#38bdf8;font-weight:700;margin-bottom:.3rem;">&#9654; DEBUG LOG</div><div id="debug-log"></div></div>
       <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
         <label style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">
           <i class="bi bi-keyboard me-1"></i>Ou insira manualmente
@@ -385,7 +386,7 @@ function abrirScanner() {
   document.getElementById('scanner-overlay').classList.add('active');
   document.getElementById('scanResult').style.display = 'none';
   document.getElementById('scanStatus').innerHTML = '<i class="bi bi-camera me-1"></i> Iniciando câmera...';
-  document.getElementById('debug-log').innerHTML = '';
+  const dbgEl = document.getElementById('debug-log'); if (dbgEl) dbgEl.innerHTML = '';
   dbgFrames = 0; dbgErrors = {};
   dbg('abrirScanner()');
   setTimeout(initScanner, 500);
