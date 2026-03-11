@@ -111,11 +111,13 @@ def set_security_headers(response):
     # Content Security Policy — permite Bootstrap/Google Fonts/CDNs usados
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; "
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
         "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
-        "img-src 'self' data:; "
-        "connect-src 'self';"
+        "img-src 'self' data: blob:; "
+        "media-src 'self' blob:; "
+        "worker-src 'self' blob:; "
+        "connect-src 'self' https://unpkg.com;"
     )
     return response
 
