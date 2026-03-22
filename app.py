@@ -942,7 +942,6 @@ def admin_excluir_rede(id):
 
     nome = rede.nome
     Medicamento.query.filter_by(rede_id=id).delete()
-    IntegracaoConsys.query.filter_by(rede_id=id).delete()
     Usuario.query.filter_by(rede_id=id).delete()
     db.session.delete(rede)
     db.session.commit()
@@ -1276,9 +1275,9 @@ APP_BASE_URL      = os.environ.get('APP_BASE_URL', 'https://www.medcontrol.app.b
 
 # Preços dos planos em centavos (Mercado Pago usa centavos)
 PLANOS_MP = {
-    'basico':       {'nome': 'MedControl Básico',       'preco': 7900,  'filiais': 1},
-    'profissional': {'nome': 'MedControl Profissional', 'preco': 14900, 'filiais': 5},
-    'rede':         {'nome': 'MedControl Rede',         'preco': 29900, 'filiais': 999},
+    'basico':       {'nome': 'MedControl Básico',       'preco': 6000,  'filiais': 1},
+    'profissional': {'nome': 'MedControl Profissional', 'preco': 12000, 'filiais': 5},
+    'rede':         {'nome': 'MedControl Rede',         'preco': 20000, 'filiais': 999},
 }
 
 
@@ -1797,11 +1796,6 @@ def confirmar_email():
 # =============================================================================
 # PÁGINAS LEGAIS — LGPD
 # =============================================================================
-
-@app.route('/sobre')
-def sobre():
-    return render_template('sobre.html')
-
 
 @app.route('/politica-de-privacidade')
 @login_required
