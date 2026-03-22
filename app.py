@@ -47,6 +47,21 @@ except ImportError:
 
 app = Flask(__name__)
 
+# ── MODO MANUTENÇÃO ─────────────────────────────────────────────────
+# Mude para True antes de fazer deploy de manutenção.
+# Mude de volta para False quando terminar.
+MANUTENCAO = False
+
+@app.before_request
+def verificar_manutencao():
+    if MANUTENCAO and request.endpoint not in ('manutencao', 'static'):
+        return render_template('manutencao.html'), 503
+
+@app.route('/manutencao')
+def manutencao():
+    return render_template('manutencao.html'), 503
+# ────────────────────────────────────────────────────────────────────
+
 # Filtro Jinja para data em português
 DIAS_PT   = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo']
 MESES_PT  = ['','Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -942,6 +957,7 @@ def admin_excluir_rede(id):
 
     nome = rede.nome
     Medicamento.query.filter_by(rede_id=id).delete()
+    IntegracaoConsys.query.filter_by(rede_id=id).delete()
     Usuario.query.filter_by(rede_id=id).delete()
     db.session.delete(rede)
     db.session.commit()
@@ -1796,6 +1812,11 @@ def confirmar_email():
 # =============================================================================
 # PÁGINAS LEGAIS — LGPD
 # =============================================================================
+
+@app.route('/sobre')
+def sobre():
+    return render_template('sobre.html')
+
 
 @app.route('/politica-de-privacidade')
 @login_required
