@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedControl — Em Manutenção</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary: #0f766e;
+      --primary-l: #14b8a6;
+      --teal-xl: #5eead4;
+      --dark: #0a1628;
+      --surface: #0f1f35;
+      --card: #142033;
+      --border: rgba(20,184,166,0.15);
+      --text: #f1f5f9;
+      --muted: #64748b;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Fundo animado */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .bg-orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(20,184,166,0.12), transparent);
+      top: -150px; left: -150px;
+      animation-duration: 14s;
+    }
+    .bg-orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(124,58,237,0.08), transparent);
+      bottom: -100px; right: -100px;
+      animation-duration: 10s;
+      animation-direction: alternate-reverse;
+    }
+    .bg-orb-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(20,184,166,0.06), transparent);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation-duration: 16s;
+    }
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    /* Grid de fundo sutil */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(20,184,166,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20,184,166,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+    }
+
+    /* Card central */
+    .card {
+      position: relative;
+      z-index: 10;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      box-shadow:
+        0 0 0 1px rgba(20,184,166,0.05),
+        0 24px 60px rgba(0,0,0,0.5),
+        0 0 80px rgba(20,184,166,0.05);
+      animation: fadeUp .6s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .75rem;
+      margin-bottom: 2rem;
+    }
+    .logo-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      box-shadow: 0 6px 20px rgba(20,184,166,0.35);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 6px 20px rgba(20,184,166,0.35); }
+      50%       { box-shadow: 0 6px 32px rgba(20,184,166,0.6); }
+    }
+    .logo-name {
+      font-family: 'Syne', sans-serif;
+      font-weight: 900;
+      font-size: 1.4rem;
+      color: var(--text);
+    }
+
+    /* Ícone de manutenção */
+    .icon-wrap {
+      width: 80px; height: 80px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, rgba(20,184,166,0.15), rgba(124,58,237,0.1));
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem;
+      animation: spin-slow 8s linear infinite;
+      position: relative;
+    }
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    /* Emoji não gira junto */
+    .icon-wrap span { display: inline-block; animation: spin-slow 8s linear infinite reverse; }
+
+    /* Texto */
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: .75rem;
+      line-height: 1.2;
+    }
+    .subtitle {
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    /* Barra de progresso animada */
+    .progress-wrap {
+      background: rgba(255,255,255,0.05);
+      border-radius: 100px;
+      height: 4px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--primary-l), var(--teal-xl));
+      border-radius: 100px;
+      animation: progress 3s ease-in-out infinite alternate;
+      background-size: 200% 100%;
+      animation: progress-move 2.5s ease-in-out infinite alternate,
+                 shimmer 2s linear infinite;
+    }
+    @keyframes progress-move {
+      from { width: 20%; }
+      to   { width: 85%; }
+    }
+    @keyframes shimmer {
+      from { background-position: 0% 0%; }
+      to   { background-position: 200% 0%; }
+    }
+
+    /* Previsão */
+    .eta {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: rgba(20,184,166,0.08);
+      border: 1px solid rgba(20,184,166,0.2);
+      border-radius: 100px;
+      padding: .5rem 1.1rem;
+      font-size: .8rem;
+      color: var(--primary-l);
+      font-weight: 600;
+      margin-bottom: 2rem;
+    }
+    .eta-dot {
+      width: 7px; height: 7px;
+      background: var(--primary-l);
+      border-radius: 50%;
+      animation: blink 1.2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.2; }
+    }
+
+    /* Contato */
+    .contato {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+    .contato a {
+      color: var(--primary-l);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .contato a:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      .card { padding: 2rem 1.5rem; }
+      h1 { font-size: 1.35rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-orb bg-orb-1"></div>
+  <div class="bg-orb bg-orb-2"></div>
+  <div class="bg-orb bg-orb-3"></div>
+
+  <div class="card">
+
+    <div class="logo">
+      <div class="logo-icon">💊</div>
+      <span class="logo-name">MedControl</span>
+    </div>
+
+    <div class="icon-wrap">
+      <span>⚙️</span>
+    </div>
+
+    <h1>Sistema em manutenção</h1>
+    <p class="subtitle">
+      Estamos realizando melhorias para oferecer uma experiência ainda melhor.<br>
+      Voltamos em breve.
+    </p>
+
+    <div class="progress-wrap">
+      <div class="progress-bar"></div>
+    </div>
+
+    <div class="eta">
+      <div class="eta-dot"></div>
+      Previsão de retorno: em breve <!-- ← altere aqui -->
+    </div>
+
+    <div class="contato">
+      Dúvidas? Entre em contato:<br>
+      <a href="https://wa.me/5577988175300">📱 (77) 98817-5300</a> &nbsp;·&nbsp;
+      <a href="mailto:teilon66@gmail.com">teilon66@gmail.com</a>
+    </div>
+
+  </div>
+
+</body>
+</html>
