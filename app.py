@@ -1813,6 +1813,11 @@ def confirmar_email():
 # PÁGINAS LEGAIS — LGPD
 # =============================================================================
 
+@app.route('/healthz')
+def healthz():
+    return {'status': 'ok'}, 200
+
+
 @app.route('/sobre')
 def sobre():
     return render_template('sobre.html')
