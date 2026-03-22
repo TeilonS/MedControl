@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: medcontrol
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --workers 2 --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # preencher manualmente no painel do Render
+      - key: SECRET_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: ADMIN_PASS
+        sync: false
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: PYTHON_VERSION
+        value: "3.11.0"
