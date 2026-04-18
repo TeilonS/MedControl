@@ -358,6 +358,9 @@
     <a href="{{ url_for('gerar_pdf') }}" class="nav-item">
       <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
     </a>
+    <a href="{{ url_for('gerar_excel') }}" class="nav-item">
+      <i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel
+    </a>
     {% endif %}
 
     <div class="nav-section-title mt-3">API &amp; Integrações</div>
@@ -460,9 +463,14 @@
       <div style="color:var(--muted);font-size:.82rem;">{%- set dias_pt = ['Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado','Domingo'] -%}{%- set meses_pt = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] -%}{{ dias_pt[hoje.weekday()] }}, {{ '%02d' % hoje.day }} de {{ meses_pt[hoje.month-1] }} de {{ hoje.year }}</div>
     </div>
     <div class="topbar-actions">
-      <a href="{{ url_for('gerar_pdf') }}" class="btn btn-outline-soft">
-        <i class="bi bi-download me-1"></i> PDF
-      </a>
+      <div class="btn-group">
+        <a href="{{ url_for('gerar_pdf') }}" class="btn btn-outline-soft">
+          <i class="bi bi-file-pdf me-1"></i> PDF
+        </a>
+        <a href="{{ url_for('gerar_excel') }}" class="btn btn-outline-soft">
+          <i class="bi bi-file-earmark-spreadsheet me-1"></i> Excel
+        </a>
+      </div>
       <a href="{{ url_for('cadastro') }}" class="btn btn-primary-med">
         <i class="bi bi-plus-lg me-1"></i> Novo Medicamento
       </a>
@@ -523,10 +531,10 @@
     </div>
   </div>
 
-  <!-- SEARCH + CHART ROW -->
-  <div class="row g-3 mb-3">
-    <div class="col-lg-8">
-      <!-- Search &amp; Filter -->
+  <!-- SEARCH ROW -->
+  <div class="row mb-3">
+    <div class="col-12">
+      <!-- Search & Filter -->
       <form id="search-form" method="GET" action="{{ url_for('dashboard') }}">
         <div class="search-bar">
           <div class="search-input-wrap">
@@ -556,13 +564,25 @@
         </div>
       </form>
     </div>
+  </div>
 
-    <div class="col-lg-4">
-      <!-- Chart Card -->
+  <!-- CHARTS ROW -->
+  <div class="row g-3 mb-4">
+    <div class="col-lg-6">
+      <!-- Loss Analysis Chart -->
       <div class="chart-card h-100">
-        <div class="chart-title"><i class="bi bi-pie-chart me-2" style="color:var(--primary-l)"></i>Análise de Perdas</div>
+        <div class="chart-title"><i class="bi bi-pie-chart me-2" style="color:var(--primary-l)"></i>Análise de Perdas (R$)</div>
         <div class="chart-wrap">
           <canvas id="lossChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <!-- Stock Distribution Chart -->
+      <div class="chart-card h-100">
+        <div class="chart-title"><i class="bi bi-bar-chart-steps me-2" style="color:var(--orange)"></i>Distribuição de Estoque (Qtd)</div>
+        <div class="chart-wrap">
+          <canvas id="statusChart"></canvas>
         </div>
       </div>
     </div>
@@ -657,49 +677,13 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script>
-  // ── GRÁFICO DE PERDAS ─────────────────────────────────────────────────
-  const chartData = {{ chart_data | safe }};
-  const ctx = document.getElementById('lossChart').getContext('2d');
+  // Dados para os gráficos centralizados em static/js/charts.js
+  window.CHART_DATA = {{ chart_data | safe }};
+  window.STATS_DATA = {{ stats_json | safe }};
+</script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
 
-  new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: chartData.labels,
-      datasets: [{
-        data: chartData.values,
-        backgroundColor: chartData.colors.map(c => c + 'cc'),
-        borderColor: chartData.colors,
-        borderWidth: 2,
-        hoverOffset: 8,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '65%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#94a3b8', font: { family: 'DM Sans', size: 11 },
-            padding: 14, boxWidth: 12, boxHeight: 12,
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) {
-              const val = ctx.parsed;
-              return ' R$ ' + val.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            }
-          },
-          backgroundColor: '#1e293b', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1,
-          titleColor: '#f1f5f9', bodyColor: '#94a3b8',
-          padding: 12, cornerRadius: 10,
-        }
-      },
-      animation: { animateRotate: true, duration: 800, easing: 'easeOutQuart' }
-    }
-  });
-
+<script>
   // ── AUTO-DISMISS TOAST ────────────────────────────────────────────────
   setTimeout(() => {
     document.querySelectorAll('.toast-alert').forEach(t => {

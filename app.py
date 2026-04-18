@@ -34,6 +34,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import cm
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
 import io, os, json, logging, random, string
+import openpyxl
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 import urllib.request, urllib.error, urllib.parse
 try:
     import resend as resend_sdk
@@ -308,6 +310,24 @@ class Medicamento(db.Model):
                 'rede_id':self.rede_id,'filial_id':self.filial_id}
 
 
+class IntegracaoConsys(db.Model):
+    """Armazena configuração da integração com o ERP Consys por rede."""
+    __tablename__ = 'integracoes_consys'
+    id              = db.Column(db.Integer, primary_key=True)
+    rede_id         = db.Column(db.Integer, db.ForeignKey('redes.id'), unique=True, nullable=False)
+    ativa           = db.Column(db.Boolean, default=False)
+    base_url        = db.Column(db.String(300), nullable=True)   # ex: https://api.consysonline.com.br
+    api_key         = db.Column(db.String(500), nullable=True)   # Bearer token / chave de API
+    cod_empresa     = db.Column(db.String(50),  nullable=True)   # Código da empresa no Consys
+    ultimo_sync     = db.Column(db.DateTime,    nullable=True)
+    sync_status     = db.Column(db.String(50),  default='nunca') # nunca | ok | erro
+    sync_mensagem   = db.Column(db.String(500), nullable=True)
+    criado_em       = db.Column(db.DateTime,    default=datetime.utcnow)
+    atualizado_em   = db.Column(db.DateTime,    default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    rede = db.relationship('Rede', backref=db.backref('integracao_consys', uselist=False))
+
+
 # =============================================================================
 # DECORADORES
 # =============================================================================
@@ -569,6 +589,7 @@ def dashboard():
         'values': [round(prejuizo, 2), round(valor_ok, 2)],
         'colors': ['#ef4444', '#10b981'],
     })
+    stats_json = json.dumps(stats)
 
     filiais = []
     if u.is_dono:
@@ -577,7 +598,7 @@ def dashboard():
         filiais = Usuario.query.filter_by(perfil='filial').all()
 
     return render_template('index.html',
-        medicamentos=medicamentos, stats=stats, chart_data=chart_data,
+        medicamentos=medicamentos, stats=stats, chart_data=chart_data, stats_json=stats_json,
         hoje=hoje,
         rede=u.rede if not u.is_superadmin else None, busca=busca, status_filtro=status,
         filiais=filiais, filial_filtro=filial_filtro, usuario=u,
@@ -2066,6 +2087,70 @@ def gerar_pdf():
                      as_attachment=True)
 
 
+@app.route('/relatorio/excel')
+@assinatura_required
+def gerar_excel():
+    hoje = date.today()
+    u    = get_usuario_atual()
+    meds = get_medicamentos_query().order_by(Medicamento.data_validade.asc()).all()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Medicamentos"
+
+    # Estilos
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+    center_align = Alignment(horizontal="center")
+    border = Border(left=Side(style='thin'), right=Side(style='thin'),
+                    top=Side(style='thin'), bottom=Side(style='thin'))
+
+    # Cabeçalho
+    colunas = ['#', 'Nome', 'Fabricante', 'Código de Barras', 'Lote', 'Validade', 'Qtd', 'Preço Unit.', 'Total', 'Status']
+    ws.append(colunas)
+
+    for cell in ws[1]:
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_align
+        cell.border = border
+
+    # Dados
+    for i, m in enumerate(meds, 1):
+        status_label = m.status_label
+        row = [
+            i, m.nome, m.fabricante or '', m.codigo_barras or '',
+            m.lote, m.data_validade.strftime('%d/%m/%Y'),
+            m.quantidade, m.preco_unitario, m.valor_total, status_label
+        ]
+        ws.append(row)
+
+        # Formatação condicional simples (cores para status) e bordas
+        row_idx = i + 1
+        for col_idx, cell in enumerate(ws[row_idx], 1):
+            cell.border = border
+            if col_idx in [1, 6, 7, 8, 9, 10]:
+                cell.alignment = center_align
+            if col_idx in [8, 9]:
+                cell.number_format = '"R$ "#,##0.00'
+
+    # Ajuste de largura das colunas
+    larguras = [5, 35, 20, 20, 15, 12, 8, 15, 15, 15]
+    for i, largura in enumerate(larguras, 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(i)].width = largura
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    return send_file(
+        buffer,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        download_name=f'relatorio_{hoje.strftime("%Y%m%d")}.xlsx',
+        as_attachment=True
+    )
+
+
 # =============================================================================
 # INICIALIZAÇÃO
 # =============================================================================
@@ -2167,22 +2252,5 @@ with app.app_context():
 if __name__ == '__main__':
     app.run(debug=os.environ.get('FLASK_DEBUG', '0') == '1',
             host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
-class IntegracaoConsys(db.Model):
-    """Armazena configuração da integração com o ERP Consys por rede."""
-    __tablename__ = 'integracoes_consys'
-    id              = db.Column(db.Integer, primary_key=True)
-    rede_id         = db.Column(db.Integer, db.ForeignKey('redes.id'), unique=True, nullable=False)
-    ativa           = db.Column(db.Boolean, default=False)
-    base_url        = db.Column(db.String(300), nullable=True)   # ex: https://api.consysonline.com.br
-    api_key         = db.Column(db.String(500), nullable=True)   # Bearer token / chave de API
-    cod_empresa     = db.Column(db.String(50),  nullable=True)   # Código da empresa no Consys
-    ultimo_sync     = db.Column(db.DateTime,    nullable=True)
-    sync_status     = db.Column(db.String(50),  default='nunca') # nunca | ok | erro
-    sync_mensagem   = db.Column(db.String(500), nullable=True)
-    criado_em       = db.Column(db.DateTime,    default=datetime.utcnow)
-    atualizado_em   = db.Column(db.DateTime,    default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    rede = db.relationship('Rede', backref=db.backref('integracao_consys', uselist=False))
 
 
