@@ -36,20 +36,20 @@
 
     /* EXPIRED BANNER */
     .expired-banner {
-      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+      background: var(--red-bg, rgba(239,68,68,0.08)); border: 1px solid var(--border);
       border-radius: 16px; padding: 1.2rem 1.6rem; margin-bottom: 2rem;
       display: flex; align-items: center; gap: 1rem;
-      font-size: .9rem; color: #fca5a5;
+      font-size: .9rem; color: var(--red, #ef4444);
     }
 
     /* HEADER */
     .plans-header { text-align: center; margin-bottom: 2.5rem; }
-    .plans-header h1 { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 2rem; margin-bottom: .5rem; }
+    .plans-header h1 { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 2rem; margin-bottom: .5rem; color: var(--text); }
     .plans-header p { font-size: .9rem; color: var(--muted); }
     .anvisa-note {
       display: inline-flex; align-items: center; gap: .5rem;
-      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2);
-      color: #fca5a5; font-size: .78rem; padding: .35rem .9rem; border-radius: 20px;
+      background: var(--red-bg, rgba(239,68,68,0.1)); border: 1px solid var(--border);
+      color: var(--red, #ef4444); font-size: .78rem; padding: .35rem .9rem; border-radius: 20px;
       margin-top: .7rem;
     }
 
@@ -96,7 +96,7 @@
     .plan-currency { font-size: .85rem; color: var(--primary-l); font-weight: 700; }
     .plan-val { font-family: 'Syne', sans-serif; font-weight: 900; font-size: 2rem; color: var(--primary-l); line-height: 1; }
     .plan-period { font-size: .72rem; color: var(--muted); }
-    .plan-annual { font-size: .7rem; color: #f59e0b; margin-bottom: .9rem; font-weight: 600; }
+    .plan-annual { font-size: .7rem; color: var(--orange); margin-bottom: .9rem; font-weight: 600; }
     .plan-features { list-style: none; }
     .plan-features li {
       display: flex; align-items: center; gap: .45rem;
@@ -120,6 +120,7 @@
     .btn-checkout:hover { transform: translateY(-2px); box-shadow: 0 10px 36px rgba(20,184,166,0.45); color: white; }
     .checkout-note { font-size: .75rem; color: var(--muted); margin-top: .8rem; }
     .mp-logo { display: inline-flex; align-items: center; gap: .35rem; font-size: .75rem; color: var(--muted); }
+    .mp-logo i { color: var(--primary-l); }
 
     /* GARANTIAS */
     .garantias { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--card-border); }

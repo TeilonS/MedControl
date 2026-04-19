@@ -8,6 +8,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#064e3b">
   <style>
     body { display: flex; min-height: 100vh; }
     @media (max-width: 992px) { body { display: block; } }
@@ -115,16 +117,28 @@
       text-decoration: none; transition: all .2s; background: transparent;
     }
     .pill:hover, .pill.active { color: white; border-color: transparent; }
-    .pill.p-all.active     { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.2); }
-    .pill.p-red.active     { background: rgba(239,68,68,0.2); border-color: var(--red); color: #fca5a5; }
-    .pill.p-orange.active  { background: rgba(249,115,22,0.2); border-color: var(--orange); color: #fdba74; }
-    .pill.p-yellow.active  { background: rgba(234,179,8,0.2); border-color: var(--yellow); color: #fde047; }
-    .pill.p-green.active   { background: rgba(34,197,94,0.2); border-color: var(--green); color: #86efac; }
+    .pill.p-all.active     { background: var(--surface2); color: var(--text); border-color: var(--border); }
+    .pill.p-red.active     { background: var(--red); color: white; }
+    .pill.p-orange.active  { background: var(--orange); color: white; }
+    .pill.p-yellow.active  { background: var(--yellow); color: white; }
+    .pill.p-green.active   { background: var(--green); color: white; }
 
     /* ── TABLE ── */
     .table-card {
       background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; overflow: hidden;
     }
+    .bulk-actions-bar {
+      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px);
+      background: var(--primary); color: white; padding: .8rem 1.5rem; border-radius: 16px;
+      display: flex; align-items: center; gap: 1.5rem; z-index: 1000;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: transform .3s cubic-bezier(.4,0,.2,1);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .bulk-actions-bar.active { transform: translateX(-50%) translateY(0); }
+    .bulk-count { font-weight: 700; font-size: .9rem; border-right: 1px solid rgba(255,255,255,0.2); padding-right: 1.5rem; }
+    .btn-bulk-del { background: rgba(255,255,255,0.1); border: none; color: white; padding: .4rem .8rem; border-radius: 8px; font-size: .8rem; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .btn-bulk-del:hover { background: var(--red); }
+    
     .table-head-row th {
       background: var(--surface2); color: var(--muted);
       font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
@@ -145,10 +159,10 @@
       padding: .25rem .7rem; border-radius: 20px; font-size: .73rem; font-weight: 700; white-space: nowrap;
     }
     .status-chip .dot { width: 6px; height: 6px; border-radius: 50%; }
-    .chip-vencido   { background: rgba(239,68,68,0.15);  color: #fca5a5; }
-    .chip-alerta_30 { background: rgba(249,115,22,0.15); color: #fdba74; }
-    .chip-alerta_60 { background: rgba(234,179,8,0.15);  color: #fde047; }
-    .chip-ok        { background: rgba(34,197,94,0.15);  color: #86efac; }
+    .chip-vencido   { background: var(--red-bg, rgba(239,68,68,0.15));  color: var(--red, #ef4444); }
+    .chip-alerta_30 { background: var(--orange-bg, rgba(249,115,22,0.15)); color: var(--orange, #f97316); }
+    .chip-alerta_60 { background: var(--yellow-bg, rgba(234,179,8,0.15));  color: var(--yellow, #ca8a04); }
+    .chip-ok        { background: var(--green-bg, rgba(34,197,94,0.15));  color: var(--green, #16a34a); }
     .dot-vencido   { background: var(--red); }
     .dot-alerta_30 { background: var(--orange); }
     .dot-alerta_60 { background: var(--yellow); }
@@ -479,9 +493,9 @@
 
   <!-- ALERTA DE RENOVAÇÃO -->
   {% if alerta_renovacao %}
-  <div style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);border-radius:12px;padding:.85rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:.8rem;">
-    <i class="bi bi-exclamation-triangle-fill" style="color:#f97316;font-size:1.1rem"></i>
-    <span style="font-size:.88rem;color:#fdba74">
+  <div style="background:var(--orange-bg, rgba(249,115,22,0.12)); border:1px solid var(--orange); border-radius:12px; padding:.85rem 1.2rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:.8rem;">
+    <i class="bi bi-exclamation-triangle-fill" style="color:var(--orange); font-size:1.1rem"></i>
+    <span style="font-size:.88rem; color:var(--text)">
       <strong>Atenção:</strong> Sua assinatura expira em <strong>{{ dias_restantes }} dia(s)</strong>. Entre em contato para renovar e manter o acesso.
     </span>
   </div>
@@ -604,6 +618,7 @@
       <table class="table mb-0">
         <thead>
           <tr class="table-head-row">
+            <th style="width:40px"><input type="checkbox" id="select-all-meds" class="form-check-input"></th>
             <th>Medicamento</th>
             <th>Cód. Barras</th>
             <th>Lote</th>
@@ -618,6 +633,7 @@
         <tbody id="meds-tbody">
           {% for med in medicamentos %}
           <tr class="row-{{ med.status }}">
+            <td><input type="checkbox" class="med-checkbox form-check-input" data-id="{{ med.id }}"></td>
             <td>
               <div class="med-name">{{ med.nome }}</div>
               {% if med.fabricante %}<div class="med-code">{{ med.fabricante }}</div>{% endif %}
@@ -672,6 +688,15 @@
     {% endif %}
   </div>
 
+  <!-- BARRA DE AÇÕES EM MASSA -->
+  <div class="bulk-actions-bar" id="bulk-bar">
+    <div class="bulk-count"><span id="selected-count">0</span> selecionados</div>
+    <button class="btn-bulk-del" onclick="handleBulkDelete()">
+      <i class="bi bi-trash3 me-2"></i> Excluir selecionados
+    </button>
+    <button class="btn-bulk-del" style="background:transparent;" onclick="cancelSelection()">Cancelar</button>
+  </div>
+
 </main>
 
 <!-- Chart.js -->
@@ -698,18 +723,18 @@
 <!-- ── MODAL FEEDBACK ──────────────────────────────────────────────────── -->
 <div class="modal fade" id="feedbackModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background:#1e293b;border:1px solid rgba(255,255,255,0.08);border-radius:20px;">
-      <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.07);">
-        <h5 class="modal-title" style="font-family:'Syne',sans-serif;font-weight:700;color:var(--text);">
-          <i class="bi bi-chat-heart me-2" style="color:#14b8a6"></i>Enviar Feedback
+    <div class="modal-content" style="background:var(--card-bg); border:1px solid var(--border); border-radius:20px;">
+      <div class="modal-header" style="border-bottom:1px solid var(--border);">
+        <h5 class="modal-title" style="font-family:'Syne',sans-serif; font-weight:700; color:var(--text);">
+          <i class="bi bi-chat-heart me-2" style="color:var(--primary-l)"></i>Enviar Feedback
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" style="filter: var(--btn-close-filter, none);"></button>
       </div>
       <form method="POST" action="/feedback">
         <div class="modal-body" style="padding:1.5rem;">
           <div class="mb-3">
-            <label style="color:#94a3b8;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Categoria</label>
-            <select name="categoria" style="width:100%;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.09);color:#f1f5f9;border-radius:12px;padding:.65rem .9rem;font-family:'DM Sans',sans-serif;">
+            <label style="color:var(--muted); font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; display:block; margin-bottom:.35rem;">Categoria</label>
+            <select name="categoria" class="form-select">
               <option value="Sugestão">💡 Sugestão de melhoria</option>
               <option value="Bug">🐛 Reportar bug</option>
               <option value="Elogio">⭐ Elogio</option>
@@ -718,21 +743,18 @@
             </select>
           </div>
           <div class="mb-1">
-            <label style="color:#94a3b8;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:.35rem;">Mensagem <span style="color:#ef4444">*</span></label>
-            <textarea name="mensagem" rows="5" required placeholder="Descreva sua sugestão, problema ou elogio..."
-              style="width:100%;background:rgba(15,23,42,0.7);border:1px solid rgba(255,255,255,0.09);color:#f1f5f9;border-radius:12px;padding:.75rem .9rem;font-family:'DM Sans',sans-serif;resize:vertical;"></textarea>
+            <label style="color:var(--muted); font-size:.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; display:block; margin-bottom:.35rem;">Mensagem <span style="color:var(--red)">*</span></label>
+            <textarea name="mensagem" class="form-control" rows="5" required placeholder="Descreva sua sugestão, problema ou elogio..."></textarea>
           </div>
-          <div style="font-size:.75rem;color:#475569;margin-top:.4rem;">
+          <div style="font-size:.75rem; color:var(--muted); margin-top:.4rem;">
             <i class="bi bi-info-circle me-1"></i>Seu feedback será enviado diretamente ao desenvolvedor.
           </div>
         </div>
-        <div class="modal-footer" style="border-top:1px solid var(--card-border);padding:1rem 1.5rem;gap:.7rem;">
-          <button type="button" class="btn" data-bs-dismiss="modal"
-                  style="background:transparent;border:1px solid var(--card-border);color:var(--muted);border-radius:10px;padding:.6rem 1.2rem;">
+        <div class="modal-footer" style="border-top:1px solid var(--border); padding:1rem 1.5rem; gap:.7rem;">
+          <button type="button" class="btn btn-outline-soft" data-bs-dismiss="modal">
             Cancelar
           </button>
-          <button type="submit"
-                  style="background:linear-gradient(135deg,#0f766e,#14b8a6);border:none;color:white;border-radius:10px;padding:.6rem 1.5rem;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;">
+          <button type="submit" class="btn-primary-med">
             <i class="bi bi-send me-2"></i>Enviar Feedback
           </button>
         </div>
@@ -796,10 +818,10 @@
       const delForm = `<form method="POST" action="/excluir/${m.id}" style="display:inline" onsubmit="return confirm('Excluir ${m.nome}?')"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" class="btn-action del" title="Excluir"><i class="bi bi-trash3"></i></button></form>`;
       const barcode = m.codigo_barras ? `<span class="lote-badge">${m.codigo_barras}</span>` : '—'; // mobile hidden
       const lote    = `<span class="lote-badge">${m.lote}</span>`;
-      const validadeClass = m.status === 'vencido' ? 'style="color:#ef4444;font-weight:600"' : '';
-      const statusBorder  = m.status === 'vencido' ? 'border-left:3px solid #ef4444'
-                          : m.status === 'alerta_30' ? 'border-left:3px solid #f97316'
-                          : m.status === 'alerta_60' ? 'border-left:3px solid #eab308' : '';
+      const validadeClass = m.status === 'vencido' ? 'style="color:var(--red);font-weight:600"' : '';
+      const statusBorder  = m.status === 'vencido' ? 'border-left:3px solid var(--red)'
+                          : m.status === 'alerta_30' ? 'border-left:3px solid var(--orange)'
+                          : m.status === 'alerta_60' ? 'border-left:3px solid var(--yellow)' : '';
       const subNome = m.fabricante
         ? `<div class="med-code">${m.fabricante}</div>`
         : (m.filial_nome ? `<div class="med-code">${m.filial_nome}</div>` : '');
@@ -861,6 +883,65 @@
       });
     });
   })();
+
+  // ── CONTROLE DE AÇÕES EM MASSA ───────────────────────────────────────
+  (function() {
+    const selectAll  = document.getElementById('select-all-meds');
+    const bulkBar    = document.getElementById('bulk-bar');
+    const countSpan  = document.getElementById('selected-count');
+
+    function updateBulkBar() {
+      const selected = document.querySelectorAll('.med-checkbox:checked');
+      const count = selected.length;
+      countSpan.textContent = count;
+      if (count > 0) bulkBar.classList.add('active');
+      else bulkBar.classList.remove('active');
+    }
+
+    if (selectAll) {
+      selectAll.addEventListener('change', function() {
+        document.querySelectorAll('.med-checkbox').forEach(cb => {
+          cb.checked = this.checked;
+        });
+        updateBulkBar();
+      });
+    }
+
+    document.addEventListener('change', function(e) {
+      if (e.target.classList.contains('med-checkbox')) {
+        updateBulkBar();
+      }
+    });
+
+    window.cancelSelection = function() {
+      document.querySelectorAll('.med-checkbox, #select-all-meds').forEach(cb => cb.checked = false);
+      updateBulkBar();
+    };
+
+    window.handleBulkDelete = function() {
+      const selected = Array.from(document.querySelectorAll('.med-checkbox:checked')).map(cb => cb.dataset.id);
+      if (!selected.length) return;
+
+      if (!confirm(`Excluir ${selected.length} medicamentos permanentemente?`)) return;
+
+      fetch('/medicamentos/bulk-excluir', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ ids: selected })
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Erro: ' + data.message);
+        }
+      });
+    };
+  })();
   </script>
 
 
@@ -919,5 +1000,12 @@
     if (btn) btn.textContent = t === 'dark' ? '🌙 Escuro' : '☀️ Claro';
   })();
 </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/static/sw.js');
+      });
+    }
+  </script>
 </body>
 </html>

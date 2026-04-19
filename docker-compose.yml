@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    environment:
+      - FLASK_DEBUG=1
+      - SECRET_KEY=dev_secret_key_123
+      - DATABASE_URL=sqlite:///medcontrol_dev.db
+      - ADMIN_PASS=admin123
+    restart: always

@@ -13,30 +13,41 @@
 =============================================================================
 */
 
-// ── TEMA GLOBAL DOS GRÁFICOS ──────────────────────────────────────────
-Chart.defaults.color          = '#94a3b8';
-Chart.defaults.font.family    = "'DM Sans', sans-serif";
-Chart.defaults.font.size      = 12;
-Chart.defaults.borderColor    = 'rgba(255,255,255,0.06)';
-Chart.defaults.backgroundColor = 'rgba(255,255,255,0.03)';
-
-// ── PALETA DE CORES PADRÃO ────────────────────────────────────────────
-const COLORS = {
-  red:    '#ef4444',
-  orange: '#f97316',
-  yellow: '#eab308',
-  green:  '#22c55e',
-  teal:   '#14b8a6',
-  blue:   '#3b82f6',
-  purple: '#a855f7',
-  muted:  '#475569',
+// ── AUX: LER CORES DO TEMA ───────────────────────────────────────────
+const getThemeColor = (varName, fallback) => {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || fallback;
 };
+
+// ── TEMA GLOBAL DOS GRÁFICOS ──────────────────────────────────────────
+const updateChartDefaults = () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const textColor = getThemeColor('--muted', '#94a3b8');
+  const gridColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)';
+
+  Chart.defaults.color          = textColor;
+  Chart.defaults.font.family    = "'DM Sans', sans-serif";
+  Chart.defaults.font.size      = 12;
+  Chart.defaults.borderColor    = gridColor;
+};
+
+// ── PALETA DE CORES DINÂMICA ──────────────────────────────────────────
+const getPalette = () => ({
+  red:    getThemeColor('--red',    '#ef4444'),
+  orange: getThemeColor('--orange', '#f97316'),
+  yellow: getThemeColor('--yellow', '#ca8a04'),
+  green:  getThemeColor('--green',  '#16a34a'),
+  teal:   getThemeColor('--primary-l', '#0d9488'),
+  bg:     getThemeColor('--card-bg', '#1e293b'),
+  text:   getThemeColor('--text', '#f1f5f9'),
+});
 
 // ── FUNÇÃO: GRÁFICO DE ROSCA (PERDAS vs ESTOQUE) ──────────────────────
 function initLossChart(canvasId, data) {
   const canvas = document.getElementById(canvasId);
   if (!canvas || !data) return null;
 
+  updateChartDefaults();
+  const palette = getPalette();
   const ctx = canvas.getContext('2d');
 
   return new Chart(ctx, {
@@ -45,8 +56,8 @@ function initLossChart(canvasId, data) {
       labels: data.labels,
       datasets: [{
         data:            data.values,
-        backgroundColor: data.colors.map(c => c + 'cc'),
-        borderColor:     data.colors,
+        backgroundColor: [palette.red + 'cc', palette.green + 'cc'],
+        borderColor:     [palette.red, palette.green],
         borderWidth:     2,
         hoverOffset:     10,
       }]
@@ -59,7 +70,7 @@ function initLossChart(canvasId, data) {
         legend: {
           position: 'bottom',
           labels: {
-            color:     '#94a3b8',
+            color:     getThemeColor('--muted', '#94a3b8'),
             font:      { family: 'DM Sans', size: 11 },
             padding:   14,
             boxWidth:  12,
@@ -71,25 +82,18 @@ function initLossChart(canvasId, data) {
             label: function(ctx) {
               const val = ctx.parsed;
               return ' R$ ' + val.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-            },
-            title: function(items) {
-              return items[0].label;
             }
           },
-          backgroundColor: '#1e293b',
+          backgroundColor: palette.bg,
           borderColor:     'rgba(255,255,255,0.1)',
           borderWidth:     1,
-          titleColor:      '#f1f5f9',
-          bodyColor:       '#94a3b8',
+          titleColor:      palette.text,
+          bodyColor:       getThemeColor('--muted', '#94a3b8'),
           padding:         12,
           cornerRadius:    10,
         }
       },
-      animation: {
-        animateRotate: true,
-        duration:      900,
-        easing:        'easeOutQuart',
-      }
+      animation: { animateRotate: true, duration: 900, easing: 'easeOutQuart' }
     }
   });
 }
@@ -99,22 +103,24 @@ function initStatusBarChart(canvasId, stats) {
   const canvas = document.getElementById(canvasId);
   if (!canvas || !stats) return null;
 
+  updateChartDefaults();
+  const palette = getPalette();
   const ctx = canvas.getContext('2d');
 
   return new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Vencidos', 'Próx. 30 dias', 'Próx. 60 dias', 'OK'],
+      labels: ['Vencidos', '30 dias', '60 dias', 'OK'],
       datasets: [{
         label:           'Medicamentos',
         data:            [stats.vencidos, stats.alerta_30, stats.alerta_60, stats.ok],
         backgroundColor: [
-          COLORS.red    + '33',
-          COLORS.orange + '33',
-          COLORS.yellow + '33',
-          COLORS.green  + '33',
+          palette.red    + '33',
+          palette.orange + '33',
+          palette.yellow + '33',
+          palette.green  + '33',
         ],
-        borderColor: [COLORS.red, COLORS.orange, COLORS.yellow, COLORS.green],
+        borderColor: [palette.red, palette.orange, palette.yellow, palette.green],
         borderWidth:  2,
         borderRadius: 8,
         borderSkipped: false,
@@ -126,23 +132,19 @@ function initStatusBarChart(canvasId, stats) {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1e293b',
+          backgroundColor: palette.bg,
           borderColor:     'rgba(255,255,255,0.1)',
           borderWidth:     1,
-          titleColor:      '#f1f5f9',
-          bodyColor:       '#94a3b8',
+          titleColor:      palette.text,
+          bodyColor:       getThemeColor('--muted', '#94a3b8'),
           padding:         12,
           cornerRadius:    10,
         }
       },
       scales: {
-        x: {
-          grid:  { color: 'rgba(255,255,255,0.04)' },
-          ticks: { color: '#64748b' },
-        },
+        x: { ticks: { color: getThemeColor('--muted', '#64748b') }, grid: { display: false } },
         y: {
-          grid:      { color: 'rgba(255,255,255,0.04)' },
-          ticks:     { color: '#64748b', stepSize: 1 },
+          ticks:     { color: getThemeColor('--muted', '#64748b'), stepSize: 1 },
           beginAtZero: true,
         }
       },

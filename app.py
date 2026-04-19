@@ -21,6 +21,8 @@
 
 from flask import (Flask, render_template, request, redirect,
                    url_for, session, jsonify, send_file, flash, abort)
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_limiter import Limiter
@@ -46,6 +48,16 @@ try:
     import requests as _requests
 except ImportError:
     _requests = None
+
+# ── SENTRY MONITORING ───────────────────────────────────────────────
+SENTRY_DSN = os.environ.get('SENTRY_DSN')
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[FlaskIntegration()],
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
 
 app = Flask(__name__)
 
@@ -2013,6 +2025,30 @@ def api_listar_filiais():
     return jsonify({'success': True, 'total': len(data), 'data': data})
 
 
+@app.route('/medicamentos/bulk-excluir', methods=['POST'])
+@assinatura_required
+def bulk_excluir():
+    ids = request.json.get('ids', [])
+    if not ids:
+        return jsonify({'success': False, 'message': 'Nenhum item selecionado.'}), 400
+    
+    u = get_usuario_atual()
+    query = Medicamento.query.filter(Medicamento.id.in_(ids))
+    
+    # Segurança: garante que o usuário só delete o que é dele
+    if not u.is_superadmin:
+        if u.is_dono:
+            query = query.filter_by(rede_id=u.rede_id)
+        else:
+            query = query.filter_by(filial_id=u.id)
+            
+    count = query.delete(synchronize_session=False)
+    db.session.commit()
+    
+    audit('bulk_excluir', f'count={count} ids={ids}')
+    return jsonify({'success': True, 'message': f'{count} medicamentos excluídos.'})
+
+
 # =============================================================================
 # PDF
 # =============================================================================
@@ -2213,40 +2249,34 @@ with app.app_context():
     if os.environ.get('RESET_DB') == '1':
         db.drop_all()
     db.create_all()
-    # Migração: adiciona colunas novas se não existirem (PostgreSQL e SQLite)
-    try:
-        with db.engine.connect() as conn:
-            for col_sql in [
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS termos_aceitos BOOLEAN DEFAULT FALSE",
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS termos_aceitos_em TIMESTAMP",
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_confirmado BOOLEAN DEFAULT FALSE",
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_codigo VARCHAR(10)",
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email_codigo_exp TIMESTAMP",
-                "ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS email VARCHAR(150)",
-            ]:
-                conn.execute(db.text(col_sql))
-            conn.commit()
-    except Exception:
-        pass
-    # Cria tabela de integração Consys se não existir (create_all já faz isso,
-    # mas garantimos aqui para bancos existentes)
-    try:
-        db.create_all()
-    except Exception:
-        pass
-    # Migrar colunas novas da Rede (trial + MP)
-    try:
-        with db.engine.connect() as conn:
-            for col_sql in [
-                "ALTER TABLE redes ADD COLUMN IF NOT EXISTS trial BOOLEAN DEFAULT TRUE",
-                "ALTER TABLE redes ADD COLUMN IF NOT EXISTS trial_inicio TIMESTAMP",
-                "ALTER TABLE redes ADD COLUMN IF NOT EXISTS mp_assinatura_id VARCHAR(100)",
-                "ALTER TABLE redes ADD COLUMN IF NOT EXISTS mp_payer_email VARCHAR(150)",
-            ]:
-                conn.execute(db.text(col_sql))
-            conn.commit()
-    except Exception:
-        pass
+    # Migração: adiciona colunas novas individualmente para compatibilidade (PostgreSQL e SQLite)
+    with db.engine.connect() as conn:
+        # Colunas para Usuarios
+        for col_name, col_type in [
+            ("termos_aceitos", "BOOLEAN DEFAULT FALSE"),
+            ("termos_aceitos_em", "TIMESTAMP"),
+            ("email_confirmado", "BOOLEAN DEFAULT FALSE"),
+            ("email_codigo", "VARCHAR(10)"),
+            ("email_codigo_exp", "TIMESTAMP"),
+            ("email", "VARCHAR(150)"),
+        ]:
+            try:
+                conn.execute(db.text(f"ALTER TABLE usuarios ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+            except Exception: pass # Coluna já existe
+
+        # Colunas para Redes
+        for col_name, col_type in [
+            ("trial", "BOOLEAN DEFAULT TRUE"),
+            ("trial_inicio", "TIMESTAMP"),
+            ("mp_assinatura_id", "VARCHAR(100)"),
+            ("mp_payer_email", "VARCHAR(150)"),
+        ]:
+            try:
+                conn.execute(db.text(f"ALTER TABLE redes ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+            except Exception: pass # Coluna já existe
+
     seed_database()
 
 if __name__ == '__main__':

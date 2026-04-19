@@ -1,23 +1,25 @@
-# 💊 MedControl
+# 💊 MedControl — SaaS de Controle de Validades
 
-> **SaaS de controle de validade de medicamentos para farmácias e redes farmacêuticas.**
+> **SaaS profissional de gestão de vencimentos para farmácias e redes farmacêuticas.**
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python&logoColor=white)](https://python.org)
 [![Flask](https://img.shields.io/badge/Flask-3.x-000000?style=flat&logo=flask)](https://flask.palletsprojects.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-3ECF8E?style=flat&logo=supabase)](https://supabase.com)
-[![License](https://img.shields.io/badge/license-BSL%201.1-blue)](LICENSE)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Sentry](https://img.shields.io/badge/Sentry-Monitoring-362D59?style=flat&logo=sentry&logoColor=white)](https://sentry.io)
 
 ---
 
-## 📋 Sobre o Projeto
+## 🚀 Novidades da Versão Premium
 
-O **MedControl** é um sistema web multi-tenant para controle de validade de medicamentos, voltado para farmácias independentes e redes farmacêuticas. Permite que donos de rede e filiais cadastrem, monitorem e exportem relatórios de medicamentos com alertas automáticos de vencimento.
-
-Acesse em produção: **[www.medcontrol.app.br](https://www.medcontrol.app.br)**
+- **Interface Emerald Deep**: Paleta moderna com efeitos **Glassmorphism** e tipografia **Inter**.
+- **Ações em Massa**: Seleção múltipla e exclusão rápida de medicamentos diretamente na tabela.
+- **Docker Ready**: Ambiente padronizado para desenvolvimento e produção via containers.
+- **Monitoramento Sentry**: Detecção e alerta de erros em tempo real.
+- **Relatórios Avançados**: Exportação em PDF e Excel (.xlsx) formatados.
 
 ---
 
-## ✨ Funcionalidades
+## ✨ Funcionalidades Core
 
 - **Dashboard em tempo real** com cards de status (Vencidos, 30 dias, 60 dias, OK)
 - **Cadastro de medicamentos** com código de barras (EAN-13), lote, validade, fabricante e preço
@@ -78,35 +80,24 @@ medcontrol/
         └── rede_form.html
 ```
 
----
+### Rodando com Docker (Recomendado)
 
-## 🚀 Rodando Localmente
-
-### Pré-requisitos
-
-- Python 3.11+
-- PostgreSQL (ou conta no [Supabase](https://supabase.com) — plano gratuito funciona)
-- Conta no [Resend](https://resend.com) para envio de e-mails (opcional em dev)
-
-### Instalação
+O MedControl agora suporta Docker para facilitar o desenvolvimento local.
 
 ```bash
-# 1. Clone o repositório
+# 1. Clone e entre na pasta
 git clone https://github.com/seu-usuario/medcontrol.git
 cd medcontrol
 
-# 2. Crie e ative o ambiente virtual
-python -m venv venv
-source venv/bin/activate      # Linux/Mac
-venv\Scripts\activate         # Windows
-
-# 3. Instale as dependências
-pip install -r requirements.txt
-
-# 4. Configure as variáveis de ambiente
-cp .env.example .env
-# Edite o .env com suas credenciais
+# 2. Suba o container
+docker-compose up --build
 ```
+Acesse em: `http://localhost:5000`
+
+---
+
+### Instalação Manual (Alternativa)
+
 
 ### Variáveis de Ambiente
 

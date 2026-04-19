@@ -8,12 +8,12 @@
 
 /* ── SCROLLBAR PERSONALIZADA ─────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0f172a; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-l); }
 
 /* ── SELEÇÃO DE TEXTO ────────────────────────────────────────────────── */
-::selection { background: rgba(20, 184, 166, 0.25); color: #f1f5f9; }
+::selection { background: var(--primary-bg); color: var(--text); }
 
 /* ── TRANSIÇÃO GLOBAL DE PÁGINA ──────────────────────────────────────── */
 body { animation: fadeIn 0.3s ease; }
@@ -21,39 +21,39 @@ body { animation: fadeIn 0.3s ease; }
 
 /* ── TOOLTIPS BOOTSTRAP CUSTOMIZADOS ─────────────────────────────────── */
 .tooltip-inner {
-  background: #1e293b;
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #f1f5f9;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
   font-family: 'DM Sans', sans-serif;
   font-size: .78rem;
   border-radius: 8px;
   padding: .4rem .8rem;
 }
-.tooltip-arrow::before { border-top-color: #1e293b !important; }
+.tooltip-arrow::before { border-top-color: var(--surface) !important; }
 
 /* ── MODAL CUSTOMIZADO ───────────────────────────────────────────────── */
 .modal-backdrop { background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
 
 /* ── TABELA — ZEBRA SUAVE ────────────────────────────────────────────── */
 .table-zebra tbody tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.012);
+  background: var(--surface2);
 }
 
 /* ── FORM CONTROL — PLACEHOLDER ─────────────────────────────────────── */
 .form-control::placeholder,
-.form-select::placeholder { color: #475569; }
+.form-select::placeholder { color: var(--muted); }
 
 /* ── BADGE DE STATUS (uso geral) ─────────────────────────────────────── */
-.badge-vencido   { background: rgba(239, 68, 68, 0.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
-.badge-alerta_30 { background: rgba(249,115, 22, 0.15);  color: #fdba74; border: 1px solid rgba(249,115,22,0.3); }
-.badge-alerta_60 { background: rgba(234,179,  8, 0.15);  color: #fde047; border: 1px solid rgba(234,179,8,0.3); }
-.badge-ok        { background: rgba( 34,197, 94, 0.15);  color: #86efac; border: 1px solid rgba(34,197,94,0.3); }
+.badge-vencido   { background: var(--red-bg, rgba(239, 68, 68, 0.15));  color: var(--red, #ef4444); border: 1px solid var(--border); }
+.badge-alerta_30 { background: var(--orange-bg, rgba(249,115, 22, 0.15));  color: var(--orange, #f97316); border: 1px solid var(--border); }
+.badge-alerta_60 { background: var(--yellow-bg, rgba(234,179,  8, 0.15));  color: var(--yellow, #eab308); border: 1px solid var(--border); }
+.badge-ok        { background: var(--green-bg, rgba( 34,197, 94, 0.15));  color: var(--green, #22c55e); border: 1px solid var(--border); }
 
 /* ── CARD DE INTEGRAÇÃO HOVER ────────────────────────────────────────── */
 .integration-item { transition: background .2s, border-color .2s; }
 .integration-item:hover {
-  background: rgba(255,255,255,0.03);
-  border-color: rgba(255,255,255,0.2);
+  background: var(--surface2);
+  border-color: var(--border);
 }
 
 /* ── PRINT — RELATÓRIO ───────────────────────────────────────────────── */

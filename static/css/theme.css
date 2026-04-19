@@ -5,19 +5,19 @@
 
 /* ── TEMA CLARO (padrão) ── */
 :root {
-  --primary:       #0f766e;
-  --primary-l:     #0d9488;
-  --primary-xl:    #14b8a6;
-  --primary-bg:    #f0fdfa;
-  --accent:        #f59e0b;
-  --red:           #ef4444;
-  --orange:        #f97316;
-  --yellow:        #ca8a04;
-  --green:         #16a34a;
-  --sidebar-w:     260px;
-  --bg:            #f1f5f9;
+  --primary:       #064e3b; /* Emerald Deep */
+  --primary-l:     #059669;
+  --primary-xl:    #10b981;
+  --primary-bg:    #ecfdf5;
+  --accent:        #6366f1; /* Indigo para destaque */
+  --red:           #e11d48;
+  --orange:        #f59e0b;
+  --yellow:        #fbbf24;
+  --green:         #10b981;
+  --sidebar-w:     280px;
+  --bg:            #f8fafc;
   --surface:       #ffffff;
-  --surface2:      #f8fafc;
+  --surface2:      #f1f5f9;
   --border:        #e2e8f0;
   --border-l:      #f1f5f9;
   --text:          #0f172a;
@@ -27,54 +27,74 @@
   --sb-bg:         #ffffff;
   --sb-border:     #e2e8f0;
   --sb-text:       #475569;
-  --sb-active-bg:  #f0fdfa;
-  --sb-active-c:   #0f766e;
-  --sb-active-br:  #0d9488;
+  --sb-active-bg:  #ecfdf5;
+  --sb-active-c:   #064e3b;
+  --sb-active-br:  #059669;
   --card-bg:       #ffffff;
   --card-border:   #e2e8f0;
-  --card-shadow:   0 1px 4px rgba(0,0,0,0.06);
-  --card-hover:    0 6px 24px rgba(0,0,0,0.10);
+  --card-shadow:   0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+  --card-hover:    0 20px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
   --input-bg:      #ffffff;
   --input-border:  #cbd5e1;
   --input-text:    #0f172a;
-  --input-focus:   #0d9488;
+  --input-focus:   #10b981;
+  --glass:         rgba(255, 255, 255, 0.7);
+  --glass-border:  rgba(255, 255, 255, 0.5);
 }
 
 /* ── TEMA ESCURO ── */
 [data-theme="dark"] {
-  --bg:            #0f172a;
-  --surface:       #1e293b;
-  --surface2:      #273548;
-  --border:        rgba(255,255,255,0.07);
-  --border-l:      rgba(255,255,255,0.04);
-  --text:          #f1f5f9;
+  --bg:            #020617;
+  --surface:       #0f172a;
+  --surface2:      #1e293b;
+  --border:        rgba(255,255,255,0.06);
+  --border-l:      rgba(255,255,255,0.03);
+  --text:          #f8fafc;
   --text-2:        #cbd5e1;
   --muted:         #94a3b8;
   --muted-l:       #64748b;
-  --sb-bg:         #1e293b;
-  --sb-border:     rgba(255,255,255,0.07);
+  --sb-bg:         #0f172a;
+  --sb-border:     rgba(255,255,255,0.06);
   --sb-text:       #94a3b8;
-  --sb-active-bg:  rgba(15,118,110,0.2);
-  --sb-active-c:   #14b8a6;
-  --sb-active-br:  rgba(20,184,166,0.3);
-  --card-bg:       #1e293b;
-  --card-border:   rgba(255,255,255,0.07);
-  --card-shadow:   0 1px 4px rgba(0,0,0,0.3);
-  --card-hover:    0 6px 24px rgba(0,0,0,0.4);
-  --input-bg:      #273548;
+  --sb-active-bg:  rgba(16,185,129,0.1);
+  --sb-active-c:   #34d399;
+  --sb-active-br:  rgba(52,211,153,0.3);
+  --card-bg:       rgba(15, 23, 42, 0.6);
+  --card-border:   rgba(255,255,255,0.08);
+  --card-shadow:   0 10px 15px -3px rgba(0,0,0,0.3);
+  --card-hover:    0 25px 50px -12px rgba(0,0,0,0.5);
+  --input-bg:      #1e293b;
   --input-border:  rgba(255,255,255,0.1);
-  --input-text:    #f1f5f9;
-  --input-focus:   #14b8a6;
-  --primary-l:     #14b8a6;
-  --primary-xl:    #5eead4;
-  --primary-bg:    rgba(15,118,110,0.12);
-  --yellow:        #eab308;
-  --green:         #22c55e;
+  --input-text:    #f8fafc;
+  --input-focus:   #10b981;
+  --primary-l:     #34d399;
+  --primary-xl:    #6ee7b7;
+  --primary-bg:    rgba(6,78,59,0.2);
+  --glass:         rgba(15, 23, 42, 0.7);
+  --glass-border:  rgba(255, 255, 255, 0.05);
 }
 
 /* ══ BASE ══ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg) !important; color: var(--text) !important; font-family: 'DM Sans', Arial, sans-serif; min-height: 100vh; }
+body { 
+  background: var(--bg) !important; 
+  color: var(--text) !important; 
+  font-family: 'Inter', 'DM Sans', sans-serif; 
+  min-height: 100vh; 
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══ GLASSMORPHISM ══ */
+.glass-effect {
+  background: var(--glass) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.sidebar { @extend .glass-effect; }
+.topbar { @extend .glass-effect; }
+.modal-content { @extend .glass-effect; }
 
 /* ══ SIDEBAR ══ */
 .sidebar, aside.sidebar { background: var(--sb-bg) !important; border-right: 1px solid var(--sb-border) !important; }

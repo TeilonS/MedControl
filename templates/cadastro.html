@@ -306,8 +306,8 @@ function autofillField(name, value) {
   if (!el || el.value) return; // não sobrescreve campos já preenchidos
   el.value = value;
   el.style.transition = 'border-color .4s, box-shadow .4s';
-  el.style.borderColor = '#14b8a6';
-  el.style.boxShadow = '0 0 0 3px rgba(20,184,166,0.15)';
+  el.style.borderColor = 'var(--primary-l)';
+  el.style.boxShadow = '0 0 0 3px var(--primary-bg)';
   setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 3000);
 }
 
@@ -320,12 +320,12 @@ function showBanner(html, tipo) {
     document.querySelector('.form-card').prepend(b);
   }
   if (tipo === 'success') {
-    b.style.background = 'rgba(20,184,166,0.08)';
-    b.style.border = '1px solid rgba(20,184,166,0.25)';
-    b.style.color = '#5eead4';
+    b.style.background = 'var(--primary-bg)';
+    b.style.border = '1px solid var(--primary-l)';
+    b.style.color = 'var(--primary-l)';
   } else {
-    b.style.background = 'rgba(148,163,184,0.06)';
-    b.style.border = '1px solid rgba(148,163,184,0.15)';
+    b.style.background = 'var(--surface2)';
+    b.style.border = '1px solid var(--border)';
     b.style.color = 'var(--muted)';
   }
   b.innerHTML = html;
@@ -359,8 +359,8 @@ function processBarcode(code) {
           if (precoEl && !precoEl.value) {
             precoEl.value = parseFloat(m.preco_unitario).toFixed(2).replace('.', ',');
             precoEl.style.transition = 'border-color .4s, box-shadow .4s';
-            precoEl.style.borderColor = '#14b8a6';
-            precoEl.style.boxShadow = '0 0 0 3px rgba(20,184,166,0.15)';
+            precoEl.style.borderColor = 'var(--primary-l)';
+            precoEl.style.boxShadow = '0 0 0 3px var(--primary-bg)';
             setTimeout(() => { precoEl.style.borderColor = ''; precoEl.style.boxShadow = ''; }, 3000);
           }
         }
@@ -369,21 +369,21 @@ function processBarcode(code) {
         const orig = document.querySelector('[name="origem_cadastro"]');
         if (orig) orig.value = 'barcode';
 
-        res.innerHTML = `<i class="bi bi-check-circle-fill me-2" style="color:#10b981"></i>
+        res.innerHTML = `<i class="bi bi-check-circle-fill me-2" style="color:var(--green)"></i>
           Produto encontrado: <strong>${m.nome}</strong>`;
 
         showBanner(
           `<i class="bi bi-magic" style="font-size:1.1rem;margin-top:.1rem"></i>
            <div>
-             <strong style="color:#f1f5f9">Preenchimento automático</strong><br>
+             <strong style="color:var(--text)">Preenchimento automático</strong><br>
              Nome, fabricante, princípio ativo e preço foram preenchidos com base no histórico.
-             <span style="color:#64748b"> Lote e validade ficaram em branco — preencha com os dados da embalagem atual.</span>
-             <br><span style="font-size:.78rem;color:#64748b;margin-top:.3rem;display:block">Você pode alterar qualquer campo antes de salvar.</span>
+             <span style="color:var(--muted)"> Lote e validade ficaram em branco — preencha com os dados da embalagem atual.</span>
+             <br><span style="font-size:.78rem;color:var(--muted);margin-top:.3rem;display:block">Você pode alterar qualquer campo antes de salvar.</span>
            </div>`,
           'success'
         );
       } else {
-        res.innerHTML = `<i class="bi bi-info-circle me-2" style="color:#94a3b8"></i>
+        res.innerHTML = `<i class="bi bi-info-circle me-2" style="color:var(--muted)"></i>
           Código <strong>${code}</strong> não encontrado no sistema — preencha os campos manualmente.`;
         showBanner(
           `<i class="bi bi-info-circle" style="font-size:1.1rem;margin-top:.1rem"></i>
