@@ -224,7 +224,7 @@ p { color: var(--text-2); }
 .theme-toggle::after {
   content: ''; position: absolute;
   width: 14px; height: 14px; border-radius: 50%;
-  background: var(--primary); top: 2px; left: 2px; transition: transform .3s;
+  background: var(--text); top: 2px; left: 2px; transition: transform .3s, background .3s;
 }
 [data-theme="dark"] .theme-toggle { background: var(--primary); border-color: var(--primary-l); }
 [data-theme="dark"] .theme-toggle::after { transform: translateX(18px); background: white; }
