@@ -92,10 +92,10 @@ def datefmt_ptbr(d):
 
 _secret = os.environ.get('SECRET_KEY')
 if not _secret:
-    raise RuntimeError("SECRET_KEY não definida! Adicione nas variáveis do Railway.")
+    raise RuntimeError("SECRET_KEY não definida! Adicione nas variáveis do Render.")
 app.secret_key = _secret
 
-_is_prod = os.environ.get('RAILWAY_ENVIRONMENT') or os.environ.get('DATABASE_URL', '').startswith('postgresql')
+_is_prod = os.environ.get('DATABASE_URL', '').startswith('postgresql')
 
 # Sessão
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=120)
@@ -1311,7 +1311,7 @@ def consys_sync_ajax():
 # =============================================================================
 # SELF-SERVE — CADASTRO PÚBLICO + MERCADO PAGO
 # =============================================================================
-# Configurar no Railway:
+# Configurar no Render:
 #   MP_ACCESS_TOKEN  = seu Access Token do Mercado Pago (produção)
 #   MP_WEBHOOK_SECRET = string secreta para validar webhooks (qualquer texto)
 #   APP_BASE_URL     = https://www.medcontrol.app.br
@@ -1598,9 +1598,9 @@ def webhook_mercadopago():
 # =============================================================================
 # EMAIL — SMTP GMAIL
 # =============================================================================
-# Configurar no Railway:
-#   GMAIL_USER   = seu.email@gmail.com
-#   GMAIL_PASS   = senha de app (não a senha normal — gerar em myaccount.google.com/apppasswords)
+# Configurar no Render:
+#   RESEND_API_KEY = chave da API Resend
+#   RESEND_FROM    = MedControl <noreply@medcontrol.app.br>
 
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 RESEND_FROM    = os.environ.get('RESEND_FROM', 'MedControl <noreply@medcontrol.app.br>')
@@ -2092,7 +2092,7 @@ def seed_database():
         if not _admin_pass:
             raise RuntimeError(
                 "ADMIN_PASS não definida! "
-                "Adicione ADMIN_PASS nas variáveis de ambiente do Railway."
+                "Adicione ADMIN_PASS nas variáveis de ambiente do Render."
             )
         admin = Usuario(
             username    = os.environ.get('ADMIN_USER', 'admin'),
