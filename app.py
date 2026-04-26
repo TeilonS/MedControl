@@ -289,14 +289,14 @@ class Medicamento(db.Model):
     fabricante      = db.Column(db.String(150), nullable=True)
     principio_ativo = db.Column(db.String(200), nullable=True)
     lote            = db.Column(db.String(50), nullable=False)
-    data_validade   = db.Column(db.Date, nullable=False)
+    data_validade   = db.Column(db.Date, nullable=False, index=True)
     quantidade      = db.Column(db.Integer, nullable=False, default=0)
     preco_unitario  = db.Column(db.Float, nullable=False, default=0.0)
     data_cadastro   = db.Column(db.DateTime, default=datetime.utcnow)
     origem_cadastro = db.Column(db.String(50), default='manual')
     codigo_externo  = db.Column(db.String(100), nullable=True)
-    rede_id         = db.Column(db.Integer, db.ForeignKey('redes.id'), nullable=True)
-    filial_id       = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True)
+    rede_id         = db.Column(db.Integer, db.ForeignKey('redes.id'), nullable=True, index=True)
+    filial_id       = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=True, index=True)
 
     @property
     def status(self):
@@ -573,29 +573,39 @@ def dashboard():
 
     query = query.order_by(Medicamento.data_validade.asc())
 
-    # Filtra por status antes de paginar
+    # Filtra por status via SQL — sem carregar tabela inteira em memória
     if status:
-        todos_filtrados = [m for m in query.all() if m.status == status]
-        total_filtrado  = len(todos_filtrados)
-        inicio = (pagina - 1) * ITENS_POR_PAGINA
-        medicamentos = todos_filtrados[inicio: inicio + ITENS_POR_PAGINA]
-    else:
-        total_filtrado = query.count()
-        medicamentos   = query.offset((pagina - 1) * ITENS_POR_PAGINA).limit(ITENS_POR_PAGINA).all()
+        if status == 'vencido':
+            query = query.filter(Medicamento.data_validade < hoje)
+        elif status == 'alerta_30':
+            query = query.filter(Medicamento.data_validade >= hoje,
+                                 Medicamento.data_validade < hoje + timedelta(days=30))
+        elif status == 'alerta_60':
+            query = query.filter(Medicamento.data_validade >= hoje + timedelta(days=30),
+                                 Medicamento.data_validade < hoje + timedelta(days=60))
+        elif status == 'ok':
+            query = query.filter(Medicamento.data_validade >= hoje + timedelta(days=60))
+    total_filtrado = query.count()
+    medicamentos   = query.offset((pagina - 1) * ITENS_POR_PAGINA).limit(ITENS_POR_PAGINA).all()
 
     total_paginas = max(1, -(-total_filtrado // ITENS_POR_PAGINA))  # ceil division
 
-    # Stats sempre sobre todos os medicamentos (sem filtro de busca)
-    todos = get_medicamentos_query().all()
+    # Stats via SQL — sem carregar todos os objetos em memória
+    sq       = get_medicamentos_query()
+    d30, d60 = hoje + timedelta(days=30), hoje + timedelta(days=60)
     stats = {
-        'total':     len(todos),
-        'vencidos':  sum(1 for m in todos if m.status == 'vencido'),
-        'alerta_30': sum(1 for m in todos if m.status == 'alerta_30'),
-        'alerta_60': sum(1 for m in todos if m.status == 'alerta_60'),
-        'ok':        sum(1 for m in todos if m.status == 'ok'),
+        'total':     sq.count(),
+        'vencidos':  sq.filter(Medicamento.data_validade < hoje).count(),
+        'alerta_30': sq.filter(Medicamento.data_validade >= hoje,  Medicamento.data_validade < d30).count(),
+        'alerta_60': sq.filter(Medicamento.data_validade >= d30,   Medicamento.data_validade < d60).count(),
+        'ok':        sq.filter(Medicamento.data_validade >= d60).count(),
     }
-    prejuizo   = sum(m.valor_total for m in todos if m.status == 'vencido')
-    valor_ok   = sum(m.valor_total for m in todos if m.status != 'vencido')
+    prejuizo = db.session.query(
+        db.func.coalesce(db.func.sum(Medicamento.preco_unitario * Medicamento.quantidade), 0)
+    ).filter(Medicamento.id.in_(sq.filter(Medicamento.data_validade < hoje).with_entities(Medicamento.id))).scalar() or 0
+    valor_ok = db.session.query(
+        db.func.coalesce(db.func.sum(Medicamento.preco_unitario * Medicamento.quantidade), 0)
+    ).filter(Medicamento.id.in_(sq.filter(Medicamento.data_validade >= hoje).with_entities(Medicamento.id))).scalar() or 0
     chart_data = json.dumps({
         'labels': ['Vencidos (Prejuízo)', 'Em estoque (Válido)'],
         'values': [round(prejuizo, 2), round(valor_ok, 2)],
@@ -743,23 +753,35 @@ def api_busca():
         except (ValueError, TypeError):
             pass
 
+    hoje_busca = date.today()
     query = query.order_by(Medicamento.data_validade.asc())
-    todos = query.all()
 
     if status_filtro:
-        todos = [m for m in todos if m.status == status_filtro]
+        if status_filtro == 'vencido':
+            query = query.filter(Medicamento.data_validade < hoje_busca)
+        elif status_filtro == 'alerta_30':
+            query = query.filter(Medicamento.data_validade >= hoje_busca,
+                                 Medicamento.data_validade < hoje_busca + timedelta(days=30))
+        elif status_filtro == 'alerta_60':
+            query = query.filter(Medicamento.data_validade >= hoje_busca + timedelta(days=30),
+                                 Medicamento.data_validade < hoje_busca + timedelta(days=60))
+        elif status_filtro == 'ok':
+            query = query.filter(Medicamento.data_validade >= hoje_busca + timedelta(days=60))
+
+    todos = query.limit(500).all()
+
+    # Pre-carrega filiais em 1 query (evita N+1)
+    filial_ids = list({m.filial_id for m in todos if m.filial_id})
+    filiais_map = {}
+    if filial_ids:
+        filiais_map = {u.id: (u.filial_nome or u.username)
+                       for u in Usuario.query.filter(Usuario.id.in_(filial_ids)).all()}
 
     def fmt_brl(v):
         return f"R$ {v:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
 
     meds = []
     for m in todos:
-        # Buscar nome da filial
-        filial_nome = None
-        if m.filial_id:
-            filial_u = Usuario.query.get(m.filial_id)
-            filial_nome = filial_u.filial_nome or filial_u.username if filial_u else None
-
         meds.append({
             'id':           m.id,
             'nome':         m.nome,
@@ -771,7 +793,7 @@ def api_busca():
             'preco':        fmt_brl(m.preco_unitario),
             'total':        fmt_brl(m.preco_unitario * m.quantidade),
             'status':       m.status,
-            'filial_nome':  filial_nome,
+            'filial_nome':  filiais_map.get(m.filial_id),
             'edit_url':     url_for('editar', id=m.id),
         })
 
@@ -970,7 +992,6 @@ def admin_toggle_rede(id):
 @app.route('/admin/redes/<int:id>/excluir', methods=['GET', 'POST'])
 @login_required
 @superadmin_required
-@csrf.exempt
 def admin_excluir_rede(id):
     """
     GET  → mostra tela de confirmação com nome da rede
@@ -1092,7 +1113,7 @@ def dono_excluir_filial(id):
     db.session.commit()
     audit('filial_excluida_dono', f'filial={nome}')
     flash(f'Filial "{nome}" removida.', 'warning')
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('gerenciar_filiais'))
 
 
 # =============================================================================
@@ -1300,11 +1321,11 @@ def consys_sync_ajax():
     """Endpoint AJAX para sincronização rápida."""
     u = get_usuario_atual()
     if u.perfil not in ('dono_rede', 'superadmin'):
-        return json.dumps({'ok': False, 'msg': 'Sem permissão'}), 403
+        return jsonify({'ok': False, 'msg': 'Sem permissão'}), 403
 
-    rede_id = u.rede_id if u.perfil == 'dono_rede' else request.json.get('rede_id')
+    rede_id = u.rede_id if u.perfil == 'dono_rede' else (request.get_json(silent=True) or {}).get('rede_id')
     ok, msg = _sync_consys(rede_id)
-    return json.dumps({'ok': ok, 'msg': msg})
+    return jsonify({'ok': ok, 'msg': msg})
 
 
 
@@ -1904,8 +1925,108 @@ def salvar_tema():
 
 
 # =============================================================================
-# API REST (Movemos para app/routes/api.py)
+# API REST v1 — autenticação por X-API-Key
 # =============================================================================
+
+@app.route('/api/v1/medicamentos', methods=['GET', 'POST'])
+@csrf.exempt
+@api_key_required
+def api_v1_medicamentos():
+    rede = request.rede_autenticada
+    if request.method == 'POST':
+        dados = request.get_json(silent=True) or {}
+        erros = [c for c in ('nome', 'lote', 'data_validade', 'quantidade') if not dados.get(c)]
+        if erros:
+            return jsonify({'success': False, 'error': f'Campos obrigatórios: {", ".join(erros)}'}), 400
+        try:
+            validade = date.fromisoformat(dados['data_validade'])
+        except ValueError:
+            return jsonify({'success': False, 'error': 'data_validade inválida. Use YYYY-MM-DD.'}), 400
+        filial_id = dados.get('filial_id')
+        if filial_id:
+            filial = Usuario.query.filter_by(id=filial_id, rede_id=rede.id, perfil='filial').first()
+            if not filial:
+                return jsonify({'success': False, 'error': 'filial_id não encontrada nesta rede.'}), 400
+        med = Medicamento(
+            nome           = str(dados['nome'])[:200],
+            lote           = str(dados['lote'])[:50],
+            data_validade  = validade,
+            quantidade     = int(dados['quantidade']),
+            codigo_barras  = str(dados.get('codigo_barras') or '')[:50] or None,
+            fabricante     = str(dados.get('fabricante') or '')[:150] or None,
+            preco_unitario = float(dados.get('preco_unitario') or 0),
+            origem_cadastro= str(dados.get('origem', 'api'))[:50],
+            codigo_externo = str(dados.get('codigo_externo') or '')[:100] or None,
+            rede_id        = rede.id,
+            filial_id      = filial_id,
+        )
+        db.session.add(med)
+        db.session.commit()
+        audit('api_medicamento_criado', f'rede_id={rede.id} nome={med.nome}')
+        return jsonify({'success': True, 'id': med.id, 'message': 'Medicamento cadastrado com sucesso.'}), 201
+
+    status    = request.args.get('status')
+    filial_id = request.args.get('filial_id')
+    query     = Medicamento.query.filter_by(rede_id=rede.id)
+    if filial_id:
+        query = query.filter_by(filial_id=filial_id)
+    meds = query.all()
+    if status:
+        meds = [m for m in meds if m.status == status]
+    return jsonify({'success': True, 'total': len(meds), 'data': [m.to_dict() for m in meds]})
+
+
+@app.route('/api/v1/medicamentos/<int:med_id>', methods=['PUT', 'DELETE'])
+@csrf.exempt
+@api_key_required
+def api_v1_medicamento_detalhe(med_id):
+    rede = request.rede_autenticada
+    med  = Medicamento.query.filter_by(id=med_id, rede_id=rede.id).first()
+    if not med:
+        return jsonify({'success': False, 'error': 'Medicamento não encontrado.'}), 404
+    if request.method == 'DELETE':
+        db.session.delete(med)
+        db.session.commit()
+        audit('api_medicamento_deletado', f'rede_id={rede.id} id={med_id}')
+        return jsonify({'success': True, 'message': 'Medicamento removido.'})
+    dados = request.get_json(silent=True) or {}
+    if 'nome'           in dados: med.nome           = str(dados['nome'])[:200]
+    if 'lote'           in dados: med.lote           = str(dados['lote'])[:50]
+    if 'fabricante'     in dados: med.fabricante     = str(dados['fabricante'])[:150]
+    if 'quantidade'     in dados: med.quantidade     = int(dados['quantidade'])
+    if 'preco_unitario' in dados: med.preco_unitario = float(dados['preco_unitario'])
+    if 'codigo_barras'  in dados: med.codigo_barras  = str(dados['codigo_barras'])[:50]
+    if 'data_validade'  in dados:
+        try:
+            med.data_validade = date.fromisoformat(dados['data_validade'])
+        except ValueError:
+            return jsonify({'success': False, 'error': 'data_validade inválida. Use YYYY-MM-DD.'}), 400
+    db.session.commit()
+    return jsonify({'success': True, 'data': med.to_dict()})
+
+
+@app.route('/api/v1/medicamentos/barcode/<codigo>', methods=['GET'])
+@csrf.exempt
+@api_key_required
+def api_v1_buscar_barcode(codigo):
+    rede         = request.rede_autenticada
+    codigo_limpo = ''.join(c for c in codigo if c.isalnum() or c == '-')[:50]
+    med          = Medicamento.query.filter_by(codigo_barras=codigo_limpo, rede_id=rede.id).first()
+    if med:
+        return jsonify({'success': True, 'data': med.to_dict()})
+    return jsonify({'success': False, 'message': 'Não encontrado'}), 404
+
+
+@app.route('/api/v1/filiais', methods=['GET'])
+@csrf.exempt
+@api_key_required
+def api_v1_filiais():
+    rede    = request.rede_autenticada
+    filiais = Usuario.query.filter_by(rede_id=rede.id, perfil='filial').order_by(Usuario.id).all()
+    data    = [{'id': f.id, 'nome': f.filial_nome or f.nome_exibir or f.username, 'username': f.username}
+               for f in filiais]
+    return jsonify({'success': True, 'total': len(data), 'data': data})
+
 
 @app.route('/api/docs')
 @login_required
@@ -2109,14 +2230,13 @@ def seed_database():
         db.session.add(rede_demo)
         db.session.flush()
         dono_demo   = Usuario(username='dono_demo', perfil='dono_rede',
-                               nome_exibir='Dono Demo', rede_id=rede_demo.id)
+                               nome_exibir='Dono Demo', rede_id=rede_demo.id,
+                               termos_aceitos=True, email_confirmado=True)
         filial_demo = Usuario(username='filial_demo', perfil='filial',
                                nome_exibir='Filial Centro', filial_nome='Unidade Centro',
-                               rede_id=rede_demo.id)
+                               rede_id=rede_demo.id, email_confirmado=True)
         dono_demo.set_password('demo123')
-        dono_demo.email_confirmado = True
         filial_demo.set_password('demo123')
-        filial_demo.email_confirmado = True
         db.session.add_all([dono_demo, filial_demo])
         db.session.flush()
         db.session.add_all([
@@ -2154,6 +2274,7 @@ with app.app_context():
             ("email_codigo", "VARCHAR(10)"),
             ("email_codigo_exp", "TIMESTAMP"),
             ("email", "VARCHAR(150)"),
+            ("tema", "VARCHAR(10) DEFAULT 'light'"),
         ]:
             try:
                 conn.execute(db.text(f"ALTER TABLE usuarios ADD COLUMN {col_name} {col_type}"))
@@ -2166,6 +2287,7 @@ with app.app_context():
             ("trial_inicio", "TIMESTAMP"),
             ("mp_assinatura_id", "VARCHAR(100)"),
             ("mp_payer_email", "VARCHAR(150)"),
+            ("token_api", "VARCHAR(64)"),
         ]:
             try:
                 conn.execute(db.text(f"ALTER TABLE redes ADD COLUMN {col_name} {col_type}"))

@@ -71,6 +71,7 @@
   </ul>
 
   <form method="POST" action="{{ url_for('admin_excluir_rede', id=rede.id) }}" id="deleteForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Para confirmar, digite exatamente o nome da rede:</label>
     <div class="hint">{{ rede.nome }}</div>
     <input type="text" name="confirmacao" id="confirmInput" class="fc"

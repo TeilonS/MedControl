@@ -92,9 +92,9 @@ body {
   border: 1px solid var(--glass-border) !important;
 }
 
-.sidebar { @extend .glass-effect; }
-.topbar { @extend .glass-effect; }
-.modal-content { @extend .glass-effect; }
+.sidebar { background: var(--glass) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; border: 1px solid var(--glass-border) !important; }
+.topbar { background: var(--glass) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; border: 1px solid var(--glass-border) !important; }
+.modal-content { background: var(--glass) !important; backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; border: 1px solid var(--glass-border) !important; }
 
 /* ══ SIDEBAR ══ */
 .sidebar, aside.sidebar { background: var(--sb-bg) !important; border-right: 1px solid var(--sb-border) !important; }
